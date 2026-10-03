@@ -1,7 +1,7 @@
 # Backlit — Part 2: Music Visualizer Toy — Design
 
 **Date:** 2026-10-03
-**Status:** Draft for review
+**Status:** Implemented (amended after on-device review: Wave style removed, frame pacing added)
 **Builds on:** `docs/superpowers/specs/2026-10-03-backlit-clocks-design.md` (Part 1, merged)
 
 ## 1. Goal
@@ -11,7 +11,7 @@ a visualizer that reacts to the song. When nothing plays, it shows a softly brea
 
 ### Success criteria
 - On a Phone (3), with music playing from any app (Spotify, YouTube Music, …), the matrix moves
-  in time with the song in all three styles.
+  in time with the song in both styles (Mirror, Peaks).
 - A long press on the Glyph Button cycles the styles. The app's Music tab shows the same frames
   as a live preview.
 - Without the audio permission, or if the system blocks capture, the toy still works and shows the
@@ -61,7 +61,6 @@ app/src/main/java/app/backlit/
 │   ├─ VizStyle              interface: id, label, update(frame, dtMs), render(size): PixelGrid
 │   ├─ MirrorBars            style E
 │   ├─ MirrorPeaks           style F
-│   ├─ ScrollWave            style G
 │   ├─ IdleLine              breathing centre line (idle + fallback)
 │   └─ VizStyles             registry: all, byId, next (same pattern as Faces)
 ├─ glyph/MusicToyService     second Glyph Toy
@@ -96,7 +95,7 @@ Column levels rise instantly and fall as `old × 0.7 + new × 0.3` per update.
 - **F, MirrorPeaks (`peaks`):** like E, but the bar pixels go from 90 near the centre to 200 at the
   tips. A peak dot at 255 sits one pixel beyond the bar. Peaks hold for 250 ms, then drop one pixel
   every 200 ms.
-- **G, ScrollWave (`wave`):** keeps a history of `level` samples, one new sample every 70 ms. The
+- **G, ScrollWave (`wave`) — removed after on-device review** (the user found it read as lines sliding sideways; a stored `wave` now falls back to `mirror`). Original design: keeps a history of `level` samples, one new sample every 70 ms. The
   newest sample is on the right edge and older ones shift left. Each column is a mirrored bar of
   that sample's height, with brightness fading from 255 on the right to 90 on the left.
 - **IdleLine:** the centre row, whose brightness breathes between 60 and 140 over a 4 s sine cycle.
@@ -112,7 +111,7 @@ sizes still render correctly (tested at 13 for robustness), even though the toy 
   start `OutputVisualizer` if `RECORD_AUDIO` is granted. Start the frame loop. The loop reads FFT
   data by polling `Visualizer.getFft()` on the main thread each tick. There is no capture-listener
   thread, so all state stays on one thread.
-- **Frame loop (main thread, every 50 ms):** read `MusicActivity` and the latest FFT, run
+- **Frame loop (main thread, on a fixed 50 ms grid via `FramePacer` — the SDK push measured 12–16 ms on a Phone (3), so a plain 50 ms delay gave only ~14 fps):** read `MusicActivity` and the latest FFT, run
   `SpectrumAnalyzer`, update `MusicState`, then:
   - IDLE or FALLBACK → `IdleLine.update/render`
   - LIVE → the current style `update(frame, dt)` / `render(25)`
@@ -134,7 +133,7 @@ sizes still render correctly (tested at 13 for robustness), even though the toy 
 ## 7. Settings
 
 These new fields are added to `Settings` and persisted by `SettingsRepo`:
-- `musicStyle: String = "mirror"` (one of `mirror`, `peaks`, `wave`)
+- `musicStyle: String = "mirror"` (one of `mirror`, `peaks`; unknown or removed ids fall back to `mirror`)
 - `musicSensitivity: Sensitivity = MED` (`LOW`, `MED`, `HIGH`, stored by name, unknown → MED)
 
 ## 8. App UI
@@ -144,7 +143,7 @@ These new fields are added to `Settings` and persisted by `SettingsRepo`:
 - **MUSIC tab:**
   - A live `MatrixPreview` of the 25×25 frame. It uses real audio when `RECORD_AUDIO` is granted
     and the app is in the foreground, and `DemoAudio` otherwise.
-  - Style chips **MIRROR · PEAKS · WAVE**, plus a Sensitivity row (LOW / MED / HIGH, tap to cycle)
+  - Style chips **MIRROR · PEAKS**, plus a Sensitivity row (LOW / MED / HIGH, tap to cycle)
     and the shared Brightness row.
   - Permission not granted → a disclosure panel with the exact text: "Let Backlit react to your
     music. Android files this under the microphone permission, but Backlit only reads the sound
@@ -186,8 +185,7 @@ These new fields are added to `Settings` and persisted by `SettingsRepo`:
   - `MirrorBars`: vertically symmetric about the centre row; the centre column is the tallest for a
     bass-only frame; a zero frame lights only the centre row.
   - `MirrorPeaks`: the peak sits above the bar; it holds 250 ms, then falls.
-  - `ScrollWave`: a new sample enters at the right and shifts left by one column per 70 ms.
-  - `IdleLine`: lights only the centre row; brightness changes over time; fallback is brighter.
+    - `IdleLine`: lights only the centre row; brightness changes over time; fallback is brighter.
   - `MusicState`: every transition in §6, using a fake clock.
   - `VizStyles`: byId fallback and next cycling.
   - `SettingsRepo`: round-trip of the new fields; an unknown sensitivity falls back to MED.
