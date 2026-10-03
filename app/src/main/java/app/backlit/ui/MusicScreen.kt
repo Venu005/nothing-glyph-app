@@ -28,6 +28,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.currentStateAsState
 import app.backlit.audio.DemoAudio
 import app.backlit.audio.MusicActivity
 import app.backlit.audio.MusicEngine
@@ -53,13 +56,17 @@ fun MusicTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
     val current by rememberUpdatedState(settings)
     val engine = remember { MusicEngine(25) }
     val music = remember { MusicActivity(context) }
-    val viz = remember(granted) { OutputVisualizer().also { if (granted) it.start() } }
+    // Only read audio and animate while this screen is in the foreground; leaving the app releases the Visualizer.
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    val resumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+    val viz = remember(granted, resumed) { OutputVisualizer().also { if (granted && resumed) it.start() } }
     DisposableEffect(viz) { onDispose { viz.release() } }
     var grid by remember { mutableStateOf(PixelGrid(25)) }
     var live by remember { mutableStateOf(false) }
 
     LaunchedEffect(settings.musicStyle) { engine.setStyle(settings.musicStyle) }
-    LaunchedEffect(viz) {
+    LaunchedEffect(viz, resumed) {
+        if (!resumed) return@LaunchedEffect
         val start = SystemClock.elapsedRealtime()
         var last = start
         while (true) {
