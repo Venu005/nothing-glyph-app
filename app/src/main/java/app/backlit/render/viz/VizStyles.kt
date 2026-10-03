@@ -1,9 +1,10 @@
 package app.backlit.render.viz
 
 object VizStyles {
-    val ids = listOf("mirror", "peaks", "wave")
-    private val labels = mapOf("mirror" to "MIRROR", "peaks" to "PEAKS", "wave" to "WAVE")
+    val ids = listOf("mirror", "peaks")
+    private val labels = mapOf("mirror" to "MIRROR", "peaks" to "PEAKS")
 
+    /** Unknown ids (including the removed "wave" style) fall back to the first style. */
     fun normalize(id: String): String = if (id in ids) id else ids.first()
 
     fun label(id: String): String = labels.getValue(normalize(id))
@@ -12,7 +13,6 @@ object VizStyles {
 
     fun create(id: String, size: Int): VizStyle = when (normalize(id)) {
         "peaks" -> MirrorPeaks(size)
-        "wave" -> ScrollWave(size)
         else -> MirrorBars(size)
     }
 }

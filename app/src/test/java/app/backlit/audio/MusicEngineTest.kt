@@ -62,7 +62,7 @@ class MusicEngineTest {
     fun switchingStyleMidSongKeepsRendering() {
         val e = MusicEngine()
         e.tick(0, 50, true, bassFft(), sr, 1f, true)
-        for (id in listOf("peaks", "wave", "mirror", "peaks")) {
+        for (id in listOf("peaks", "mirror", "peaks", "mirror")) {
             e.setStyle(id)
             assertEquals(id, e.styleId)
             val g = e.tick(100, 70, true, bassFft(), sr, 1f, true)
