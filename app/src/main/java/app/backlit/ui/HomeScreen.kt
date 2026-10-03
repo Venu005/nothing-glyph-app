@@ -118,10 +118,11 @@ fun HomeScreen(
                 onUpdate { it.copy(secondHand = !it.secondHand) }
             }
         }
-        SettingRow("Time format", if (settings.use24h) "24H" else "12H") {
-            onUpdate { it.copy(use24h = !it.use24h) }
-        }
         if (face.id == DayRingFace.id) {
+            // Only faces that show digits have a time format; the analog face has none.
+            SettingRow("Time format", if (settings.use24h) "24H" else "12H") {
+                onUpdate { it.copy(use24h = !it.use24h) }
+            }
             val where = when (settings.locationMode) {
                 LocationMode.FIXED -> "06–18"
                 else -> settings.placeName ?: "—"
