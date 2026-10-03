@@ -40,11 +40,16 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val PLACE = stringPreferencesKey("place_name")
         private val LOC_AT = longPreferencesKey("location_updated_at")
         private val BOUND = booleanPreferencesKey("toy_ever_bound")
+        private val MUSIC_STYLE = stringPreferencesKey("music_style")
+        private val MUSIC_SENS = stringPreferencesKey("music_sensitivity")
 
         fun get(context: Context): SettingsRepo = SettingsRepo(context.applicationContext.settingsDataStore)
 
         fun parseMode(s: String?): LocationMode =
             LocationMode.entries.firstOrNull { it.name == s } ?: LocationMode.FIXED
+
+        fun parseSensitivity(s: String?): Sensitivity =
+            Sensitivity.entries.firstOrNull { it.name == s } ?: Sensitivity.MED
 
         private fun Preferences.toSettings(): Settings {
             val d = Settings()
@@ -59,6 +64,8 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 placeName = this[PLACE],
                 locationUpdatedAt = this[LOC_AT] ?: d.locationUpdatedAt,
                 toyEverBound = this[BOUND] ?: d.toyEverBound,
+                musicStyle = this[MUSIC_STYLE] ?: d.musicStyle,
+                musicSensitivity = parseSensitivity(this[MUSIC_SENS]),
             )
         }
 
@@ -73,6 +80,8 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             if (s.placeName != null) this[PLACE] = s.placeName else remove(PLACE)
             this[LOC_AT] = s.locationUpdatedAt
             this[BOUND] = s.toyEverBound
+            this[MUSIC_STYLE] = s.musicStyle
+            this[MUSIC_SENS] = s.musicSensitivity.name
         }
     }
 }
