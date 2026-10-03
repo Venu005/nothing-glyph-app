@@ -12,5 +12,7 @@ class VizStylesTest {
         assertEquals("peaks", VizStyles.next("mirror"))
         assertEquals("mirror", VizStyles.next("wave"))
         assertEquals("mirror", VizStyles.create("unknown", 25).id)
+        assertEquals("peaks", VizStyles.create("peaks", 25).id)
+        assertEquals("wave", VizStyles.create("wave", 25).id)
     }
 }
