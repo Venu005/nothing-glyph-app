@@ -25,6 +25,7 @@ object SunTimes {
     }
 
     fun compute(date: LocalDate, lat: Double, lon: Double, zone: ZoneId): DayLight {
+        if (!lat.isFinite() || !lon.isFinite()) return DayLight.FIXED
         val rise = event(date, lat, lon, rising = true)
         val set = event(date, lat, lon, rising = false)
         if (rise is Event.NeverRises || set is Event.NeverRises) return DayLight.ALL_NIGHT

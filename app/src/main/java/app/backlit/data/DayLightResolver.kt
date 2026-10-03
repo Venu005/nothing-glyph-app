@@ -19,7 +19,7 @@ class DayLightResolver(
         if (settings.locationMode == LocationMode.FIXED || lat == null || lon == null) return DayLight.FIXED
         val k = Key(date, lat, lon, zone)
         if (k != key) {
-            cached = compute(date, lat, lon, zone)
+            cached = runCatching { compute(date, lat, lon, zone) }.getOrDefault(DayLight.FIXED)
             key = k
         }
         return cached

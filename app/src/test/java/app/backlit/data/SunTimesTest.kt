@@ -44,4 +44,12 @@ class SunTimesTest {
         assertEquals(DayLight.ALL_DAY, SunTimes.compute(LocalDate.of(2026, 6, 21), 69.6492, 18.9553, zone))
         assertEquals(DayLight.ALL_NIGHT, SunTimes.compute(LocalDate.of(2026, 12, 21), 69.6492, 18.9553, zone))
     }
+
+    @Test
+    fun corruptCoordinatesFallBackToFixedInsteadOfThrowing() {
+        val zone = ZoneId.of("UTC")
+        val day = LocalDate.of(2026, 10, 3)
+        assertEquals(DayLight.FIXED, SunTimes.compute(day, Double.NaN, 0.0, zone))
+        assertEquals(DayLight.FIXED, SunTimes.compute(day, 10.0, Double.POSITIVE_INFINITY, zone))
+    }
 }

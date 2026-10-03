@@ -52,4 +52,10 @@ class DayLightResolverTest {
         r.resolve(located, day1, ZoneId.of("Asia/Kolkata"))
         assertEquals(2, calls)
     }
+
+    @Test
+    fun computeFailureFallsBackToFixed() {
+        val r = DayLightResolver { _, _, _, _ -> throw IllegalStateException("boom") }
+        assertEquals(DayLight.FIXED, r.resolve(located, day1, london))
+    }
 }

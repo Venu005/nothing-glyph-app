@@ -19,6 +19,7 @@ import app.backlit.render.Mode
 import app.backlit.render.PixelGrid
 import app.backlit.render.faces.Faces
 import com.nothing.ketchum.GlyphToy
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -68,7 +69,8 @@ class ClockToyService : Service() {
         profile = DeviceProfile.detect()
         modes = ModeTracker(profile.aodOnly)
         repo = SettingsRepo.get(this)
-        val s = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+        val crashGuard = CoroutineExceptionHandler { _, e -> Log.e(TAG, "toy coroutine failed", e) }
+        val s = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate + crashGuard)
         scope = s
 
         if (profile != DeviceProfile.UNSUPPORTED) {
