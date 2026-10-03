@@ -59,6 +59,13 @@ fun MusicTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
     // Only read audio and animate while this screen is in the foreground; leaving the app releases the Visualizer.
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val resumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+    // Re-check on every resume: the user may have granted the permission in system Settings.
+    LaunchedEffect(resumed) {
+        if (resumed) {
+            granted = hasAudioPermission(context)
+            if (granted) denied = false
+        }
+    }
     val viz = remember(granted, resumed) { OutputVisualizer().also { if (granted && resumed) it.start() } }
     DisposableEffect(viz) { onDispose { viz.release() } }
     var grid by remember { mutableStateOf(PixelGrid(25)) }
