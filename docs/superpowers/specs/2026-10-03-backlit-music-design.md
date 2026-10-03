@@ -54,7 +54,7 @@ app/src/main/java/app/backlit/
 │   ├─ SpectrumAnalyzer      pure Kotlin: FFT bytes → AudioFrame (unit-tested)
 │   ├─ AudioFrame            data: bands FloatArray(8) 0..1, level 0..1, kick 0..1
 │   ├─ MusicState            pure Kotlin state machine (IDLE / LIVE / FALLBACK), unit-tested
-│   ├─ OutputVisualizer      wraps android.media.audiofx.Visualizer(0); emits FFT bytes
+│   ├─ OutputVisualizer      wraps android.media.audiofx.Visualizer(0); the loop polls getFft() each tick
 │   ├─ MusicActivity         AudioManager.isMusicActive() wrapper
 │   └─ DemoAudio             pure Kotlin synthetic AudioFrames for the in-app preview
 ├─ render/viz/               pure Kotlin, stateful visualizer styles
@@ -108,8 +108,10 @@ sizes still render correctly (tested at 13 for robustness), even though the toy 
 ## 6. Runtime (`MusicToyService`)
 
 - **`onBind`:** detect the device. If it isn't a Phone (3), return a binder and do nothing. Otherwise
-  connect `GlyphOutput`, collect settings, and start `OutputVisualizer` if `RECORD_AUDIO` is
-  granted. Start the frame loop.
+  connect `GlyphOutput`, collect settings, set `toyEverBound = true` (like the Clock toy), and
+  start `OutputVisualizer` if `RECORD_AUDIO` is granted. Start the frame loop. The loop reads FFT
+  data by polling `Visualizer.getFft()` on the main thread each tick. There is no capture-listener
+  thread, so all state stays on one thread.
 - **Frame loop (main thread, every 50 ms):** read `MusicActivity` and the latest FFT, run
   `SpectrumAnalyzer`, update `MusicState`, then:
   - IDLE or FALLBACK → `IdleLine.update/render`
