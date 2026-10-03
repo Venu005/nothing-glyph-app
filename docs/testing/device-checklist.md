@@ -25,3 +25,15 @@ Date: ______  Build: ______  Nothing OS: ______
 - [ ] 13×13 preview toggle shows the stacked day-ring digits with ring gaps top/bottom.
 - [ ] Location: city, approximate (approximate-only prompt), deny path.
 - [ ] About shows version and licenses.
+
+## Music toy (Part 2)
+- [x] Backlit Music appears in Glyph Toys with the bars icon.
+- [x] Mirror and Peaks each move in time with a song (Spotify).
+- [x] Works with the screen off (phone face down, toy shown via the Glyph Button).
+- [x] Long press switches Mirror ↔ Peaks; the app's chips follow.
+- [x] A 2–3 s gap between tracks does not drop to the idle line.
+- [x] Pause: bars fall for ~1 s, then the breathing line.
+- [x] Permission revoked (`adb shell pm revoke app.backlit android.permission.RECORD_AUDIO`): toy shows the livelier fallback line while music plays; no crash.
+- [x] After leaving the toy (and after leaving the app from the Music tab), `dumpsys media.audio_flinger` shows no Backlit Visualizer client.
+- [x] Steady 20 fps (200 frames per 10.0 s in the `avg frame` log); push cost ~15 ms is SDK-side.
+- [x] Music tab: demo preview, disclosure + ALLOW, LIVE label with real music, sensitivity cycling.
