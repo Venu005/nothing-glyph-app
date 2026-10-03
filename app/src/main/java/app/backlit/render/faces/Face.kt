@@ -11,7 +11,7 @@ interface Face {
 }
 
 object Faces {
-    val all: List<Face> = listOf(AnalogFace)
+    val all: List<Face> = listOf(AnalogFace, DayRingFace)
 
     fun byId(id: String): Face = all.firstOrNull { it.id == id } ?: all.first()
 
