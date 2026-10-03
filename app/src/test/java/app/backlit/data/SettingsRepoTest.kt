@@ -37,6 +37,7 @@ class SettingsRepoTest {
             faceId = "dayring", secondHand = false, brightness = 40, use24h = false,
             locationMode = LocationMode.CITY, lat = 12.97, lon = 77.59, placeName = "Bengaluru, IN",
             locationUpdatedAt = 123L, toyEverBound = true,
+            musicStyle = "wave", musicSensitivity = Sensitivity.HIGH,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -58,5 +59,12 @@ class SettingsRepoTest {
         r.update { it.copy(locationMode = LocationMode.APPROXIMATE) }
         assertEquals(LocationMode.APPROXIMATE, r.settings.first().locationMode)
         assertEquals(LocationMode.FIXED, SettingsRepo.parseMode("NOT_A_MODE"))
+    }
+
+    @Test
+    fun unknownSensitivityFallsBackToMed() {
+        assertEquals(Sensitivity.MED, SettingsRepo.parseSensitivity("LOUD"))
+        assertEquals(Sensitivity.LOW, SettingsRepo.parseSensitivity("LOW"))
+        assertEquals("mirror", Settings().musicStyle)
     }
 }

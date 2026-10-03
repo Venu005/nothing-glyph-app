@@ -10,6 +10,7 @@ belongs there.
 
 • ANALOG — smooth anti-aliased hands, a rim second hand on Phone (3)
 • DAY RING — a 24-hour dial that lights the hours between your real sunrise and sunset
+• MUSIC — a second toy that moves with the song playing on your phone (Mirror, Peaks)
 • Live preview in the app, pixel-for-pixel what the matrix shows
 • Long press the Glyph Button to switch faces
 • Always-on (AOD) support, including Phone (4a) Pro
@@ -17,6 +18,6 @@ belongs there.
 
 Supported: Nothing Phone (3), Nothing Phone (4a) Pro.
 
-**Data safety form:** No data collected. No data shared. (Location is processed on device only.)
+**Data safety form:** No data collected. No data shared. (Location and audio are processed on device only; audio is never recorded.)
 **Privacy policy URL:** GitHub URL of docs/privacy-policy.md (or a GitHub Pages copy)
 **Screenshots:** 2–4 app screenshots + 2 photos of the physical matrix (Analog, Day ring).

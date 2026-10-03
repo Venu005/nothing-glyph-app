@@ -2,4 +2,6 @@
     <string name="app_name">Backlit</string>
     <string name="toy_name">Backlit Clock</string>
     <string name="toy_summary">Analog and day-ring clocks. Long press to change face.</string>
+    <string name="music_toy_name">Backlit Music</string>
+    <string name="music_toy_summary">Reacts to the music playing on your phone. Long press to change style.</string>
 </resources>

@@ -54,23 +54,7 @@ fun HomeScreen(
     onUpdate: ((Settings) -> Settings) -> Unit,
     onNavigate: (Screen) -> Unit,
 ) {
-    val now by produceState(LocalDateTime.now()) {
-        while (true) {
-            delay(TickSchedule.delayToNextTick(System.currentTimeMillis(), perSecond = true))
-            value = LocalDateTime.now()
-        }
-    }
-    var previewSize by rememberSaveable { mutableIntStateOf(profile.size) }
-    val resolver = remember { DayLightResolver() }
-    val face = Faces.byId(settings.faceId)
-    val ctx = FaceContext(
-        hour = now.hour, minute = now.minute, second = now.second,
-        size = previewSize,
-        mode = if (previewSize == 13) Mode.AOD else Mode.ACTIVE,
-        options = settings.faceOptions,
-        dayLight = resolver.resolve(settings, now.toLocalDate(), ZoneId.systemDefault()),
-    )
-    val grid = face.render(ctx)
+    var tab by rememberSaveable { mutableIntStateOf(0) }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -96,40 +80,13 @@ fun HomeScreen(
             Spacer(Modifier.height(12.dp))
         }
 
-        MatrixPreview(grid, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp))
-
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-            Text(
-                listOf(25, 13).joinToString("   ") { if (it == previewSize) "[${it}×$it]" else "${it}×$it" },
-                style = MaterialTheme.typography.labelSmall,
-                color = BacklitColors.Dim,
-                modifier = Modifier.clickable { previewSize = if (previewSize == 25) 13 else 25 }.padding(8.dp),
-            )
+        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SquareChip("CLOCK", selected = tab == 0, onClick = { tab = 0 }, modifier = Modifier.weight(1f))
+            SquareChip("MUSIC", selected = tab == 1, onClick = { tab = 1 }, modifier = Modifier.weight(1f))
         }
 
-        Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Faces.all.forEach { f ->
-                SquareChip(f.label, selected = f.id == face.id, onClick = { onUpdate { it.copy(faceId = f.id) } }, modifier = Modifier.weight(1f))
-            }
-        }
+        if (tab == 0) ClockTab(settings, profile, onUpdate, onNavigate) else MusicTab(settings, profile, onUpdate)
 
-        if (face.id == "analog") {
-            SettingRow("Second hand", if (settings.secondHand) "ON" else "OFF") {
-                onUpdate { it.copy(secondHand = !it.secondHand) }
-            }
-        }
-        if (face.id == DayRingFace.id) {
-            // Only faces that show digits have a time format; the analog face has none.
-            SettingRow("Time format", if (settings.use24h) "24H" else "12H") {
-                onUpdate { it.copy(use24h = !it.use24h) }
-            }
-            val where = when (settings.locationMode) {
-                LocationMode.FIXED -> "06–18"
-                else -> settings.placeName ?: "—"
-            }
-            SettingRow("Sun times", "$where →") { onNavigate(Screen.LOCATION) }
-        }
-        BrightnessRow(settings.brightness) { pct -> onUpdate { it.copy(brightness = pct) } }
         SettingRow("Glyph Toy setup", "→") { onNavigate(Screen.SETUP) }
         SettingRow("About", "→") { onNavigate(Screen.ABOUT) }
         DashedDivider()
@@ -138,7 +95,68 @@ fun HomeScreen(
 }
 
 @Composable
-private fun BrightnessRow(value: Int, onChange: (Int) -> Unit) {
+private fun ClockTab(
+    settings: Settings,
+    profile: DeviceProfile,
+    onUpdate: ((Settings) -> Settings) -> Unit,
+    onNavigate: (Screen) -> Unit,
+) {
+    val now by produceState(LocalDateTime.now()) {
+        while (true) {
+            delay(TickSchedule.delayToNextTick(System.currentTimeMillis(), perSecond = true))
+            value = LocalDateTime.now()
+        }
+    }
+    var previewSize by rememberSaveable { mutableIntStateOf(profile.size) }
+    val resolver = remember { DayLightResolver() }
+    val face = Faces.byId(settings.faceId)
+    val ctx = FaceContext(
+        hour = now.hour, minute = now.minute, second = now.second,
+        size = previewSize,
+        mode = if (previewSize == 13) Mode.AOD else Mode.ACTIVE,
+        options = settings.faceOptions,
+        dayLight = resolver.resolve(settings, now.toLocalDate(), ZoneId.systemDefault()),
+    )
+    val grid = face.render(ctx)
+
+    MatrixPreview(grid, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp))
+
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+        Text(
+            listOf(25, 13).joinToString("   ") { if (it == previewSize) "[${it}×$it]" else "${it}×$it" },
+            style = MaterialTheme.typography.labelSmall,
+            color = BacklitColors.Dim,
+            modifier = Modifier.clickable { previewSize = if (previewSize == 25) 13 else 25 }.padding(8.dp),
+        )
+    }
+
+    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Faces.all.forEach { f ->
+            SquareChip(f.label, selected = f.id == face.id, onClick = { onUpdate { it.copy(faceId = f.id) } }, modifier = Modifier.weight(1f))
+        }
+    }
+
+    if (face.id == "analog") {
+        SettingRow("Second hand", if (settings.secondHand) "ON" else "OFF") {
+            onUpdate { it.copy(secondHand = !it.secondHand) }
+        }
+    }
+    if (face.id == DayRingFace.id) {
+        // Only faces that show digits have a time format; the analog face has none.
+        SettingRow("Time format", if (settings.use24h) "24H" else "12H") {
+            onUpdate { it.copy(use24h = !it.use24h) }
+        }
+        val where = when (settings.locationMode) {
+            LocationMode.FIXED -> "06–18"
+            else -> settings.placeName ?: "—"
+        }
+        SettingRow("Sun times", "$where →") { onNavigate(Screen.LOCATION) }
+    }
+    BrightnessRow(settings.brightness) { pct -> onUpdate { it.copy(brightness = pct) } }
+}
+
+@Composable
+internal fun BrightnessRow(value: Int, onChange: (Int) -> Unit) {
     var local by remember(value) { mutableStateOf(value.toFloat()) }
     DashedDivider()
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp, horizontal = 2.dp)) {

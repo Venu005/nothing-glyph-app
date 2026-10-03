@@ -27,6 +27,7 @@ fun AboutScreen(onBack: () -> Unit) {
         DashedDivider()
         Text(
             "Backlit collects no data. Everything, including your location if you share it, stays on your phone. " +
+                "Music is analysed on the phone in real time and is never recorded, stored or shared. " +
                 "The app makes no network requests.",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(vertical = 14.dp),
