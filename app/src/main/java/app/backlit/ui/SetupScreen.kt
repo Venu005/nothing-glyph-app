@@ -29,7 +29,8 @@ fun SetupScreen(onDone: () -> Unit) {
             "01" to "Open Settings → Glyph Interface → Glyph Toys.",
             "02" to "Find \"Backlit Clock\" and switch it on.",
             "03" to "Phone (3): press the Glyph Button on the back until the clock shows. Long press to change face.",
-            "04" to "Phone (4a) Pro: choose Backlit Clock as the always-on toy.",
+            "04" to "Phone (3): also switch on \"Backlit Music\" to see your music on the back.",
+            "05" to "Phone (4a) Pro: choose Backlit Clock as the always-on toy.",
         ).forEach { (n, step) ->
             DashedDivider()
             Column(Modifier.padding(vertical = 12.dp)) {
