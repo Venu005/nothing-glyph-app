@@ -57,6 +57,7 @@ class ChargeToyService : Service() {
         }
     }
     private val messenger = Messenger(handler)
+    private val rekick = Runnable { kick() }
 
     private val batteryReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -94,6 +95,7 @@ class ChargeToyService : Service() {
 
     override fun onUnbind(intent: Intent?): Boolean {
         runCatching { unregisterReceiver(batteryReceiver) }
+        handler.removeCallbacks(rekick)
         renderJob?.cancel()
         renderJob = null
         scope?.cancel()
@@ -114,21 +116,27 @@ class ChargeToyService : Service() {
     private fun kick() {
         val s = scope ?: return
         if (renderJob?.isActive == true) return
+        handler.removeCallbacks(rekick)
         renderJob = s.launch {
             val pacer = FramePacer(FRAME_MS)
             var wait = 0L
             while (isActive) {
                 delay(wait)
                 val now = AlertsRuntime.now()
-                session.tick(now)
                 val alert = alerts?.bus?.value
+                session.setHeld(alert != null, now)
+                session.tick(now)
                 val aod = isAod()
                 val grid = runCatching {
                     if (alert != null) alerts!!.animationFor(alert).frame(profile.size, now - alert.startedAt) else frame(now, aod)
                 }.getOrElse { Log.e(TAG, "render failed", it); PixelGrid(profile.size) }
                 output?.push(FrameEncoder.encode(grid, settings.brightness, aod = alert == null && aod))
                 val animating = alert != null || (!aod && session.show.moment != Moment.STILL)
-                if (!animating) break
+                if (!animating) {
+                    // EVENT_AOD stops arriving when the phone wakes; redraw (and resume animating) once AOD lapses.
+                    if (aod) modes.msUntilActive(System.currentTimeMillis())?.let { handler.postDelayed(rekick, it + 100) }
+                    break
+                }
                 wait = pacer.delayBeforeNext(AlertsRuntime.now())
             }
         }

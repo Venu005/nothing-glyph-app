@@ -20,6 +20,7 @@ class ChargeSession(private val target: () -> Int) {
     private var plugged = false
     private var donePlayed = false
     private var donePending = false
+    private var held = false
 
     /**
      * [pluggedAt] is when the charger was last connected, if known. Nothing's own charge animation holds the
@@ -60,7 +61,21 @@ class ChargeSession(private val target: () -> Int) {
         if (!donePlayed && prev < target() && level >= target()) {
             donePlayed = true
             if (!active) return
-            if (show.moment == Moment.PLUG_IN) donePending = true else show = Show(Moment.DONE, now)
+            if (show.moment == Moment.PLUG_IN || held) donePending = true else show = Show(Moment.DONE, now)
+        }
+    }
+
+    /**
+     * While an alert covers the toy ([isHeld] true), DONE neither starts nor runs out; it plays in full once the
+     * alert ends. A PLUG_IN that runs out underneath still moves on to CHARGING.
+     */
+    fun setHeld(isHeld: Boolean, now: Long) {
+        if (held == isHeld) return
+        held = isHeld
+        if (isHeld) return
+        when {
+            show.moment == Moment.DONE -> show = Show(Moment.DONE, now)
+            donePending && show.moment != Moment.PLUG_IN -> { show = Show(Moment.DONE, now); donePending = false }
         }
     }
 
@@ -68,10 +83,14 @@ class ChargeSession(private val target: () -> Int) {
         val s = show
         when (s.moment) {
             Moment.PLUG_IN -> if (now - s.startedAt >= PLUG_IN_MS) {
-                show = if (donePending) Show(Moment.DONE, now) else Show(Moment.CHARGING, now)
-                donePending = false
+                if (donePending && !held) {
+                    show = Show(Moment.DONE, now)
+                    donePending = false
+                } else {
+                    show = Show(Moment.CHARGING, now)
+                }
             }
-            Moment.DONE -> if (now - s.startedAt >= DONE_MS) show = Show(Moment.CHARGING, now)
+            Moment.DONE -> if (!held && now - s.startedAt >= DONE_MS) show = Show(Moment.CHARGING, now)
             else -> Unit
         }
     }

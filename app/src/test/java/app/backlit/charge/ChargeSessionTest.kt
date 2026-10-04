@@ -136,4 +136,38 @@ class ChargeSessionTest {
         s.onBattery(on(80), 11_000, true)
         s.tick(15_000); assertEquals(Moment.DONE, s.show.moment)
     }
+
+    @Test
+    fun doneQueuedDuringAnAlertPlaysInFullAfterIt() {
+        val s = session(); s.onBind(off(79), 0)
+        s.onBattery(on(79), 0, true)                 // PLUG_IN
+        s.setHeld(true, 1000)                         // a call alert covers the toy
+        s.onBattery(on(80), 2000, true)               // crossing, queued
+        s.tick(5000); s.tick(8500); s.tick(29_000)    // the service ticks every frame under the alert
+        assertEquals(Moment.CHARGING, s.show.moment)
+        s.setHeld(false, 30_000)
+        assertEquals(Show(Moment.DONE, 30_000), s.show)
+        s.tick(33_499); assertEquals(Moment.DONE, s.show.moment)
+        s.tick(33_500); assertEquals(Moment.CHARGING, s.show.moment)
+    }
+
+    @Test
+    fun doneInterruptedByAnAlertRestartsAfterIt() {
+        val s = session(); s.onBind(on(79), 0)
+        s.onBattery(on(80), 0, true)                  // DONE starts
+        s.setHeld(true, 1000)
+        s.tick(10_000); assertEquals(Moment.DONE, s.show.moment)
+        s.setHeld(false, 20_000)
+        assertEquals(Show(Moment.DONE, 20_000), s.show)
+    }
+
+    @Test
+    fun crossingDuringAnAlertWhileChargingPlaysAfterIt() {
+        val s = session(); s.onBind(on(79), 0)
+        s.setHeld(true, 100)
+        s.onBattery(on(80), 200, true)
+        assertEquals(Moment.CHARGING, s.show.moment)
+        s.setHeld(false, 9000)
+        assertEquals(Show(Moment.DONE, 9000), s.show)
+    }
 }
