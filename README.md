@@ -46,6 +46,13 @@ Free, no ads, no analytics, no network access.
 - A breathing centre line when nothing plays, and a livelier fallback line without the audio permission.
 - Steady 20 fps on a fixed frame grid (the SDK push itself takes ~15 ms).
 
+### Backlit Charge (Glyph Toy)
+- A battery toy with four styles: **Sprout** (a plant that grows), **Buddy** (a little blob that fills
+  up), **Big number** and **Moon** (the lit phase is your level). Long-press to switch.
+- Shows your level all day. Plug in for a plug-in animation, then a gentle charging loop that flashes
+  the % every 10 s, and a **done** moment once you reach your chosen level (50–100 %).
+- Plug-in and done can use Glyph Museum imports instead. AOD (always-on) shows the still level.
+
 ### Alerts
 - **Important contacts:** pick contacts and give each its own animation. It plays as their call
   starts, and again after a **missed call** (10 s, then a 5 s reminder every minute, up to 10, until
@@ -294,6 +301,8 @@ Backlit learned the format by reading the open-source editor; no code was copied
 - **Nothing's ringtone Glyph wins during calls.** Nothing OS plays its own ringtone pattern a moment
   into every incoming call, above any app, and there's no user setting to turn it off. Backlit plays
   the contact's animation as the call starts, and again for missed calls.
+- **Nothing's charge animation plays first.** Plugging in shows Nothing's own battery Glyph for about
+  3 s, with no setting to turn it off. Backlit Charge replays its plug-in animation when the matrix comes back.
 - **The Music toy needs the Phone (3).** The (4a) Pro only runs always-on toys, which update once a minute.
 - **Phone (4a) Pro hasn't been tested on real hardware yet.** Its 13×13 layouts are designed and
   previewable in the app.
@@ -307,6 +316,7 @@ Backlit learned the format by reading the open-source editor; no code was copied
 | Core + Clock toy | [`2026-10-03-backlit-clocks-design.md`](docs/superpowers/specs/2026-10-03-backlit-clocks-design.md) | [`2026-10-03-backlit-clocks.md`](docs/superpowers/plans/2026-10-03-backlit-clocks.md) |
 | Music toy | [`2026-10-03-backlit-music-design.md`](docs/superpowers/specs/2026-10-03-backlit-music-design.md) | [`2026-10-03-backlit-music.md`](docs/superpowers/plans/2026-10-03-backlit-music.md) |
 | Alerts | [`2026-10-04-backlit-alerts-design.md`](docs/superpowers/specs/2026-10-04-backlit-alerts-design.md) | [`2026-10-04-backlit-alerts.md`](docs/superpowers/plans/2026-10-04-backlit-alerts.md) |
+| Charge toy | [`2026-10-04-backlit-charge-design.md`](docs/superpowers/specs/2026-10-04-backlit-charge-design.md) | [`2026-10-04-backlit-charge.md`](docs/superpowers/plans/2026-10-04-backlit-charge.md) |
 
 Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](docs/privacy-policy.md) ·
 [Device checklist](docs/testing/device-checklist.md).
@@ -315,7 +325,9 @@ Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](doc
 
 ## Roadmap
 
-- **OTP on Glyph:** show verification codes on the matrix (feasibility check on Android 16 in progress).
+- **Pixel studio:** draw your own frames and animations for 25×25 and 13×13.
+- **Next-event countdown:** your next calendar event on the matrix.
+- **OTP on Glyph:** show verification codes on the matrix (parked).
 - **AI reactions:** animations while you talk to ChatGPT, Gemini or Claude (parked, design started).
 - **Play Store release:** signing key, store listing and screenshots.
 

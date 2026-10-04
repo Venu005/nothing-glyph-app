@@ -51,9 +51,9 @@ class AlertCoordinator(
     /** When the caller should next call [tick] (end of the active alert or the next reminder). */
     fun nextWakeAt(): Long? = active?.endsAt ?: missed?.nextAt
 
-    fun preview(animationId: String, nowMs: Long) {
+    fun preview(animationId: String, nowMs: Long, durationMs: Long = SHORT_MS) {
         if (active?.kind == AlertKind.CALL) return
-        active = ActiveAlert(animationId, AlertKind.DEVICE, nowMs, nowMs + SHORT_MS)
+        active = ActiveAlert(animationId, AlertKind.DEVICE, nowMs, nowMs + durationMs)
     }
 
     fun tick(nowMs: Long) {

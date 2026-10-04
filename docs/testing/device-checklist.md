@@ -54,3 +54,16 @@ Date: ______  Build: ______  Nothing OS: ______
 - [ ] Bad file: "This file isn't a Glyph Museum animation."
 - [x] Tap-to-preview plays on the matrix with the Glyph idle.
 - [ ] Notification access off / Nearby devices denied: hints shown, no crash.
+
+## Charge toy (Phone (3))
+
+- [x] Toy listed as "Backlit Charge"; still level shows; long press cycles Sprout → Buddy → Big number → Moon
+- [x] Plug in: Nothing's own battery animation takes the matrix for about 3 s (no off switch found, Phone (3), 2026-10-04). Backlit's plug-in animation replays when the toy returns (about 10 s), ending with the %
+- [x] The charging loop shows the % for 2 s every 10 s (Sprout, Buddy, Moon)
+- [x] Unplug → still
+- [x] Done plays once when the level crosses "Done at" (halo seen); 100 → 99 → 100 jitter doesn't replay it
+- [x] AOD toy: still level only, no animation loop
+- [x] Alert preview from ALERTS plays inside the Charge toy, then the toy resumes
+- [x] Imported plug-in animation plays instead of the style's own
+- [x] CHARGE tab previews all four moments
+- Tip: `adb shell dumpsys battery unplug` / `set level N` / `set ac 1`, then `dumpsys battery reset`, fakes charging events

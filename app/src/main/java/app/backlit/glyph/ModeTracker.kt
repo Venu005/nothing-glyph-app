@@ -15,7 +15,18 @@ class ModeTracker(private val aodOnly: Boolean) {
 
     fun mode(nowMillis: Long): Mode = when {
         aodOnly -> Mode.AOD
-        lastAodAt >= 0 && nowMillis - lastAodAt < 70_000L -> Mode.AOD
+        lastAodAt >= 0 && nowMillis - lastAodAt < WINDOW_MS -> Mode.AOD
         else -> Mode.ACTIVE
+    }
+
+    /** How long until the AOD window lapses and the toy counts as active again; null if not in a lapsing AOD. */
+    fun msUntilActive(nowMillis: Long): Long? {
+        if (aodOnly || lastAodAt < 0) return null
+        val left = lastAodAt + WINDOW_MS - nowMillis
+        return if (left > 0) left else null
+    }
+
+    private companion object {
+        const val WINDOW_MS = 70_000L
     }
 }

@@ -1,0 +1,151 @@
+<h2>Charging, round 3 (fixed): Buddy is round, Big number has more room at 13×13</h2>
+<p class="subtitle">One or two takes per family. <b>Plug-in</b> shows your level, and <b>Done</b> plays when you hit your target. Drag the slider to try levels. Click the ones you like. A 5th option, <b>Import from Glyph Museum</b>, will sit next to these in the app.</p>
+
+<div class="section" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  <label class="label">Battery level</label>
+  <input id="lvl" type="range" min="5" max="100" value="62">
+  <span id="lvlv" class="label">62%</span>
+</div>
+
+<div class="options" data-multiselect id="opts" style="display:flex;flex-direction:column;gap:14px"></div>
+
+<style>
+  .vizrow{display:flex;gap:18px;align-items:flex-end;background:#0b0b0b;border-radius:8px;padding:12px;flex-wrap:wrap;justify-content:center}
+  .gl{color:#888;font-size:11px;text-align:center;margin-top:4px;font-family:monospace}
+  .sep{width:1px;align-self:stretch;background:#333}
+  .fam{font-size:11px;letter-spacing:.08em;color:#999;text-transform:uppercase;margin:6px 0 -4px}
+</style>
+
+<script>
+(function(){
+const rnd=Math.random;
+function mask(n,x,y){const c=(n-1)/2;return Math.hypot(x-c,y-c)<=n/2}
+function G(n){const g=new Float32Array(n*n);g.n=n;
+  g.p=(x,y,b)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=n||y>=n||!mask(n,x,y)||b<=0)return;const i=y*n+x;if(b>g[i])g[i]=Math.min(1,b)};
+  g.s=(x,y,b)=>{x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=n||y>=n)return;g[y*n+x]=b};
+  return g}
+const ease=t=>1-Math.pow(1-Math.min(1,Math.max(0,t)),3);
+const easeIO=t=>{t=Math.min(1,Math.max(0,t));return t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2};
+const F3={0:["111","101","101","101","111"],1:["010","110","010","010","111"],2:["111","001","111","100","111"],3:["111","001","111","001","111"],4:["101","101","111","001","001"],5:["111","100","111","001","111"],6:["111","100","111","101","111"],7:["111","001","010","010","010"],8:["111","101","111","101","111"],9:["111","101","111","001","111"]};
+const F5={0:["01110","10001","10011","10101","11001","10001","01110"],1:["00100","01100","00100","00100","00100","00100","01110"],2:["01110","10001","00001","00010","00100","01000","11111"],3:["11111","00010","00100","00010","00001","10001","01110"],4:["00010","00110","01010","10010","11111","00010","00010"],5:["11111","10000","11110","00001","00001","10001","01110"],6:["00110","01000","10000","11110","10001","10001","01110"],7:["11111","00001","00010","00100","01000","01000","01000"],8:["01110","10001","10001","01110","10001","10001","01110"],9:["01110","10001","10001","01111","00001","00010","01100"]};
+function bm(g,rows,x0,y0,b){for(let r=0;r<rows.length;r++)for(let k=0;k<rows[r].length;k++)if(rows[r][k]==="1"||rows[r][k]==="#")g.p(x0+k,y0+r,b)}
+function num(g,str,cx,cy,big,b=1,gap=1){const f=big?F5:F3,cw=big?5:3,ch=big?7:5,w=str.length*(cw+gap)-gap;const x0=Math.round(cx-(w-1)/2),y0=Math.round(cy-(ch-1)/2);
+  for(let i=0;i<str.length;i++)bm(g,f[str[i]],x0+i*(cw+gap),y0,b);return{x0,y0,w,h:ch}}
+function reveal(g,L,t){if(t<3800)return g;const n=g.n,c=(n-1)/2,k=Math.max(0.2,1-(t-3800)/250);for(let i=0;i<g.length;i++)g[i]*=k;
+  const str=String(Math.round(L*100)),w=str.length*4-1,x0=Math.round(c-(w-1)/2),y0=Math.round(c-2);
+  for(let y=y0-1;y<=y0+5;y++)for(let x=x0-1;x<=x0+w;x++)g.s(x,y,0);num(g,str,c,c,false);return g}
+function line(g,x0,y0,x1,y1,b){const st=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)*2));for(let k=0;k<=st;k++){const f=k/st;g.p(x0+(x1-x0)*f,y0+(y1-y0)*f,b)}}
+function polyDraw(g,pts,frac,b,thick){let tot=0;const ls=[];for(let i=1;i<pts.length;i++){const l=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);ls.push(l);tot+=l}
+  let left=frac*tot;for(let i=1;i<pts.length&&left>0;i++){const q=Math.min(1,left/ls[i-1]);const [ax,ay]=pts[i-1],[bx,by]=pts[i];line(g,ax,ay,ax+(bx-ax)*q,ay+(by-ay)*q,b);if(thick)line(g,ax,ay+1,ax+(bx-ax)*q,ay+1+(by-ay)*q,b);left-=ls[i-1]}}
+
+// ================= A1. Sprout (plant grows with charge) =================
+function plant(g,n,h,t,bloom){const big=n>=25;
+  // pot
+  if(big){for(let x=7;x<=17;x++)g.p(x,19,0.8);for(let y=20;y<=22;y++){const i=y-20;for(let x=8+i;x<=16-i;x++)g.p(x,y,y===20?0.45:0.45)}}
+  else{for(let x=4;x<=8;x++)g.p(x,10,0.8);for(let x=5;x<=7;x++)g.p(x,11,0.45)}
+  const base=big?18:9,maxH=big?12:6;const len=Math.round(h*maxH);const sway=t=>Math.sin(t/900);
+  let topX=(n-1)/2;
+  for(let k=0;k<len;k++){const y=base-k;const off=(k>len*0.6&&len>3)?Math.round(sway(t)*0.6*(k/len)):0;const x=(n-1)/2+off;g.p(x,y,0.9);topX=x;
+    // leaves
+    const every=big?3:2;if(k>0&&k%every===0&&k<len-1){const side=(k/every)%2?1:-1;
+      if(big){g.p(x+side,y,0.75);g.p(x+2*side,y-1,0.75);g.p(x+side,y-1,0.5);if(Math.sin(t/600+k)>0.6)g.p(x+3*side,y-1,0.4)}
+      else g.p(x+side,y-1,0.75)}}
+  const topY=base-len+1;
+  if(bloom>0){const r=big?2.6*bloom:1.4*bloom;const N=big?8:4;
+    for(let i=0;i<N;i++){const a=i/N*2*Math.PI+t/2000;g.p(topX+Math.cos(a)*r,topY-(big?2:1)+Math.sin(a)*r,0.85)}
+    g.p(topX,topY-(big?2:1),1)}
+  else if(len>0){g.p(topX,topY-1,0.55)}   // bud
+  return{topX,topY}}
+function sproutPlug(n,L,t){const g=G(n);plant(g,n,L*easeIO(t/3000),t,0);return reveal(g,L,t)}
+function sproutDone(n,t){const g=G(n);const big=n>=25;const tip=plant(g,n,1,t,easeIO(t/1200));
+  if(t>1200){for(let i=0;i<(big?6:3);i++){const ph=(t/900+i/ (big?6:3))%1;const a=i*2.4;const r=(big?4:2)+ph*(big?6:3);g.p(tip.topX+Math.cos(a)*r,tip.topY-(big?2:1)+Math.sin(a)*r*0.8-ph*2,1-ph)}}
+  return g}
+
+// ================= A2. Buddy (blob that fills up) =================
+const HEART=["101","111","010"];
+function circlePts(cx,cy,r){const P=[];let x=r,y=0,e=1-r;while(x>=y){for(const [a,b] of [[x,y],[y,x],[-y,x],[-x,y],[-x,-y],[-y,-x],[y,-x],[x,-y]])P.push([cx+a,cy+b]);y++;if(e<0)e+=2*y+1;else{x--;e+=2*(y-x)+1}}return P}
+function buddy(g,n,lvl,t,happy){const big=n>=25;const cx=big?12:6,cy=big?13:7,R=big?8:4;
+  const RING13=["..#####..",".#.....#.","#.......#","#.......#","#.......#","#.......#","#.......#",".#.....#.","..#####.."];
+  let ring;if(big)ring=circlePts(cx,cy,R);else{ring=[];RING13.forEach((row,r)=>[...row].forEach((ch,k)=>{if(ch==="#")ring.push([2+k,3+r])}))}const onRing=new Set(ring.map(([x,y])=>y*n+x));
+  const top=big?cy-R+1:4,bot=big?cy+R-1:10;const topFill=bot+1-(bot-top+1)*lvl;
+  for(let y=cy-R-1;y<=cy+R+1;y++)for(let x=cx-R-1;x<=cx+R+1;x++){if(onRing.has(y*n+x))continue;const inside=big?Math.hypot(x-cx,y-cy)<R-0.3:(x>=3&&x<=9&&y>=4&&y<=10&&!((y===4||y===10)&&(x===3||x===9)));if(inside&&y>=topFill-0.001)g.p(x,y,0.35)}
+  for(const [x,y] of ring)g.p(x,y,0.85);
+  // antenna with charging tip
+  const ay=big?cy-R:3;if(big){g.p(cx,ay-1,0.7);g.p(cx,ay-2,0.7)}if(!big)g.p(cx,ay-1,0.7);g.p(cx,ay-(big?3:2),happy?1:0.3+0.7*Math.abs(Math.sin(t/350)));
+  const blink=(t%2600)<140&&!happy;
+  if(big){const ey=cy-2;
+    for(const ex of [8,15]){if(happy){const m=ex+0.5;g.s(m-1.5,ey+1,1);g.s(m-0.5,ey,1);g.s(m+0.5,ey,1);g.s(m+1.5,ey+1,1)}
+      else if(blink){g.s(ex,ey+1,1);g.s(ex+1,ey+1,1)}else{g.s(ex,ey,1);g.s(ex+1,ey,1);g.s(ex,ey+1,1);g.s(ex+1,ey+1,1)}}
+    const my=cy+2;const o=happy?[[-2,0],[-1,1],[0,1],[1,1],[2,0]]:[[-1,0],[0,1],[1,0]];for(const [dx,dy] of o)g.s(cx+dx,my+dy,1)}
+  else{const ey=cy-1;for(const ex of [4,8]){if(!blink||happy)g.s(ex,ey,1)}
+    if(happy){g.s(4,8,1);g.s(5,9,1);g.s(6,9,1);g.s(7,9,1);g.s(8,8,1)}else{g.s(5,8,1);g.s(6,9,1);g.s(7,8,1)}}
+  return{cx,cy,R}}
+function buddyPlug(n,L,t){const g=G(n);buddy(g,n,L*easeIO(t/2800),t,false);return reveal(g,L,t)}
+function buddyDone(n,t){const g=G(n);const big=n>=25;const hop=t<900?Math.round(Math.abs(Math.sin(t/900*Math.PI*2))*(big?-2:-1)):0;
+  const g2=G(n);const b=buddy(g2,n,1,t,true);for(let y=0;y<n;y++)for(let x=0;x<n;x++){const v=g2[y*n+x];if(v)g.p(x,y+hop,v)}
+  if(t>800){for(let i=0;i<(big?2:1);i++){const ph=((t-800)/1400+i*0.5)%1;const hx=big?(i?18:4):10;const hy=(big?9:4)-ph*(big?6:3);
+    if(big)bm(g,HEART,hx,Math.round(hy),1-ph*0.8);else g.p(hx,Math.round(hy),1-ph*0.8)}}
+  return g}
+
+// ================= B. Big number =================
+const BOLT5=["001","010","111","010","100"],BOLT3=["011","010","110"];
+// Rim as an ordered ring of pixels (midpoint circle sorted by angle) so the dot glides smoothly around.
+const RIMS={};
+function rimPts(n){if(RIMS[n])return RIMS[n];const c=(n-1)/2,r=n>=25?11:5;const seen=new Set(),P=[];
+  for(const [x,y] of circlePts(c,c,r)){const k=y*n+x;if(seen.has(k))continue;seen.add(k);let a=Math.atan2(x-c,c-y);if(a<0)a+=2*Math.PI;P.push([x,y,a])}
+  P.sort((p,q)=>p[2]-q[2]);return RIMS[n]=P}
+function rimDot(g,n,t,full){const P=rimPts(n);if(full){for(const [x,y] of P)g.p(x,y,0.35);return}
+  const pos=(t/75)%P.length,TRAIL=8;
+  for(let k=0;k<TRAIL;k++){const idx=Math.floor(pos-k+P.length)%P.length;const [x,y]=P[idx];g.p(x,y,k===0?1:0.75*(1-k/TRAIL))}}
+function bigPlug(n,L,t){const g=G(n);const big=n>=25;const v=String(Math.round(L*100*ease(t/1800)));
+  const bb=0.35+0.65*(0.5+0.5*Math.sin(t/420));
+  if(big){num(g,v,12,13,true);bm(g,BOLT5,11,3,bb);rimDot(g,n,t,false)}
+  else{num(g,v,6,6,false,1,v.length<3?2:1);g.p(6,10,bb)}   // 13x13: digits spaced apart, one pulsing dot instead of bolt + rim
+  return g}
+function bigDone(n,t){const g=G(n);const big=n>=25;
+  if(t<1300){const on=Math.floor(t/220)%2===0;if(big){num(g,"100",12,13,true,on?1:0.25);bm(g,BOLT5,11,3,1)}else{rimDot(g,n,t,true);for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(g[y*n+x])g[y*n+x]=on?1:0.3}}   // 13x13: "100" is too cramped, so the rim blinks instead
+  else{rimDot(g,n,t,true);const pts=big?[[6,13],[10,17],[19,7]]:[[3,6],[5,8],[9,4]];polyDraw(g,pts,ease((t-1300)/500),1,big)}
+  return g}
+
+// ================= C. Moon phase (calm) =================
+const STARS={25:[[3,8],[20,4],[22,15],[5,19],[17,22],[2,13]],13:[[1,4],[11,3],[10,11]]};
+function moon(g,n,f,t,halo){const big=n>=25;const c=(n-1)/2,R=big?8.6:4.6;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){const dx=x-c,dy=y-c;const d=Math.hypot(dx,dy);if(d>R)continue;const w=Math.sqrt(Math.max(0,R*R-dy*dy));
+    const lit=dx>w*(1-2*f);const crater=big&&((x===14&&y===10)||(x===15&&y===10)||(x===10&&y===15)||(x===16&&y===15)||(x===13&&y===16));
+    g.p(x,y,lit?(crater?0.5:0.8):0.07)}
+  for(const [i,[sx,sy]] of STARS[n].entries())g.p(sx,sy,0.15+0.35*(0.5+0.5*Math.sin(t/900+i*1.7)));
+  if(halo>0){const hr=R+1.3+0.4*Math.sin(t/500);for(let y=0;y<n;y++)for(let x=0;x<n;x++){const d=Math.hypot(x-c,y-c);const w=Math.abs(d-hr);if(w<0.7)g.p(x,y,halo*(1-w/0.7)*0.6)}}}
+function moonPlug(n,L,t){const g=G(n);moon(g,n,L*easeIO(t/3200),t,0);return reveal(g,L,t)}
+function moonDone(n,t){const g=G(n);moon(g,n,1,t,Math.min(1,t/900));return g}
+
+const styles=[
+ {fam:"A · Cute",id:"a1",name:"Sprout",desc:"A little plant grows out of its pot as you charge. Its height is your level, and the top leaves sway gently. Done: the flower blooms and pollen sparkles drift off.",plug:sproutPlug,done:sproutDone},
+ {fam:"A · Cute",id:"a2",name:"Buddy",desc:"A small blob with blinking eyes fills up like a battery, and its antenna glows while charging. Done: it hops, smiles with ^ ^ eyes and floats little hearts.",plug:buddyPlug,done:buddyDone},
+ {fam:"B · Bold",id:"b",name:"Big number",desc:"A large clean % counts up to your level, with a softly pulsing bolt above and one quiet dot circling the rim. Done: 100 blinks (the rim blinks on 13×13), then a check mark draws in.",plug:bigPlug,done:bigDone},
+ {fam:"C · Calm",id:"c",name:"Moon",desc:"The moon's lit phase is your level: a crescent at low charge, a full moon at 100%. Faint stars twinkle slowly. Done: the full moon gets a soft glowing halo.",plug:moonPlug,done:moonDone},
+];
+const box=document.getElementById("opts");let lastFam="";
+styles.forEach(s=>{if(s.fam!==lastFam){const h=document.createElement("div");h.className="fam";h.textContent=s.fam;box.appendChild(h);lastFam=s.fam}
+  const el=document.createElement("div");el.className="option";el.dataset.choice=s.id;el.style.flexDirection="column";el.style.alignItems="stretch";
+  el.innerHTML=`<div class="vizrow">
+   <div><canvas id="p25-${s.id}"></canvas><div class="gl">Plug-in · 25×25</div></div>
+   <div><canvas id="p13-${s.id}"></canvas><div class="gl">Plug-in · 13×13</div></div>
+   <div class="sep"></div>
+   <div><canvas id="d25-${s.id}"></canvas><div class="gl">Done · 25×25</div></div>
+   <div><canvas id="d13-${s.id}"></canvas><div class="gl">Done · 13×13</div></div></div>
+   <div class="content"><h3>${s.name}</h3><p>${s.desc}</p></div>`;
+  el.onclick=()=>toggleSelect(el);box.appendChild(el)});
+function draw(id,g,px){const n=g.n,cv=document.getElementById(id),ctx=cv.getContext("2d");if(cv.width!==n*px){cv.width=cv.height=n*px}
+  ctx.fillStyle="#0b0b0b";ctx.fillRect(0,0,cv.width,cv.height);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(!mask(n,x,y))continue;const b=g[y*n+x];ctx.beginPath();ctx.arc(x*px+px/2,y*px+px/2,px*.38,0,7);ctx.fillStyle=b>0?`rgba(255,255,255,${0.1+0.9*b})`:"#1a1a1a";ctx.fill()}}
+let L=0.62;const lv=document.getElementById("lvl"),lvv=document.getElementById("lvlv");
+lv.oninput=()=>{L=lv.value/100;lvv.textContent=lv.value+"%"};
+const t0=performance.now();
+function frame(now){const t=now-t0;const tp=t%6500,td=t%4500;
+  styles.forEach(s=>{
+    draw("p25-"+s.id,tp<5000?s.plug(25,L,tp):G(25),7);draw("p13-"+s.id,tp<5000?s.plug(13,L,tp):G(13),11);
+    draw("d25-"+s.id,td<3500?s.done(25,td):G(25),7);draw("d13-"+s.id,td<3500?s.done(13,td):G(13),11)});
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+})();
+</script>

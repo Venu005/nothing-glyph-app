@@ -1,0 +1,109 @@
+package app.backlit.charge
+
+data class Battery(val plugged: Boolean, val level: Int)
+
+enum class Moment { STILL, PLUG_IN, CHARGING, DONE }
+
+data class Show(val moment: Moment, val startedAt: Long)
+
+/**
+ * What the Charge toy shows, from battery events. Pure: callers pass the time.
+ * A session runs from plug-in to unplug; DONE plays at most once per session, and only when the level
+ * crosses the target while charging and the toy is active.
+ */
+class ChargeSession(private val target: () -> Int) {
+    var show = Show(Moment.STILL, 0)
+        private set
+    var level = 0
+        private set
+
+    private var plugged = false
+    private var donePlayed = false
+    private var donePending = false
+    private var held = false
+
+    /**
+     * [pluggedAt] is when the charger was last connected, if known. Nothing's own charge animation holds the
+     * matrix for a few seconds after plugging in, so a bind soon after still gets the plug-in animation.
+     */
+    fun onBind(b: Battery, now: Long, pluggedAt: Long? = null) {
+        level = b.level
+        plugged = b.plugged
+        donePending = false
+        donePlayed = b.plugged && b.level >= target()
+        val recentPlug = b.plugged && pluggedAt != null && now - pluggedAt in 0..REPLAY_WINDOW_MS
+        show = Show(
+            when {
+                recentPlug -> Moment.PLUG_IN
+                b.plugged -> Moment.CHARGING
+                else -> Moment.STILL
+            },
+            now,
+        )
+    }
+
+    fun onBattery(b: Battery, now: Long, active: Boolean) {
+        val prev = level
+        level = b.level
+        if (!b.plugged) {
+            if (plugged || show.moment != Moment.STILL) show = Show(Moment.STILL, now)
+            plugged = false
+            donePending = false
+            return
+        }
+        if (!plugged) {                                  // a new session
+            plugged = true
+            donePending = false
+            donePlayed = b.level >= target()             // already there: no crossing, no done
+            show = Show(if (active) Moment.PLUG_IN else Moment.CHARGING, now)
+            return
+        }
+        if (!donePlayed && prev < target() && level >= target()) {
+            donePlayed = true
+            if (!active) return
+            if (show.moment == Moment.PLUG_IN || held) donePending = true else show = Show(Moment.DONE, now)
+        }
+    }
+
+    /**
+     * While an alert covers the toy ([isHeld] true), DONE neither starts nor runs out; it plays in full once the
+     * alert ends. A PLUG_IN that runs out underneath still moves on to CHARGING.
+     */
+    fun setHeld(isHeld: Boolean, now: Long) {
+        if (held == isHeld) return
+        held = isHeld
+        if (isHeld) return
+        when {
+            show.moment == Moment.DONE -> show = Show(Moment.DONE, now)
+            donePending && show.moment != Moment.PLUG_IN -> { show = Show(Moment.DONE, now); donePending = false }
+        }
+    }
+
+    fun tick(now: Long) {
+        val s = show
+        when (s.moment) {
+            Moment.PLUG_IN -> if (now - s.startedAt >= PLUG_IN_MS) {
+                if (donePending && !held) {
+                    show = Show(Moment.DONE, now)
+                    donePending = false
+                } else {
+                    show = Show(Moment.CHARGING, now)
+                }
+            }
+            Moment.DONE -> if (!held && now - s.startedAt >= DONE_MS) show = Show(Moment.CHARGING, now)
+            else -> Unit
+        }
+    }
+
+    fun nextWakeAt(): Long? = when (show.moment) {
+        Moment.PLUG_IN -> show.startedAt + PLUG_IN_MS
+        Moment.DONE -> show.startedAt + DONE_MS
+        else -> null
+    }
+
+    companion object {
+        const val PLUG_IN_MS = 5000L
+        const val DONE_MS = 3500L
+        const val REPLAY_WINDOW_MS = 20_000L
+    }
+}

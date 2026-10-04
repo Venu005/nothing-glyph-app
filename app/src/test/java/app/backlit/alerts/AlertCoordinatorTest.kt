@@ -166,4 +166,12 @@ class AlertCoordinatorTest {
         assertNull(c.active)
         assertEquals(70_000L, c.nextWakeAt())
     }
+
+    @Test
+    fun previewHonoursCustomDuration() {
+        val c = AlertCoordinator({ emptyList() }, { emptyList() })
+        c.preview("charge:moon:plug_in", 0, durationMs = 5000)
+        c.tick(4999); assertEquals("charge:moon:plug_in", c.active?.animationId)
+        c.tick(5000); assertNull(c.active)
+    }
 }
