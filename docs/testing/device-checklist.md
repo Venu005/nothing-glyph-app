@@ -37,3 +37,20 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] After leaving the toy (and after leaving the app from the Music tab), `dumpsys media.audio_flinger` shows no Backlit Visualizer client.
 - [x] Steady 20 fps (200 frames per 10.0 s in the `avg frame` log); push cost ~15 ms is SDK-side.
 - [x] Music tab: demo preview, disclosure + ALLOW, LIVE label with real music, sensitivity cycling.
+
+
+## Alerts
+- [x] Dialer's incoming-call notification is recognised (log: "incoming call notification", no name).
+- [x] Important caller: animation plays as the call starts; Nothing OS ringtone Glyph takes over after ~1 s (platform limit, documented in app).
+- [x] Missed call from important contact: 10 s animation, then reminders (log: "missed call notification").
+- [x] Missed-call reminders fire with the screen off (checked over 3 min; deep Doze over longer idle may delay later ones).
+- [ ] Missed-call reminders stop when the notification is dismissed.
+- [ ] Important caller while Backlit Clock shows (carousel / AOD).
+- [ ] Non-important caller: nothing.
+- [x] Chosen BT device connects: animation plays.
+- [ ] BT reconnect within 30 s: nothing (covered by AlertCoordinatorTest).
+- [x] Real Glyph Museum export (v4, 76 frames) imports via file picker and plays on the Phone (3), upscaled.
+- [ ] Share → Backlit import from Glyph Museum.
+- [ ] Bad file: "This file isn't a Glyph Museum animation."
+- [x] Tap-to-preview plays on the matrix with the Glyph idle.
+- [ ] Notification access off / Nearby devices denied: hints shown, no crash.

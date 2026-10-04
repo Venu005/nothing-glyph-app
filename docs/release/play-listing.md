@@ -11,6 +11,7 @@ belongs there.
 • ANALOG — smooth anti-aliased hands, a rim second hand on Phone (3)
 • DAY RING — a 24-hour dial that lights the hours between your real sunrise and sunset
 • MUSIC — a second toy that moves with the song playing on your phone (Mirror, Peaks)
+• ALERTS — your own animation when important contacts call or you miss their call, and when your Bluetooth devices connect; import from Glyph Museum
 • Live preview in the app, pixel-for-pixel what the matrix shows
 • Long press the Glyph Button to switch faces
 • Always-on (AOD) support, including Phone (4a) Pro

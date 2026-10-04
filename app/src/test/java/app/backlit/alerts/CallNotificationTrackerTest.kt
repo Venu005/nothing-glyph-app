@@ -1,0 +1,66 @@
+package app.backlit.alerts
+
+import app.backlit.alerts.CallNotificationTracker.Event
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Test
+
+class CallNotificationTrackerTest {
+
+    @Test
+    fun incomingCallStartsRinging() {
+        val t = CallNotificationTracker()
+        assertEquals(Event.Ringing("Mom"), t.onPosted("k1", isCall = true, incoming = true, title = "Mom"))
+    }
+
+    @Test
+    fun otherNotificationsAreIgnored() {
+        val t = CallNotificationTracker()
+        assertNull(t.onPosted("chat", isCall = false, incoming = false, title = "Hi"))
+        assertNull(t.onPosted("call", isCall = true, incoming = true, title = null))
+        assertNull(t.onRemoved("chat"))
+    }
+
+    @Test
+    fun answeringEndsTheCall() {
+        val t = CallNotificationTracker()
+        t.onPosted("k1", true, true, "Mom")
+        assertEquals(Event.Ended, t.onPosted("k1", isCall = true, incoming = false, title = "Mom"))   // now "ongoing"
+        assertNull(t.onPosted("k1", isCall = true, incoming = false, title = "Mom"))
+    }
+
+    @Test
+    fun removalEndsTheCall() {
+        val t = CallNotificationTracker()
+        t.onPosted("k1", true, true, "Mom")
+        assertNull(t.onRemoved("other"))
+        assertEquals(Event.Ended, t.onRemoved("k1"))
+        assertNull(t.onRemoved("k1"))
+    }
+
+    @Test
+    fun repeatedIncomingUpdatesDoNotRestart() {
+        val t = CallNotificationTracker()
+        t.onPosted("k1", true, true, "Mom")
+        assertNull(t.onPosted("k1", true, true, "Mom"))
+    }
+
+    @Test
+    fun missedCallNotificationStartsMissedAndRemovalClearsIt() {
+        val t = CallNotificationTracker()
+        assertEquals(Event.Missed("m1", listOf("Missed call", "Mom (2)")), t.onPosted("m1", isCall = false, incoming = false, title = "Missed call", isMissedCall = true, text = "Mom (2)"))
+        assertNull(t.onPosted("m1", isCall = false, incoming = false, title = "Missed call", isMissedCall = true, text = "Mom (2)"))
+        assertEquals(Event.MissedCleared("m1"), t.onRemoved("m1"))
+        assertNull(t.onRemoved("m1"))
+    }
+
+    @Test
+    fun tracksSeveralMissedNotificationsAndContentUpdates() {
+        val t = CallNotificationTracker()
+        assertEquals(Event.Missed("a", listOf("Mom")), t.onPosted("a", false, false, "Mom", isMissedCall = true))
+        assertEquals(Event.Missed("b", listOf("Bob")), t.onPosted("b", false, false, "Bob", isMissedCall = true))
+        assertEquals(Event.Missed("b", listOf("Bob, Mom")), t.onPosted("b", false, false, "Bob, Mom", isMissedCall = true))  // updated content
+        assertEquals(Event.MissedCleared("a"), t.onRemoved("a"))
+        assertEquals(Event.MissedCleared("b"), t.onRemoved("b"))
+    }
+}

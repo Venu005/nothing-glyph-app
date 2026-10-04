@@ -1,6 +1,9 @@
 package app.backlit
 
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -18,6 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.backlit.data.LocationRefresher
+import app.backlit.alerts.AlertsRuntime
+import app.backlit.alerts.importFromUri
 import app.backlit.data.Settings
 import app.backlit.data.SettingsRepo
 import app.backlit.glyph.DeviceProfile
@@ -34,6 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        handleShare(intent)
         val repo = SettingsRepo.get(this)
         val profile = DeviceProfile.detect()
 
@@ -64,5 +70,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        handleShare(intent)
+    }
+
+    private fun handleShare(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_SEND) return
+        val uri = intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java) ?: return
+        val size = if (DeviceProfile.detect() == DeviceProfile.PHONE_4A_PRO) 13 else 25
+        Toast.makeText(this, importFromUri(this, AlertsRuntime.get(this), uri, size), Toast.LENGTH_LONG).show()
     }
 }

@@ -10,6 +10,7 @@ val hasReleaseKey = listOf("storeFile", "storePassword", "keyAlias", "keyPasswor
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -70,6 +71,7 @@ dependencies {
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.datastore.preferences)
     implementation(libs.coroutines.android)
+    implementation(libs.serialization.json)
 
     testImplementation(libs.junit)
     testImplementation(libs.coroutines.test)

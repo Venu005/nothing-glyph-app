@@ -11,6 +11,8 @@ import android.os.Looper
 import android.os.Message
 import android.os.Messenger
 import android.util.Log
+import app.backlit.alerts.AlertsRuntime
+import app.backlit.alerts.ToyPresence
 import app.backlit.data.DayLightResolver
 import app.backlit.data.Settings
 import app.backlit.data.SettingsRepo
@@ -41,6 +43,8 @@ class ClockToyService : Service() {
     private lateinit var repo: SettingsRepo
     private val resolver = DayLightResolver()
     private var settings = Settings()
+    private var alertJob: Job? = null
+    private var alerts: AlertsRuntime? = null
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -74,6 +78,10 @@ class ClockToyService : Service() {
         scope = s
 
         if (profile != DeviceProfile.UNSUPPORTED) {
+            ToyPresence.enter()
+            val rt = AlertsRuntime.get(this).also { alerts = it }
+            rt.toyChanged()
+            s.launch { rt.bus.collect { a -> if (a != null) startAlert() else stopAlert() } }
             output = GlyphOutput(this, profile) { draw(); restartTicker() }.also { it.connect() }
             s.launch {
                 repo.update { if (it.toyEverBound) it else it.copy(toyEverBound = true) }
@@ -98,8 +106,15 @@ class ClockToyService : Service() {
         tickJob?.cancel()
         scope?.cancel()
         scope = null
+        alertJob?.cancel()
+        alertJob = null
         output?.close()
         output = null
+        if (alerts != null) {
+            ToyPresence.leave()
+            alerts?.toyChanged()
+            alerts = null
+        }
         return false
     }
 
@@ -114,6 +129,7 @@ class ClockToyService : Service() {
     )
 
     private fun draw() {
+        if (alertJob?.isActive == true) return
         val out = output ?: return
         val ctx = context()
         val face = Faces.byId(settings.faceId)
@@ -123,6 +139,7 @@ class ClockToyService : Service() {
     }
 
     private fun restartTicker() {
+        if (alertJob?.isActive == true) return
         val s = scope ?: return
         tickJob?.cancel()
         tickJob = s.launch {
@@ -132,6 +149,32 @@ class ClockToyService : Service() {
                 draw()
             }
         }
+    }
+
+    private fun startAlert() {
+        val s = scope ?: return
+        val rt = alerts ?: return
+        if (alertJob?.isActive == true) return
+        tickJob?.cancel()
+        alertJob = s.launch {
+            val pacer = FramePacer(50)
+            var wait = 0L
+            while (isActive) {
+                delay(wait)
+                val a = rt.bus.value ?: break
+                val grid = runCatching { rt.animationFor(a).frame(profile.size, AlertsRuntime.now() - a.startedAt) }
+                    .getOrElse { PixelGrid(profile.size) }
+                output?.push(FrameEncoder.encode(grid, settings.brightness, aod = false))
+                wait = pacer.delayBeforeNext(AlertsRuntime.now())
+            }
+        }
+    }
+
+    private fun stopAlert() {
+        alertJob?.cancel()
+        alertJob = null
+        draw()
+        restartTicker()
     }
 
     private companion object {
