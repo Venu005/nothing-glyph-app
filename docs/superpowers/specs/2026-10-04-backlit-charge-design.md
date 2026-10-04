@@ -216,3 +216,15 @@ These are added to `Settings` / `SettingsRepo` (DataStore):
   - A target lowered below the level means no DONE.
   - Replug starts a new session, so DONE can play again.
 - **Settings:** defaults are used, and the target is clamped.
+
+## 11. Amendments after on-device testing (2026-10-04)
+
+- **% while charging:** at the user's request, Sprout, Buddy and Moon also show the % window for the last 2 s
+  of every 10 s in the charging loop (`ChargeKit.periodicReveal`).
+- **Nothing's On Charge animation:** on Phone (3), plugging in always switches the matrix to Nothing's own
+  battery toy (`com.nothing.hearthstone…GlyphMatrixBatteryService`) for about 3 s. The user found no switch to
+  turn it off. The Glyph carousel then hands back to Backlit Charge about 10 s after plugging in. A passive
+  `PlugWatcher` remembers the last `ACTION_POWER_CONNECTED` time. It is registered once per process by the Charge
+  toy or the Alerts listener, never starts or wakes anything, and amends §1's "receiver only while bound".
+  `ChargeSession.onBind(…, pluggedAt)` replays `PLUG_IN` when the toy binds within 20 s of plugging in. If the
+  process wasn't alive, it falls back to `CHARGING`. No UI note is shown, because there is no switch to point to.
