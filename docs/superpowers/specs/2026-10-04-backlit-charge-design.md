@@ -102,7 +102,7 @@ over 250 ms. Then clear a box 1 px larger than the text and draw the % in 3×5 d
 Big number has no reveal because the number is always shown.
 
 **Still = the last frame of plug-in without the reveal.** That means the plant at full eased height, Buddy filled to the level,
-the moon at phase = level, and the number at the level. For Sprout, Buddy and Moon, still has no motion (t frozen).
+the moon at phase = level, and the number at the level. For Sprout, Buddy and Moon, still has no motion (t frozen). Big number's still shows the number only, with no bolt and no rim dot, because the bolt means "charging".
 
 | Style | still / plug-in | charging loop | done |
 |---|---|---|---|
