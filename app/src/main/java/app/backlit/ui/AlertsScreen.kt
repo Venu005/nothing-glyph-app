@@ -67,10 +67,12 @@ fun AlertsTab(profile: DeviceProfile) {
     val resumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
     var listenerOn by remember { mutableStateOf(false) }
     var btGranted by remember { mutableStateOf(false) }
+    var nothingCallLights by remember { mutableStateOf(false) }
     LaunchedEffect(resumed) {
         if (resumed) {
             listenerOn = NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
             btGranted = hasBtPermission(context)
+            nothingCallLights = nothingCallLightsOn(context)
         }
     }
 
@@ -110,6 +112,9 @@ fun AlertsTab(profile: DeviceProfile) {
             context.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         }, modifier = Modifier.fillMaxWidth())
         Spacer(Modifier.height(8.dp))
+    }
+    if (nothingCallLights && config.contacts.isNotEmpty()) {
+        Notice("Nothing's ringtone lights take over the matrix a moment into each call. Backlit plays your contact's animation as the call starts, and again if you miss it.")
     }
     if (!btGranted && config.devices.isNotEmpty()) Notice("Allow Nearby devices so Backlit can notice your Bluetooth devices connecting.")
     Notice("Tip: set Backlit Clock as your always-on toy so alerts always show.")
@@ -247,3 +252,10 @@ private fun bondedDevices(context: Context): List<Pair<String, String>> = runCat
     context.getSystemService(BluetoothManager::class.java)?.adapter?.bondedDevices
         ?.map { it.address to (it.name ?: it.address) }?.sortedBy { it.second.lowercase() }
 }.getOrNull().orEmpty()
+
+/** Nothing OS keeps its "Glyph for calls" switch in a global setting (its key really is spelled "enalbe"). */
+private fun nothingCallLightsOn(context: Context): Boolean = runCatching {
+    val cr = context.contentResolver
+    android.provider.Settings.Global.getInt(cr, "led_effect_call_enalbe", 0) == 1 ||
+        android.provider.Settings.Global.getInt(cr, "led_effect_call_enable", 0) == 1
+}.getOrDefault(false)

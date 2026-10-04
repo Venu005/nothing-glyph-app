@@ -90,4 +90,47 @@ class AlertCoordinatorTest {
         c.preview("builtin:burst", 200)
         assertEquals(AlertKind.CALL, c.active?.kind)
     }
+
+    @Test
+    fun missedCallPlaysTenSecondsThenRemindsEveryMinute() {
+        val c = coordinator()
+        c.onMissedCall(listOf("Mom"), 0)
+        assertEquals(ActiveAlert("builtin:heart", AlertKind.MISSED, 0, 10_000), c.active)
+        assertEquals(10_000L, c.nextWakeAt())
+        c.tick(10_000); assertNull(c.active)
+        assertEquals(70_000L, c.nextWakeAt())
+        c.tick(69_999); assertNull(c.active)
+        c.tick(70_000); assertEquals(ActiveAlert("builtin:heart", AlertKind.MISSED, 70_000, 75_000), c.active)
+    }
+
+    @Test
+    fun missedRemindersStopAfterTenOrWhenCleared() {
+        val c = coordinator()
+        c.onMissedCall(listOf("Mom"), 0)
+        var t = 10_000L
+        var reminders = 0
+        while (t < 2_000_000) { c.tick(t); if (c.active?.kind == AlertKind.MISSED && c.active?.startedAt == t) reminders++; t += 1_000 }
+        assertEquals(10, reminders)
+        val d = coordinator()
+        d.onMissedCall(listOf("Mom"), 0)
+        d.onMissedCleared()
+        assertNull(d.active); assertNull(d.nextWakeAt())
+    }
+
+    @Test
+    fun unknownMissedCallerDoesNothingAndCallBeatsReminder() {
+        val c = coordinator()
+        c.onMissedCall(listOf("Missed call", "Stranger (1)"), 0)
+        assertNull(c.active); assertNull(c.nextWakeAt())
+        c.onMissedCall(listOf("Mom"), 0)
+        c.onCallRinging("Mom", 5_000)
+        assertEquals(AlertKind.CALL, c.active?.kind)
+    }
+
+    @Test
+    fun missedCallMatchesNameInsideNotificationText() {
+        val c = coordinator()
+        c.onMissedCall(listOf("Missed call", "Mom (2)"), 0)
+        assertEquals(AlertKind.MISSED, c.active?.kind)
+    }
 }

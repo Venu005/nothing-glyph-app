@@ -60,7 +60,8 @@ interface GlyphAnimation {
     - 13 small (7×6): `.XX.XX.` `XXXXXXX` `XXXXXXX` `.XXXXX.` `..XXX..` `...X...`
     - 13 big (9×8): `.XX...XX.` `XXXX.XXXX` `XXXXXXXXX` `XXXXXXXXX` `.XXXXXXX.` `..XXXXX..` `...XXX...` `....X....`
   - **Smiley wink (`builtin:smiley`):** loop 2400 ms; it winks during 55–80% of the loop. The outline
-    is every pixel with |distance − R| < 0.5 at 140 (R = 8.5 on 25, R = 5 on 13). The face pixels are
+    is a midpoint (Bresenham) circle at 140, radius 8 on 25 and 5 on 13. (Amended after the device
+    check: the original distance band left holes at the four cardinal points on 25×25.) The face pixels are
     at 255:
     - 25: left eye (9..10, 9..10). Right eye (14..15, 9..10), or when winking (13..16, 10).
       Smile `(9,14)(10,15)(11,15)(12,15)(13,15)(14,15)(15,14)`. Wide smile adds `(8,13)(16,13)`.
@@ -240,3 +241,18 @@ Home tabs become **CLOCK | MUSIC | ALERTS** (same raw / dot-matrix style).
   - a real Glyph Museum export imports and plays
   - the PREVIEW button
   - the permissions-denied paths
+
+## 11. Amendment after device testing (2026-10-04)
+
+- **Nothing's ringtone lights win during calls.** On the Phone (3), Nothing OS plays its own ringtone
+  Glyph pattern a moment into every incoming call, on a system light channel above app-matrix and
+  toys. There's no user-facing switch to disable it (global `led_effect_call_enalbe`), and a
+  non-Nothing ringtone didn't help.
+- **The user chose option C:** keep the start-of-call animation, and add a **missed-call alert**.
+  - It comes from the dialer's `CATEGORY_MISSED_CALL` notification and matches the contact name
+    in the title or text as a whole word (some dialers put "Missed call" in the title).
+  - It plays 10 s, then a 5 s reminder every 60 s (max 10) until the notification is dismissed.
+  - An incoming call beats a reminder.
+- The ALERTS tab shows an honest note instead of a "turn off call lights" hint.
+- The smiley outline is a midpoint circle (see §3.1).
+

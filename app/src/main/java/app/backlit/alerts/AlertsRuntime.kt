@@ -54,6 +54,8 @@ class AlertsRuntime private constructor(private val app: Context) {
 
     fun onCallRinging(name: String) = dispatch { coordinator.onCallRinging(name, now()) }
     fun onCallEnded() = dispatch { coordinator.onCallEnded() }
+    fun onMissedCall(texts: List<String>) = dispatch { coordinator.onMissedCall(texts, now()) }
+    fun onMissedCleared() = dispatch { coordinator.onMissedCleared() }
     fun onDeviceConnected(address: String) = dispatch { coordinator.onDeviceConnected(address, now()) }
     fun preview(animationId: String) = dispatch { coordinator.preview(animationId, now()) }
 
@@ -99,7 +101,7 @@ class AlertsRuntime private constructor(private val app: Context) {
         coordinator.tick(now())
         _bus.value = coordinator.active
         handler.removeCallbacks(expire)
-        coordinator.active?.let { handler.postDelayed(expire, (it.endsAt - now()).coerceAtLeast(0) + 10) }
+        coordinator.nextWakeAt()?.let { handler.postDelayed(expire, (it - now()).coerceAtLeast(0) + 10) }
         player.sync()
     }
 

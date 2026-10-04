@@ -12,7 +12,7 @@ data class DeviceRule(val address: String, val name: String, val animationId: St
 @Serializable
 data class AnimIndexEntry(val id: String, val name: String, val sourceV: Int)
 
-enum class AlertKind { CALL, DEVICE }
+enum class AlertKind { CALL, DEVICE, MISSED }
 
 data class ActiveAlert(val animationId: String, val kind: AlertKind, val startedAt: Long, val endsAt: Long)
 

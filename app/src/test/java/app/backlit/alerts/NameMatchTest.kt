@@ -20,4 +20,13 @@ class NameMatchTest {
         assertFalse(NameMatch.matches("   ", "Mom"))
         assertFalse(NameMatch.matches("+91 98765 43210", "Mom"))
     }
+
+    @Test
+    fun containsNameMatchesWholeWordsOnly() {
+        assertTrue(NameMatch.containsName("Mom (2)", "mom"))
+        assertTrue(NameMatch.containsName("Missed call from Ravi Kumar · mobile", "ravi  kumar"))
+        assertFalse(NameMatch.containsName("Momo (2)", "Mom"))
+        assertFalse(NameMatch.containsName("Missed call", "Mom"))
+        assertFalse(NameMatch.containsName("Mom", ""))
+    }
 }
