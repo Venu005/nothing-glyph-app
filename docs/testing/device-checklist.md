@@ -43,6 +43,7 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] Dialer's incoming-call notification is recognised (log: "incoming call notification", no name).
 - [x] Important caller: animation plays as the call starts; Nothing OS ringtone Glyph takes over after ~1 s (platform limit, documented in app).
 - [x] Missed call from important contact: 10 s animation, then reminders (log: "missed call notification").
+- [x] Missed-call reminders fire with the screen off (checked over 3 min; deep Doze over longer idle may delay later ones).
 - [ ] Missed-call reminders stop when the notification is dismissed.
 - [ ] Important caller while Backlit Clock shows (carousel / AOD).
 - [ ] Non-important caller: nothing.
