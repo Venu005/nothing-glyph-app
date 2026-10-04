@@ -9,6 +9,8 @@ import android.os.Message
 import android.os.Messenger
 import android.os.SystemClock
 import android.util.Log
+import app.backlit.alerts.AlertsRuntime
+import app.backlit.alerts.ToyPresence
 import app.backlit.audio.MusicActivity
 import app.backlit.audio.MusicEngine
 import app.backlit.audio.OutputVisualizer
@@ -38,6 +40,7 @@ class MusicToyService : Service() {
     private lateinit var music: MusicActivity
     private lateinit var repo: SettingsRepo
     private var settings = Settings()
+    private var alerts: AlertsRuntime? = null
     private var frames = 0
     private var frameNanos = 0L
 
@@ -60,6 +63,8 @@ class MusicToyService : Service() {
         val crashGuard = CoroutineExceptionHandler { _, e -> Log.e(TAG, "music toy coroutine failed", e) }
         val s = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate + crashGuard)
         scope = s
+        ToyPresence.enter()
+        alerts = AlertsRuntime.get(this).also { it.toyChanged() }
         output = GlyphOutput(this, profile) { startLoop() }.also { it.connect() }
         s.launch { repo.update { if (it.toyEverBound) it else it.copy(toyEverBound = true) } }
         s.launch {
@@ -89,11 +94,16 @@ class MusicToyService : Service() {
                     visualizer.start()
                 }
                 val t0 = SystemClock.elapsedRealtimeNanos()
+                val alert = alerts?.bus?.value
                 val grid = runCatching {
-                    engine.tick(
-                        now, dt, music.isPlaying(), visualizer.readFft(), visualizer.samplingRateHz,
-                        settings.musicSensitivity.gain, visualizer.isActive,
-                    )
+                    if (alert != null) {
+                        alerts!!.animationFor(alert).frame(SIZE, AlertsRuntime.now() - alert.startedAt)
+                    } else {
+                        engine.tick(
+                            now, dt, music.isPlaying(), visualizer.readFft(), visualizer.samplingRateHz,
+                            settings.musicSensitivity.gain, visualizer.isActive,
+                        )
+                    }
                 }.getOrElse { Log.e(TAG, "render failed", it); PixelGrid(SIZE) }
                 output?.push(FrameEncoder.encode(grid, settings.brightness, aod = false))
                 frameNanos += SystemClock.elapsedRealtimeNanos() - t0
@@ -115,6 +125,11 @@ class MusicToyService : Service() {
         visualizer.release()
         output?.close()
         output = null
+        if (alerts != null) {
+            ToyPresence.leave()
+            alerts?.toyChanged()
+            alerts = null
+        }
         return false
     }
 

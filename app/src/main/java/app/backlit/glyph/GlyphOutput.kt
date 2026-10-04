@@ -10,6 +10,7 @@ import com.nothing.ketchum.GlyphMatrixManager
 class GlyphOutput(
     private val context: Context,
     private val profile: DeviceProfile,
+    private val appMatrix: Boolean = false,
     private val onReady: () -> Unit,
 ) {
     private val handler = Handler(Looper.getMainLooper())
@@ -62,7 +63,7 @@ class GlyphOutput(
     fun push(frame: IntArray) {
         if (!ready) return
         if (last?.contentEquals(frame) == true) return
-        runCatching { manager?.setMatrixFrame(frame) }
+        runCatching { if (appMatrix) manager?.setAppMatrixFrame(frame) else manager?.setMatrixFrame(frame) }
             .onSuccess { last = frame }
             .onFailure { Log.w(TAG, "setMatrixFrame failed", it) }
     }
@@ -72,6 +73,7 @@ class GlyphOutput(
         ready = false
         last = null
         handler.removeCallbacksAndMessages(null)
+        if (appMatrix) runCatching { manager?.closeAppMatrix() }
         runCatching { manager?.unInit() }
         manager = null
     }
