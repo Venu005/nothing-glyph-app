@@ -25,6 +25,24 @@ fun PixelGrid.ringBand(r: Double, b: Int, width: Double = 0.5) {
     }
 }
 
+/** Midpoint (Bresenham) circle of integer radius [r] around the grid centre: gap-free and symmetric. */
+fun PixelGrid.circle(r: Int, b: Int) {
+    val c = (size - 1) / 2
+    var x = r
+    var y = 0
+    var err = 1 - r
+    while (x >= y) {
+        for ((dx, dy) in listOf(x to y, y to x, -y to x, -x to y, -x to -y, -y to -x, y to -x, x to -y)) plot(c + dx, c + dy, b)
+        y++
+        if (err < 0) {
+            err += 2 * y + 1
+        } else {
+            x--
+            err += 2 * (y - x) + 1
+        }
+    }
+}
+
 object Bitmaps {
     /** Draws 'X' cells of [rows], centred on the grid. */
     fun draw(g: PixelGrid, rows: List<String>, b: Int) {

@@ -36,14 +36,22 @@ class HandDrawnAnimationsTest {
     }
 
     @Test
-    fun smileyOutlineIsARoundDistanceBand() {
-        for ((size, r) in listOf(25 to 8.5, 13 to 5.0)) {
-            val g = SmileyWink.frame(size, 0)
-            val c = (size - 1) / 2.0
+    fun smileyOutlineIsAGapFreeRoundCircle() {
+        // Midpoint circle: the cardinal points must be present (the old distance band left holes there).
+        val big = SmileyWink.frame(25, 0)
+        for ((x, y) in listOf(12 to 4, 12 to 20, 4 to 12, 20 to 12, 10 to 4, 14 to 4)) assertEquals("($x,$y)", 140, big[x, y])
+        val small = SmileyWink.frame(13, 0)
+        for ((x, y) in listOf(6 to 1, 6 to 11, 1 to 6, 11 to 6)) assertEquals("($x,$y)", 140, small[x, y])
+        for ((size, g) in listOf(25 to big, 13 to small)) {
             for (y in 0 until size) for (x in 0 until size) {
-                if (g[x, y] == 140) assertTrue("size=$size x=$x y=$y", abs(hypot(x - c, y - c) - r) < 0.5)
+                assertEquals("size=$size mirror x", g[x, y], g[size - 1 - x, y])
+                assertEquals("size=$size mirror y (outline only)", if (g[x, y] == 140) 140 else -1, if (g[x, size - 1 - y] == 140 && g[x, y] == 140) 140 else -1)
             }
-            for (y in 0 until size) for (x in 0 until size) assertEquals("size=$size", g[x, y], g[size - 1 - x, y])
+            // Every outline pixel has an outline neighbour on both sides → no gaps.
+            for (y in 0 until size) for (x in 0 until size) if (g[x, y] == 140) {
+                val n = (-1..1).sumOf { dy -> (-1..1).count { dx -> (dx != 0 || dy != 0) && g[x + dx, y + dy] == 140 } }
+                assertTrue("size=$size ($x,$y) has $n outline neighbours", n >= 2)
+            }
         }
     }
 
