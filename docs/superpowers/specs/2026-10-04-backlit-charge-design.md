@@ -71,6 +71,8 @@ Brightness in the mockup is 0..1. In Kotlin it maps to design brightness 0..255 
 - An imported plug-in animation plays for 5000 ms and has no % reveal. An imported done animation plays
   for 3500 ms. Imports loop if shorter and are cut if longer.
 - If an id no longer resolves, for example because the import was deleted, the style's own animation is used.
+  `AlertsRuntime` gains `importedAnimation(id): GlyphAnimation?`, which looks only at imports and does not fall back to a
+  built-in alert animation.
 - `STILL` and `CHARGING` always use the chosen style, because imports cannot show a level.
 
 ### 3.3 Interaction with Alerts
@@ -123,7 +125,7 @@ data class Show(val moment: Moment, val startedAt: Long)
 
 class ChargeSession(target: () -> Int) {
     fun onBind(b: Battery, now: Long)
-    fun onBattery(b: Battery, now: Long)   // from ACTION_BATTERY_CHANGED (sticky)
+    fun onBattery(b: Battery, now: Long, active: Boolean)   // from ACTION_BATTERY_CHANGED; active = not AOD
     fun tick(now: Long)                    // advances PLUG_IN→(DONE|CHARGING), DONE→CHARGING
     val show: Show
     val level: Int
@@ -145,8 +147,9 @@ All the rules in §3.1 live here and are unit-tested. The service only translate
   - In STILL, push one frame on each change: level, style, settings or AOD event.
   - In AOD, always use still.
 - EVENT_CHANGE sets `chargeStyle = ChargeStyles.next(...)`.
-- The manifest gets a new `<service>` with action `com.nothing.glyph.TOY` and the same meta-data pattern as Clock and Music:
-  name "Backlit Charge", a summary, a preview image, `aod_support` true, and `NothingKey=test`.
+- The manifest gets a new `<service>` with action `com.nothing.glyph.TOY` and the same meta-data keys as the Clock toy:
+  `toy.name` "Backlit Charge", `toy.summary`, `toy.image`, `toy.longpress=1` and `toy.aod_support=1`. The
+  application-level `NothingKey` meta-data is already present.
 - **Toy preview image:** a new vector drawable showing the Moon at about 62 %.
 
 ## 7. Settings
@@ -159,6 +162,7 @@ These are added to `Settings` / `SettingsRepo` (DataStore):
 | `chargeTarget` | `100` | 50..100, step 5, clamped on read |
 | `chargePlugInAnim` | `""` | `""` or `import:<id>` |
 | `chargeDoneAnim` | `""` | `""` or `import:<id>` |
+| `chargeToyEverBound` | `false` | set the first time the Charge toy binds; hides the setup hint |
 
 ## 8. App UI (ui/ChargeScreen.kt, new CHARGE tab)
 
@@ -166,17 +170,21 @@ These are added to `Settings` / `SettingsRepo` (DataStore):
 - **Live `MatrixPreview`:**
   - It renders the selected style at the device's size (25 if unsupported).
   - Segmented buttons switch it between Still, Plug-in, Charging and Done, using a demo level of 62 %.
-- **"Show on Glyph" button:** plays the previewed moment on the real matrix through the existing app-matrix preview path. The moment is wrapped as a
-  `GlyphAnimation` (`frame(size, t)`) and played for its duration. It is
-  disabled with the reason when a toy is showing or the device is unsupported, matching Alerts' preview behaviour.
+- **"Show on Glyph" button:** plays the previewed moment on the real matrix through the existing Alerts preview path, so
+  it behaves exactly like the Alerts previews. It plays through the app matrix when the Glyph is idle, and it is rendered
+  by whichever Backlit toy is showing. It is not visible under other apps' toys.
+  - **ID scheme:** `charge:<styleId>:<moment>`.
+  - **Resolving:** `AlertsRuntime.animationFor` resolves it to a `ChargePreviewAnimation` (a `GlyphAnimation` wrapping the style
+    moment at a demo level of 62 %).
+  - **Duration:** `AlertCoordinator.preview` gains an optional `durationMs`. It is 5000 for plug-in, 3500 for done and 3000
+    for still and charging.
 - **Style picker:** four cards, each with a small still preview.
 - **"Done at" slider:** 50–100 %, step 5. The help text says it plays once per charge when you reach the level, and if
   your phone limits charging (battery protection), it should be set at or below that limit.
 - **Custom animations:** "Plug-in animation" and "Done animation" rows. Each is a picker for Style default, the
   imported animations, or **Import from Glyph Museum…**, which reuses `ImportHelper` and the Alerts import flow.
   Imports are shared with Alerts, and deleting one there falls back to the default here.
-- **Setup hint card** until the Charge toy has bound once (`chargeToyEverBound`, a new Boolean setting
-  with default false): "Turn on Backlit Charge in Glyph Toys".
+- **Setup hint card** until the Charge toy has bound once (`chargeToyEverBound`): "Turn on Backlit Charge in Glyph Toys".
 - **Nothing on-charge note:** only added if the device check (§9) shows Nothing's On Charge Animation hides ours.
   It explains how to turn Nothing's one off. Backlit never changes system settings.
 
