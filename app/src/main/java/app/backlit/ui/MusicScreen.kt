@@ -143,7 +143,7 @@ fun MusicTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
 }
 
 @Composable
-private fun Notice(text: String) {
+internal fun Notice(text: String) {
     Column(Modifier.fillMaxWidth().border(1.dp, BacklitColors.Line).padding(12.dp)) {
         Text(text, style = MaterialTheme.typography.bodyMedium)
     }

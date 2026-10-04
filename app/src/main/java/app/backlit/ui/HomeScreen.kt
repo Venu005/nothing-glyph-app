@@ -83,9 +83,14 @@ fun HomeScreen(
         Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SquareChip("CLOCK", selected = tab == 0, onClick = { tab = 0 }, modifier = Modifier.weight(1f))
             SquareChip("MUSIC", selected = tab == 1, onClick = { tab = 1 }, modifier = Modifier.weight(1f))
+            SquareChip("ALERTS", selected = tab == 2, onClick = { tab = 2 }, modifier = Modifier.weight(1f))
         }
 
-        if (tab == 0) ClockTab(settings, profile, onUpdate, onNavigate) else MusicTab(settings, profile, onUpdate)
+        when (tab) {
+            0 -> ClockTab(settings, profile, onUpdate, onNavigate)
+            1 -> MusicTab(settings, profile, onUpdate)
+            else -> AlertsTab(profile)
+        }
 
         SettingRow("Glyph Toy setup", "→") { onNavigate(Screen.SETUP) }
         SettingRow("About", "→") { onNavigate(Screen.ABOUT) }
