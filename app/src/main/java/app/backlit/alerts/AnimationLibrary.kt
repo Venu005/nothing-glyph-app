@@ -35,5 +35,9 @@ class AnimationLibrary(private val dir: File) {
             ?: BuiltInAnimations.byId(fallback)
             ?: BuiltInAnimations.all.first()
 
+    /** Only an imported animation (no built-in fallback); null if [id] isn't a known, loadable import. */
+    fun importedOnly(id: String, imports: List<AnimIndexEntry>): GlyphAnimation? =
+        if (!id.startsWith("import:")) null else imports.firstOrNull { it.id == id }?.let { load(it) }
+
     private fun file(id: String) = File(dir, id.removePrefix("import:").filter { it.isLetterOrDigit() || it == '-' } + ".json")
 }

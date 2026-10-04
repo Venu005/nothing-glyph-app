@@ -6,6 +6,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import app.backlit.anim.BuiltInAnimations
+import app.backlit.charge.ChargePreviewAnimation
 import app.backlit.anim.GlyphAnimation
 import app.backlit.anim.MuseumFormat
 import app.backlit.data.SettingsRepo
@@ -57,15 +58,21 @@ class AlertsRuntime private constructor(private val app: Context) {
     fun onMissedCall(key: String, texts: List<String>) = dispatch { coordinator.onMissedCall(key, texts, now()) }
     fun onMissedCleared(key: String) = dispatch { coordinator.onMissedCleared(key) }
     fun onDeviceConnected(address: String) = dispatch { coordinator.onDeviceConnected(address, now()) }
-    fun preview(animationId: String) = dispatch { coordinator.preview(animationId, now()) }
 
     /** Called by toys when they bind/unbind so the app-matrix player can step in or out. */
     fun toyChanged() = player.sync()
 
-    fun animationFor(alert: ActiveAlert): GlyphAnimation = library.resolve(
-        alert.animationId, current.imports,
-        fallback = if (alert.kind == AlertKind.CALL) BuiltInAnimations.DEFAULT_CONTACT else BuiltInAnimations.DEFAULT_DEVICE,
-    )
+    fun preview(animationId: String, durationMs: Long = AlertCoordinator.SHORT_MS) =
+        dispatch { coordinator.preview(animationId, now(), durationMs) }
+
+    fun animationFor(alert: ActiveAlert): GlyphAnimation =
+        ChargePreviewAnimation.parse(alert.animationId) ?: library.resolve(
+            alert.animationId, current.imports,
+            fallback = if (alert.kind == AlertKind.CALL) BuiltInAnimations.DEFAULT_CONTACT else BuiltInAnimations.DEFAULT_DEVICE,
+        )
+
+    /** For the Charge toy: an imported animation by id, or null (unset, deleted, or not an import). */
+    fun importedAnimation(id: String): GlyphAnimation? = library.importedOnly(id, current.imports)
 
     suspend fun update(transform: (AlertConfig) -> AlertConfig) = store.update(transform)
 
