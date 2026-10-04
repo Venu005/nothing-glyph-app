@@ -48,9 +48,19 @@ class CallNotificationTrackerTest {
     @Test
     fun missedCallNotificationStartsMissedAndRemovalClearsIt() {
         val t = CallNotificationTracker()
-        assertEquals(Event.Missed(listOf("Missed call", "Mom (2)")), t.onPosted("m1", isCall = false, incoming = false, title = "Missed call", isMissedCall = true, text = "Mom (2)"))
+        assertEquals(Event.Missed("m1", listOf("Missed call", "Mom (2)")), t.onPosted("m1", isCall = false, incoming = false, title = "Missed call", isMissedCall = true, text = "Mom (2)"))
         assertNull(t.onPosted("m1", isCall = false, incoming = false, title = "Missed call", isMissedCall = true, text = "Mom (2)"))
-        assertEquals(Event.MissedCleared, t.onRemoved("m1"))
+        assertEquals(Event.MissedCleared("m1"), t.onRemoved("m1"))
         assertNull(t.onRemoved("m1"))
+    }
+
+    @Test
+    fun tracksSeveralMissedNotificationsAndContentUpdates() {
+        val t = CallNotificationTracker()
+        assertEquals(Event.Missed("a", listOf("Mom")), t.onPosted("a", false, false, "Mom", isMissedCall = true))
+        assertEquals(Event.Missed("b", listOf("Bob")), t.onPosted("b", false, false, "Bob", isMissedCall = true))
+        assertEquals(Event.Missed("b", listOf("Bob, Mom")), t.onPosted("b", false, false, "Bob, Mom", isMissedCall = true))  // updated content
+        assertEquals(Event.MissedCleared("a"), t.onRemoved("a"))
+        assertEquals(Event.MissedCleared("b"), t.onRemoved("b"))
     }
 }

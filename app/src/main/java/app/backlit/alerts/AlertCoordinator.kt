@@ -10,7 +10,7 @@ class AlertCoordinator(
 
     private val lastDeviceFire = mutableMapOf<String, Long>()
 
-    private data class MissedReminder(val animationId: String, val nextAt: Long, val remaining: Int)
+    private data class MissedReminder(val key: String, val animationId: String, val nextAt: Long, val remaining: Int)
     private var missed: MissedReminder? = null
 
     fun onCallRinging(name: String, nowMs: Long) {
@@ -33,20 +33,23 @@ class AlertCoordinator(
     }
 
     /** Missed call from an important contact: 10 s now, then a 5 s reminder every minute (max 10) until cleared. */
-    fun onMissedCall(texts: List<String>, nowMs: Long) {
+    fun onMissedCall(key: String, texts: List<String>, nowMs: Long) {
         val rule = contacts().firstOrNull { c -> texts.any { NameMatch.matches(c.name, it) || NameMatch.containsName(it, c.name) } } ?: return
-        missed = MissedReminder(rule.animationId, nowMs + MISSED_MS + REMINDER_EVERY_MS, MAX_REMINDERS)
+        if (missed?.key == key && missed?.animationId == rule.animationId) return   // same notification updated: keep reminding
+        missed = MissedReminder(key, rule.animationId, nowMs + MISSED_MS + REMINDER_EVERY_MS, MAX_REMINDERS)
         if (active?.kind == AlertKind.CALL) return
         active = ActiveAlert(rule.animationId, AlertKind.MISSED, nowMs, nowMs + MISSED_MS)
     }
 
-    fun onMissedCleared() {
+    /** Only the notification that started the reminders can stop them. */
+    fun onMissedCleared(key: String) {
+        if (missed?.key != key) return
         missed = null
         if (active?.kind == AlertKind.MISSED) active = null
     }
 
     /** When the caller should next call [tick] (end of the active alert or the next reminder). */
-    fun nextWakeAt(): Long? = listOfNotNull(active?.endsAt, missed?.nextAt).minOrNull()
+    fun nextWakeAt(): Long? = active?.endsAt ?: missed?.nextAt
 
     fun preview(animationId: String, nowMs: Long) {
         if (active?.kind == AlertKind.CALL) return

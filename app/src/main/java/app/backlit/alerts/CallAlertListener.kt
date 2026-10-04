@@ -27,8 +27,8 @@ class CallAlertListener : NotificationListenerService() {
         when (event) {
             is CallNotificationTracker.Event.Ringing -> { Log.d(TAG, "incoming call notification"); rt.onCallRinging(event.callerName) }
             CallNotificationTracker.Event.Ended -> rt.onCallEnded()
-            is CallNotificationTracker.Event.Missed -> { Log.d(TAG, "missed call notification"); rt.onMissedCall(event.texts) }
-            CallNotificationTracker.Event.MissedCleared -> rt.onMissedCleared()
+            is CallNotificationTracker.Event.Missed -> { Log.d(TAG, "missed call notification"); rt.onMissedCall(event.key, event.texts) }
+            is CallNotificationTracker.Event.MissedCleared -> rt.onMissedCleared(event.key)
             null -> Unit
         }
     }

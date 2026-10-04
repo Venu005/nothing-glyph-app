@@ -129,7 +129,7 @@ class ClockToyService : Service() {
     )
 
     private fun draw() {
-        if (alertJob != null) return
+        if (alertJob?.isActive == true) return
         val out = output ?: return
         val ctx = context()
         val face = Faces.byId(settings.faceId)
@@ -139,7 +139,7 @@ class ClockToyService : Service() {
     }
 
     private fun restartTicker() {
-        if (alertJob != null) return
+        if (alertJob?.isActive == true) return
         val s = scope ?: return
         tickJob?.cancel()
         tickJob = s.launch {
@@ -154,7 +154,7 @@ class ClockToyService : Service() {
     private fun startAlert() {
         val s = scope ?: return
         val rt = alerts ?: return
-        if (alertJob != null) return
+        if (alertJob?.isActive == true) return
         tickJob?.cancel()
         alertJob = s.launch {
             val pacer = FramePacer(50)

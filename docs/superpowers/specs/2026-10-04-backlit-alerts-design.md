@@ -182,9 +182,9 @@ Home tabs become **CLOCK | MUSIC | ALERTS** (same raw / dot-matrix style).
   (rules using a deleted animation fall back to the default). An intent filter (`ACTION_SEND`,
   `application/json`) lets Glyph Museum share files straight to Backlit.
 - **PREVIEW ON MATRIX** plays the animation through `AlertBus` for 3 s, like a device alert.
-- **Notification disclosure text (exact):** "Backlit only looks at incoming-call notifications from
-  your Phone app, to check the caller's name against your important contacts. Nothing else is
-  read, stored or sent."
+- **Notification disclosure text (exact, amended):** "Backlit only looks at incoming-call and
+  missed-call notifications from your calling apps, to check the caller's name against your
+  important contacts. Nothing else is read, stored or sent."
 
 ## 8. Permissions, privacy, Play
 

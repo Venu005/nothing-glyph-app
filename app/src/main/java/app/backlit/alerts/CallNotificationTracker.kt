@@ -9,23 +9,22 @@ class CallNotificationTracker {
     sealed interface Event {
         data class Ringing(val callerName: String) : Event
         data object Ended : Event
-        data class Missed(val texts: List<String>) : Event
-        data object MissedCleared : Event
+        data class Missed(val key: String, val texts: List<String>) : Event
+        data class MissedCleared(val key: String) : Event
     }
 
     private var ringingKey: String? = null
-    private var missedKey: String? = null
+    private val missed = mutableMapOf<String, List<String>>()   // key → last texts seen
 
     fun onPosted(
         key: String, isCall: Boolean, incoming: Boolean, title: String?,
         isMissedCall: Boolean = false, text: String? = null,
     ): Event? {
         if (isMissedCall) {
-            if (key == missedKey) return null
             val texts = listOfNotNull(title, text).filter { it.isNotBlank() }
-            if (texts.isEmpty()) return null
-            missedKey = key
-            return Event.Missed(texts)
+            if (texts.isEmpty() || missed[key] == texts) return null
+            missed[key] = texts
+            return Event.Missed(key, texts)
         }
         if (!isCall) return null
         if (incoming) {
@@ -42,10 +41,7 @@ class CallNotificationTracker {
     }
 
     fun onRemoved(key: String): Event? {
-        if (key == missedKey) {
-            missedKey = null
-            return Event.MissedCleared
-        }
+        if (missed.remove(key) != null) return Event.MissedCleared(key)
         if (key != ringingKey) return null
         ringingKey = null
         return Event.Ended

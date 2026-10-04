@@ -54,8 +54,8 @@ class AlertsRuntime private constructor(private val app: Context) {
 
     fun onCallRinging(name: String) = dispatch { coordinator.onCallRinging(name, now()) }
     fun onCallEnded() = dispatch { coordinator.onCallEnded() }
-    fun onMissedCall(texts: List<String>) = dispatch { coordinator.onMissedCall(texts, now()) }
-    fun onMissedCleared() = dispatch { coordinator.onMissedCleared() }
+    fun onMissedCall(key: String, texts: List<String>) = dispatch { coordinator.onMissedCall(key, texts, now()) }
+    fun onMissedCleared(key: String) = dispatch { coordinator.onMissedCleared(key) }
     fun onDeviceConnected(address: String) = dispatch { coordinator.onDeviceConnected(address, now()) }
     fun preview(animationId: String) = dispatch { coordinator.preview(animationId, now()) }
 

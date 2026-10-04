@@ -52,8 +52,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val DISCLOSURE =
-    "Backlit only looks at incoming-call notifications from your Phone app, to check the caller's name " +
-        "against your important contacts. Nothing else is read, stored or sent."
+    "Backlit only looks at incoming-call and missed-call notifications from your calling apps, to check the " +
+        "caller's name against your important contacts. Nothing else is read, stored or sent."
 
 @Composable
 fun AlertsTab(profile: DeviceProfile) {
