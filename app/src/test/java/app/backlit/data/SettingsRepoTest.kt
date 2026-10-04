@@ -38,6 +38,8 @@ class SettingsRepoTest {
             locationMode = LocationMode.CITY, lat = 12.97, lon = 77.59, placeName = "Bengaluru, IN",
             locationUpdatedAt = 123L, toyEverBound = true,
             musicStyle = "wave", musicSensitivity = Sensitivity.HIGH,
+            chargeStyle = "buddy", chargeTarget = 85, chargePlugInAnim = "import:abc", chargeDoneAnim = "import:def",
+            chargeToyEverBound = true,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -66,5 +68,30 @@ class SettingsRepoTest {
         assertEquals(Sensitivity.MED, SettingsRepo.parseSensitivity("LOUD"))
         assertEquals(Sensitivity.LOW, SettingsRepo.parseSensitivity("LOW"))
         assertEquals("mirror", Settings().musicStyle)
+    }
+
+    @Test
+    fun chargeDefaults() = runBlocking {
+        val s = repo().settings.first()
+        assertEquals("moon", s.chargeStyle)
+        assertEquals(100, s.chargeTarget)
+        assertEquals("", s.chargePlugInAnim)
+        assertEquals("", s.chargeDoneAnim)
+        assertEquals(false, s.chargeToyEverBound)
+    }
+
+    @Test
+    fun chargeTargetIsClampedToFivePercentSteps() {
+        assertEquals(50, SettingsRepo.clampTarget(10))
+        assertEquals(100, SettingsRepo.clampTarget(140))
+        assertEquals(85, SettingsRepo.clampTarget(86))
+        assertEquals(90, SettingsRepo.clampTarget(88))
+    }
+
+    @Test
+    fun outOfRangeStoredTargetReadsClamped() = runBlocking {
+        val r = repo()
+        r.update { it.copy(chargeTarget = 7) }
+        assertEquals(50, r.settings.first().chargeTarget)
     }
 }

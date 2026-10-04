@@ -19,6 +19,11 @@ data class Settings(
     val toyEverBound: Boolean = false,
     val musicStyle: String = "mirror",
     val musicSensitivity: Sensitivity = Sensitivity.MED,
+    val chargeStyle: String = "moon",
+    val chargeTarget: Int = 100,
+    val chargePlugInAnim: String = "",
+    val chargeDoneAnim: String = "",
+    val chargeToyEverBound: Boolean = false,
 ) {
     val faceOptions: FaceOptions get() = FaceOptions(secondHand = secondHand, use24h = use24h)
 }

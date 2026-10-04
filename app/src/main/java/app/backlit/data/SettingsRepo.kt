@@ -42,6 +42,14 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val BOUND = booleanPreferencesKey("toy_ever_bound")
         private val MUSIC_STYLE = stringPreferencesKey("music_style")
         private val MUSIC_SENS = stringPreferencesKey("music_sensitivity")
+        private val CHARGE_STYLE = stringPreferencesKey("charge_style")
+        private val CHARGE_TARGET = intPreferencesKey("charge_target")
+        private val CHARGE_PLUG_ANIM = stringPreferencesKey("charge_plugin_anim")
+        private val CHARGE_DONE_ANIM = stringPreferencesKey("charge_done_anim")
+        private val CHARGE_BOUND = booleanPreferencesKey("charge_toy_ever_bound")
+
+        /** 50..100 in steps of 5 (nearest step, halves round up). */
+        fun clampTarget(v: Int): Int = (((v.coerceIn(50, 100) + 2) / 5) * 5).coerceIn(50, 100)
 
         fun get(context: Context): SettingsRepo = SettingsRepo(context.applicationContext.settingsDataStore)
 
@@ -66,6 +74,11 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 toyEverBound = this[BOUND] ?: d.toyEverBound,
                 musicStyle = this[MUSIC_STYLE] ?: d.musicStyle,
                 musicSensitivity = parseSensitivity(this[MUSIC_SENS]),
+                chargeStyle = this[CHARGE_STYLE] ?: d.chargeStyle,
+                chargeTarget = clampTarget(this[CHARGE_TARGET] ?: d.chargeTarget),
+                chargePlugInAnim = this[CHARGE_PLUG_ANIM] ?: d.chargePlugInAnim,
+                chargeDoneAnim = this[CHARGE_DONE_ANIM] ?: d.chargeDoneAnim,
+                chargeToyEverBound = this[CHARGE_BOUND] ?: d.chargeToyEverBound,
             )
         }
 
@@ -82,6 +95,11 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[BOUND] = s.toyEverBound
             this[MUSIC_STYLE] = s.musicStyle
             this[MUSIC_SENS] = s.musicSensitivity.name
+            this[CHARGE_STYLE] = s.chargeStyle
+            this[CHARGE_TARGET] = s.chargeTarget
+            this[CHARGE_PLUG_ANIM] = s.chargePlugInAnim
+            this[CHARGE_DONE_ANIM] = s.chargeDoneAnim
+            this[CHARGE_BOUND] = s.chargeToyEverBound
         }
     }
 }
