@@ -21,7 +21,7 @@ object SproutStyle : ChargeStyle {
     }
 
     override fun charging(size: Int, level: Int, tMs: Long): PixelGrid =
-        PixelGrid(size).also { plant(it, level / 100.0, tMs, 0.0, sway = true) }
+        ChargeKit.periodicReveal(PixelGrid(size).also { plant(it, level / 100.0, tMs, 0.0, sway = true) }, level, tMs)
 
     override fun done(size: Int, tMs: Long): PixelGrid {
         val g = PixelGrid(size)

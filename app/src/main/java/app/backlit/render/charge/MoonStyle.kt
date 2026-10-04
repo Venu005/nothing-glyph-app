@@ -24,7 +24,7 @@ object MoonStyle : ChargeStyle {
     override fun plugIn(size: Int, level: Int, tMs: Long) =
         ChargeKit.reveal(moon(size, level / 100.0 * ChargeKit.easeInOut(tMs / 3200.0), tMs, 0.0), level, tMs)
 
-    override fun charging(size: Int, level: Int, tMs: Long) = moon(size, level / 100.0, tMs, 0.0)
+    override fun charging(size: Int, level: Int, tMs: Long) = ChargeKit.periodicReveal(moon(size, level / 100.0, tMs, 0.0), level, tMs)
 
     override fun done(size: Int, tMs: Long) = moon(size, 1.0, tMs, halo = min(1.0, tMs / 900.0))
 

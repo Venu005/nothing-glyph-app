@@ -25,7 +25,8 @@ object BuddyStyle : ChargeStyle {
         return ChargeKit.reveal(g, level, tMs)
     }
 
-    override fun charging(size: Int, level: Int, tMs: Long) = PixelGrid(size).also { buddy(it, level / 100.0, tMs, happy = false) }
+    override fun charging(size: Int, level: Int, tMs: Long) =
+        ChargeKit.periodicReveal(PixelGrid(size).also { buddy(it, level / 100.0, tMs, happy = false) }, level, tMs)
 
     override fun done(size: Int, tMs: Long): PixelGrid {
         val big = size >= 25

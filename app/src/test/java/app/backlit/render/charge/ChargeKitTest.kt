@@ -65,4 +65,18 @@ class ChargeKitTest {
         // w = 8 → x0 = 3 (6 - 3.5 = 2.5 → px 3), y0 = 4; '6' covers x 3..5, '2' covers x 8..10
         assertEquals(255, s[3, 4]); assertEquals(0, s[6, 4]); assertEquals(0, s[7, 4]); assertEquals(255, s[8, 4])
     }
+
+    @Test
+    fun chargingLoopShowsThePercentTwoSecondsEveryTen() {
+        for (style in listOf(MoonStyle, SproutStyle, BuddyStyle)) {
+            val shown = style.charging(25, 62, 19_000)            // cycle 9000 ms → in the 8000..9999 window
+            assertEquals("${style.id} digits", 255, shown[9, 10])  // '6' top-left (x0 = 9, y0 = 10)
+            assertEquals("${style.id} box cleared", 0, shown[8, 9])
+            val hidden = style.charging(25, 62, 13_000)           // cycle 3000 ms → normal frame
+            assertEquals("${style.id} plain", style.charging(25, 62, 13_000), hidden)
+            assertTrue("${style.id} no window", hidden[8, 9] > 0 || hidden[9, 10] != 255)
+        }
+        val small = MoonStyle.charging(13, 62, 9_000)
+        assertEquals(255, small[3, 4])                            // 13×13: "62" x0 = 3, y0 = 4
+    }
 }

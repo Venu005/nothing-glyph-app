@@ -79,10 +79,19 @@ object ChargeKit {
     }
 
     /** End of plug-in: dim the scene to 20 % over 250 ms, then show the % in a cleared window. */
-    fun reveal(g: PixelGrid, level: Int, tMs: Long): PixelGrid {
-        if (tMs < REVEAL_AT_MS) return g
+    fun reveal(g: PixelGrid, level: Int, tMs: Long): PixelGrid = revealFrom(g, level, tMs, REVEAL_AT_MS)
+
+    /** Charging loop: the same % window for the last 2 s of every 10 s. */
+    fun periodicReveal(g: PixelGrid, level: Int, tMs: Long): PixelGrid =
+        revealFrom(g, level, tMs % PERIOD_MS, PERIOD_MS - SHOW_MS)
+
+    private const val PERIOD_MS = 10_000L
+    private const val SHOW_MS = 2_000L
+
+    private fun revealFrom(g: PixelGrid, level: Int, tMs: Long, startMs: Long): PixelGrid {
+        if (tMs < startMs) return g
         val n = g.size
-        val k = max(0.2, 1 - (tMs - REVEAL_AT_MS) / 250.0)
+        val k = max(0.2, 1 - (tMs - startMs) / 250.0)
         val raw = g.raw()
         for (i in raw.indices) if (raw[i] > 0) g.put(i % n, i / n, (raw[i] * k).roundToInt())
         val s = level.coerceIn(0, 100).toString()
