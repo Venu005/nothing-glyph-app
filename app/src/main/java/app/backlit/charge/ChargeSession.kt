@@ -21,12 +21,24 @@ class ChargeSession(private val target: () -> Int) {
     private var donePlayed = false
     private var donePending = false
 
-    fun onBind(b: Battery, now: Long) {
+    /**
+     * [pluggedAt] is when the charger was last connected, if known. Nothing's own charge animation holds the
+     * matrix for a few seconds after plugging in, so a bind soon after still gets the plug-in animation.
+     */
+    fun onBind(b: Battery, now: Long, pluggedAt: Long? = null) {
         level = b.level
         plugged = b.plugged
         donePending = false
         donePlayed = b.plugged && b.level >= target()
-        show = Show(if (b.plugged) Moment.CHARGING else Moment.STILL, now)
+        val recentPlug = b.plugged && pluggedAt != null && now - pluggedAt in 0..REPLAY_WINDOW_MS
+        show = Show(
+            when {
+                recentPlug -> Moment.PLUG_IN
+                b.plugged -> Moment.CHARGING
+                else -> Moment.STILL
+            },
+            now,
+        )
     }
 
     fun onBattery(b: Battery, now: Long, active: Boolean) {
@@ -73,5 +85,6 @@ class ChargeSession(private val target: () -> Int) {
     companion object {
         const val PLUG_IN_MS = 5000L
         const val DONE_MS = 3500L
+        const val REPLAY_WINDOW_MS = 20_000L
     }
 }

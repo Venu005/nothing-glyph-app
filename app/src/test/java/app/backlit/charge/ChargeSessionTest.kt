@@ -113,4 +113,27 @@ class ChargeSessionTest {
         repeat(20) { s.onBattery(on(40), 100L + it, true) }
         assertEquals(Show(Moment.PLUG_IN, 0), s.show)
     }
+
+    @Test
+    fun bindSoonAfterPlugReplaysPlugIn() {
+        // Nothing's own charge animation holds the matrix for a few seconds after plugging in, then hands back.
+        val s = session(); s.onBind(on(62), now = 20_000, pluggedAt = 11_000)
+        assertEquals(Show(Moment.PLUG_IN, 20_000), s.show)
+        s.tick(25_000); assertEquals(Moment.CHARGING, s.show.moment)
+    }
+
+    @Test
+    fun bindLongAfterPlugGoesStraightToCharging() {
+        val s = session(); s.onBind(on(62), now = 40_000, pluggedAt = 11_000)
+        assertEquals(Moment.CHARGING, s.show.moment)
+        val u = session(); u.onBind(off(62), now = 12_000, pluggedAt = 11_000)   // unplugged again since
+        assertEquals(Moment.STILL, u.show.moment)
+    }
+
+    @Test
+    fun replayedPlugInStillQueuesDoneOnCrossing() {
+        val s = session(); s.onBind(on(79), now = 10_000, pluggedAt = 5_000)
+        s.onBattery(on(80), 11_000, true)
+        s.tick(15_000); assertEquals(Moment.DONE, s.show.moment)
+    }
 }

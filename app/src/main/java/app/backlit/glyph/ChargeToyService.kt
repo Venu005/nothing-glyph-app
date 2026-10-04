@@ -46,6 +46,7 @@ class ChargeToyService : Service() {
     private var alerts: AlertsRuntime? = null
     private val session = ChargeSession { settings.chargeTarget }
     private var lastBattery: Battery? = null
+    private var dbgBucket = -1L
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -64,6 +65,7 @@ class ChargeToyService : Service() {
             if (b == lastBattery) return                 // voltage/temperature-only updates
             lastBattery = b
             session.onBattery(b, AlertsRuntime.now(), active = !isAod())
+            Log.d(TAG, "DBG battery=$b aod=${isAod()} -> ${session.show}")
             kick()
         }
     }
@@ -81,8 +83,9 @@ class ChargeToyService : Service() {
         val rt = AlertsRuntime.get(this).also { alerts = it }
         rt.toyChanged()
 
+        PlugWatcher.ensure(this)
         val sticky = registerReceiver(batteryReceiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED), Context.RECEIVER_NOT_EXPORTED)
-        batteryOf(sticky)?.let { lastBattery = it; session.onBind(it, AlertsRuntime.now()) }
+        batteryOf(sticky)?.let { lastBattery = it; session.onBind(it, AlertsRuntime.now(), PlugWatcher.lastPluggedAt) }
 
         output = GlyphOutput(this, profile) { kick() }.also { it.connect() }
         s.launch { repo.update { if (it.chargeToyEverBound) it else it.copy(chargeToyEverBound = true) } }
@@ -126,6 +129,8 @@ class ChargeToyService : Service() {
                     if (alert != null) alerts!!.animationFor(alert).frame(profile.size, now - alert.startedAt) else frame(now, aod)
                 }.getOrElse { Log.e(TAG, "render failed", it); PixelGrid(profile.size) }
                 output?.push(FrameEncoder.encode(grid, settings.brightness, aod = alert == null && aod))
+                val dt = now - session.show.startedAt
+                if (dt / 500 != dbgBucket) { dbgBucket = dt / 500; Log.d(TAG, "DBG ${session.show.moment} t=$dt alert=${alert != null} aod=$aod centre=${grid[12, 12]} lit=${grid.litCount()} out=${output != null}") }
                 val animating = alert != null || (!aod && session.show.moment != Moment.STILL)
                 if (!animating) break
                 wait = pacer.delayBeforeNext(AlertsRuntime.now())

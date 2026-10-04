@@ -4,10 +4,14 @@ import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
+import app.backlit.glyph.PlugWatcher
 
 /** Watches only incoming-call notifications; everything else is ignored immediately. Never logs contents. */
 class CallAlertListener : NotificationListenerService() {
     private val tracker = CallNotificationTracker()
+
+    // Keeps the Charge toy's plug-in time while this always-bound listener holds the process alive.
+    override fun onListenerConnected() = PlugWatcher.ensure(this)
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val n = sbn.notification ?: return
