@@ -66,10 +66,10 @@ interface GlyphAnimation {
       Smile `(9,14)(10,15)(11,15)(12,15)(13,15)(14,15)(15,14)`. Wide smile adds `(8,13)(16,13)`.
     - 13: eyes `(4,4)` and `(8,4)`, or when winking `(7,5)(8,5)(9,5)`.
       Smile `(4,7)(5,8)(6,8)(7,8)(8,7)`. Wide smile adds `(3,6)(9,6)`.
-  - **Ringing (`builtin:ring`):**
-    - 25: loop 1000 ms. A 5×9 phone outline at the centre shakes ±1 px during the first half.
+  - **Ringing (`builtin:ring`):** one loop of 1200 ms for both sizes.
+    - 25: a 5×9 phone outline at the centre shakes ±1 px during the first half.
       Three arcs (±0.6 rad) move from r = 4 to r = 12 on both sides and fade with radius.
-    - 13: loop 1200 ms, hand-placed. Phone `(5..7,4)(5,5..7)(7,5..7)(5..7,8)` shakes ±1 px during
+    - 13: hand-placed. Phone `(5..7,4)(5,5..7)(7,5..7)(5..7,8)` shakes ±1 px during
       0–33%. Inner arcs `(3,5..7)(9,5..7)` show from 33% (255 until 66%, then 115). Outer arcs
       `(2,4)(1,5..7)(2,8)(10,4)(11,5..7)(10,8)` show from 66%.
   - **Burst (`builtin:burst`):** loop 1100 ms. Rays (16 on 25, 8 on 13) fly out to R (12 / 6) with
@@ -137,12 +137,17 @@ data class ActiveAlert(val animationId: String, val kind: CALL|DEVICE, val start
   `setAppMatrixFrame` on a `FramePacer` 50 ms grid, and calls `closeAppMatrix()` + `unInit()` when
   the alert ends (within 0.5 s) or a toy appears.
 - Frames are encoded with `FrameEncoder` at the user's brightness (not AOD-dimmed).
+- **Unverified: AOD toy.** Whether the system shows 20 fps pushes from a toy bound as the AOD toy
+  (rather than only once-a-minute updates) is checked on the device. If it only shows the minute
+  updates, the alert is still drawn at whatever rate is shown. This is noted in the checklist.
 - If another app's toy is showing, app-matrix frames simply don't appear. No retry storms: one
   connect attempt per alert, plus the Part 1 retry policy.
 
 ## 6. Triggers (Android)
 
-- **Calls: `CallAlertListener : NotificationListenerService`.**
+- **Calls: `CallAlertListener : NotificationListenerService`.** This depends on the Phone app
+  posting a `CallStyle` notification marked incoming. Google Phone, the dialer on the Phone (3),
+  does this; it is confirmed on the device.
   - `onNotificationPosted`: immediately ignore anything that isn't `category == CALL` with
     `EXTRA_CALL_TYPE == CALL_TYPE_INCOMING` (API 31+). For incoming calls, read `EXTRA_TITLE`
     (the caller name as shown by the Phone app) → `CallRinging(name)`.
@@ -226,6 +231,7 @@ Home tabs become **CLOCK | MUSIC | ALERTS** (same raw / dot-matrix style).
     ends at 3 s, the call beats the device, the 30 s cooldown, a call replaces a device alert.
   - Rules + index JSON round-trip, with unknown ids falling back.
 - **Device checklist (Phone (3)):**
+  - the dialer's incoming-call notification is recognised (logged as matched or unmatched, never the name)
   - an important caller with the Glyph idle (screen on and off)
   - an important caller while Backlit Clock is showing, and while it's the AOD toy
   - a non-important caller does nothing
