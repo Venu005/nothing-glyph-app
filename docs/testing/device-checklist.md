@@ -63,7 +63,7 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] Unplug → still
 - [x] Done plays once when the level crosses "Done at" (halo seen); 100 → 99 → 100 jitter doesn't replay it
 - [x] AOD toy: still level only, no animation loop
-- [ ] Alert preview from ALERTS plays inside the Charge toy, then the toy resumes
+- [x] Alert preview from ALERTS plays inside the Charge toy, then the toy resumes
 - [x] Imported plug-in animation plays instead of the style's own
 - [x] CHARGE tab previews all four moments
 - Tip: `adb shell dumpsys battery unplug` / `set level N` / `set ac 1`, then `dumpsys battery reset`, fakes charging events
