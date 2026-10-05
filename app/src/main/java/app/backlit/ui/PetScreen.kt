@@ -37,6 +37,7 @@ import app.backlit.pet.Base
 import app.backlit.pet.GhostArt
 import app.backlit.pet.MoodState
 import app.backlit.pet.PetBrain
+import app.backlit.pet.PetInsight
 import app.backlit.pet.PetPreviewAnimation
 import app.backlit.pet.SleepWindow
 import kotlinx.coroutines.delay
@@ -85,7 +86,31 @@ fun PetTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> 
     ) {
         repeat(10) { i -> Box(Modifier.size(10.dp).background(if (i < (mood + 5) / 10) BacklitColors.White else BacklitColors.LedOff, CircleShape)) }
     }
-    Text("Tap him to pet him here. Long press the Glyph button to pet him on the back.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+    Text(
+        "MOOD $mood / 100 · " + PetInsight.hint(brain.moodExact(now), now, sleep, ZoneId.systemDefault(),
+            charging = pose.base == Base.MUNCH, asleep = pose.base == Base.ASLEEP),
+        style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim,
+    )
+
+    var howOpen by remember { mutableStateOf(false) }
+    SettingRow("How ${settings.petName}'s mood works", if (howOpen) "−" else "+") { howOpen = !howOpen }
+    if (howOpen) {
+        Text(
+            listOf(
+                "↑ Long press to pet: +15 (once every 30 s)",
+                "↑ Charging with him on the Glyph: +1 a minute",
+                "↑ Peekaboo +5 · calming him down +10",
+                "↓ Awake and ignored: about −10 an hour",
+                "↓ Big shake −3 · getting angry −5",
+                "Asleep: no change. He never drops below 0.",
+                "70+ happy · 40+ content · 15+ bored · below 15 sad",
+            ).joinToString("\n"),
+            style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim,
+            modifier = Modifier.padding(vertical = 6.dp),
+        )
+    }
+    Text("Tap him to pet him here. Long press the Glyph button to pet him on the back.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim,
+        modifier = Modifier.padding(top = 6.dp))
 
     Text("NAME", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
     var name by remember(settings.petName) { mutableStateOf(settings.petName) }

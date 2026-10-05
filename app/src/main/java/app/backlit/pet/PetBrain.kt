@@ -63,6 +63,9 @@ class PetBrain(
 
     fun mood(now: Long): Int = current(now).roundToInt()
 
+    /** The fractional mood, for countdown hints. */
+    fun moodExact(now: Long): Double = current(now)
+
     fun snapshot(now: Long): MoodState {
         mood = current(now)
         moodAt = now
