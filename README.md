@@ -53,6 +53,13 @@ Free, no ads, no analytics, no network access.
   the % every 10 s, and a **done** moment once you reach your chosen level (50–100 %).
 - Plug-in and done can use Glyph Museum imports instead. AOD (always-on) shows the still level.
 
+### Backlit Studio + Canvas (Glyph Toy)
+- Draw your own pictures and animations at your phone's matrix size, in 3 shades: pen, erase, line,
+  circle, fill, text, mirror, undo/redo and shift, with up to 24 frames, a speed setting and per-frame hold.
+- Drawings appear everywhere Backlit picks an animation (contacts, devices, charging), can be shared as
+  Glyph Museum JSON, and Glyph Museum files import as editable drawings.
+- **Backlit Canvas** shows a drawing on the back; long-press for the next one. AOD shows its first frame.
+
 ### Alerts
 - **Important contacts:** pick contacts and give each its own animation. It plays as their call
   starts, and again after a **missed call** (10 s, then a 5 s reminder every minute, up to 10, until
@@ -317,6 +324,7 @@ Backlit learned the format by reading the open-source editor; no code was copied
 | Music toy | [`2026-10-03-backlit-music-design.md`](docs/superpowers/specs/2026-10-03-backlit-music-design.md) | [`2026-10-03-backlit-music.md`](docs/superpowers/plans/2026-10-03-backlit-music.md) |
 | Alerts | [`2026-10-04-backlit-alerts-design.md`](docs/superpowers/specs/2026-10-04-backlit-alerts-design.md) | [`2026-10-04-backlit-alerts.md`](docs/superpowers/plans/2026-10-04-backlit-alerts.md) |
 | Charge toy | [`2026-10-04-backlit-charge-design.md`](docs/superpowers/specs/2026-10-04-backlit-charge-design.md) | [`2026-10-04-backlit-charge.md`](docs/superpowers/plans/2026-10-04-backlit-charge.md) |
+| Studio + Canvas | [`2026-10-05-backlit-studio-design.md`](docs/superpowers/specs/2026-10-05-backlit-studio-design.md) | [`2026-10-05-backlit-studio.md`](docs/superpowers/plans/2026-10-05-backlit-studio.md) |
 
 Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](docs/privacy-policy.md) ·
 [Device checklist](docs/testing/device-checklist.md).
@@ -325,7 +333,6 @@ Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](doc
 
 ## Roadmap
 
-- **Pixel studio:** draw your own frames and animations for 25×25 and 13×13.
 - **Next-event countdown:** your next calendar event on the matrix.
 - **OTP on Glyph:** show verification codes on the matrix (parked).
 - **AI reactions:** animations while you talk to ChatGPT, Gemini or Claude (parked, design started).

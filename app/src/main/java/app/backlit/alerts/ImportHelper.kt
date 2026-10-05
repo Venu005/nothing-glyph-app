@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
 
-/** Reads a Glyph Museum JSON file from [uri], imports it, and returns a message for the user. */
-fun importFromUri(context: Context, runtime: AlertsRuntime, uri: Uri, deviceSize: Int): String {
+/** Reads a picked/shared JSON file: (display name without extension, text), or null if unreadable or too big. */
+fun readImportFile(context: Context, uri: Uri): Pair<String, String>? {
     val resolver = context.contentResolver
     val name = runCatching {
         resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
@@ -14,8 +14,13 @@ fun importFromUri(context: Context, runtime: AlertsRuntime, uri: Uri, deviceSize
     }.getOrNull()?.substringBeforeLast('.')?.takeIf { it.isNotBlank() } ?: "Imported animation"
     val text = runCatching {
         resolver.openInputStream(uri)?.use { s -> s.readNBytes(MAX_BYTES + 1) }
-    }.getOrNull()?.takeIf { it.size <= MAX_BYTES }?.toString(Charsets.UTF_8)
-        ?: return BAD
+    }.getOrNull()?.takeIf { it.size <= MAX_BYTES }?.toString(Charsets.UTF_8) ?: return null
+    return name to text
+}
+
+/** Reads a Glyph Museum JSON file from [uri], imports it, and returns a message for the user. */
+fun importFromUri(context: Context, runtime: AlertsRuntime, uri: Uri, deviceSize: Int): String {
+    val (name, text) = readImportFile(context, uri) ?: return BAD
     return when (val r = runtime.importJson(text, name)) {
         ImportOutcome.Invalid -> BAD
         is ImportOutcome.Ok -> {
@@ -25,6 +30,19 @@ fun importFromUri(context: Context, runtime: AlertsRuntime, uri: Uri, deviceSize
                 else -> " · made for 4a Pro, scaled for Phone (3)"
             }
             "Imported \"${r.name}\"$note"
+        }
+    }
+}
+
+/** Imports a Glyph Museum JSON file as an editable Studio drawing; returns a message for the user. */
+suspend fun importDrawingFromUri(context: Context, runtime: AlertsRuntime, uri: Uri, deviceSize: Int): String {
+    val (name, text) = readImportFile(context, uri) ?: return BAD
+    return when (val r = runtime.importAsDrawing(text, name, deviceSize)) {
+        DrawingImport.Invalid -> BAD
+        is DrawingImport.Ok -> buildString {
+            append("Imported \"${r.name}\" as a drawing")
+            if (r.truncated) append(" · first 24 frames kept")
+            if (r.simplified) append(" · brightness simplified to 3 shades")
         }
     }
 }

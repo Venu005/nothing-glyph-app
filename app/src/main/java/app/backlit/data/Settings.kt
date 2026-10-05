@@ -24,6 +24,8 @@ data class Settings(
     val chargePlugInAnim: String = "",
     val chargeDoneAnim: String = "",
     val chargeToyEverBound: Boolean = false,
+    val canvasDrawingId: String = "",
+    val canvasToyEverBound: Boolean = false,
 ) {
     val faceOptions: FaceOptions get() = FaceOptions(secondHand = secondHand, use24h = use24h)
 }

@@ -67,3 +67,14 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] Imported plug-in animation plays instead of the style's own
 - [x] CHARGE tab previews all four moments
 - Tip: `adb shell dumpsys battery unplug` / `set level N` / `set ac 1`, then `dumpsys battery reset`, fakes charging events
+
+## Pixel Studio + Canvas toy (Phone (3))
+
+- [x] Tools by finger: pen (continuous on fast drags), erase, line, circle, fill, text; mirror; undo/redo; shift; clear
+- [x] Frames: + copies, hold ×2, speed; ▶ PLAY in editor; SHOW ON GLYPH on the matrix
+- [x] Save asks for a name; drawing appears in STUDIO, ALERTS pickers and CHARGE pickers
+- [x] Backlit Canvas toy shows the chosen drawing; long press cycles; AOD shows frame 1
+- [x] Deleting the Canvas drawing falls back to another drawing / the pencil hint
+- [x] SHARE opens the share sheet; the shared file re-imports
+- [x] Import from Glyph Museum into STUDIO; EDIT IN STUDIO on an ALERTS import
+- [x] Discard prompt on unsaved Back; STUDIO tab kept after leaving the editor
