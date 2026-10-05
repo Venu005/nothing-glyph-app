@@ -78,3 +78,18 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] SHARE opens the share sheet; the shared file re-imports
 - [x] Import from Glyph Museum into STUDIO; EDIT IN STUDIO on an ALERTS import
 - [x] Discard prompt on unsaved Back; STUDIO tab kept after leaving the editor
+
+## Glyph Pet (Phone (3))
+
+- [x] PET tab: live ghost, headline + mood meter; debug meter tap cycles faces
+- [x] Toy shows the resting face for the mood
+- [x] Long press → hearts (+mood); shake → dizzy; 3 hard shakes → angry; long press while angry → calmed
+- [x] Tilt moves eyes / leans body (direction correct)
+- [x] Face-up ≥2 s then face-down → peekaboo !
+- [x] Charging → munch; AOD while charging → fills-up still
+- [x] Sleep hours → asleep with z's; long press → yawn, back to sleep after ~1 min
+- [x] AOD idle still (eyes change per minute) and AOD sleep still
+- [x] SHOW ON GLYPH plays a happy hop
+- [x] Mood persists after toggling the toy off/on
+
+- [x] Glyph Toys picker shows Nothing-style dot-matrix images for all five Backlit toys
