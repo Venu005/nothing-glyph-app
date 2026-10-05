@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,7 +35,9 @@ import app.backlit.data.Settings
 import app.backlit.data.SettingsRepo
 import app.backlit.glyph.DeviceProfile
 import app.backlit.pet.Base
-import app.backlit.pet.GhostArt
+import app.backlit.pet.PetArt
+import app.backlit.pet.PetKind
+import app.backlit.pet.Pose
 import app.backlit.pet.MoodState
 import app.backlit.pet.PetBrain
 import app.backlit.pet.PetInsight
@@ -49,6 +52,8 @@ fun PetTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> 
     val runtime = remember { AlertsRuntime.get(context) }
     val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
     val sleep = SleepWindow(settings.petSleepStart, settings.petSleepEnd)
+    val kind = PetKind.byId(settings.petKind)
+    val petName = SettingsRepo.petNameFor(settings, kind)
 
     // A local preview brain from the stored mood; taps pet it locally (no saved mood change).
     val brain = remember(settings.petMood, settings.petMoodAt, settings.petSleepStart, settings.petSleepEnd) {
@@ -68,15 +73,30 @@ fun PetTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> 
         Notice("Turn on Backlit Pet in Glyph Toys (Settings → Glyph Interface → Glyph Toys). He snacks while you charge with him on the Glyph.")
     }
 
+    Text("CHOOSE YOUR PET", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp, bottom = 6.dp))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        PetKind.entries.forEach { k ->
+            val selected = k == kind
+            androidx.compose.foundation.layout.Column(
+                Modifier.weight(1f).border(1.dp, if (selected) BacklitColors.White else BacklitColors.Line).clickable { onUpdate { it.copy(petKind = k.id) } }.padding(3.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                MatrixPreview(PetArt.frame(k, size, Pose(brain.base(now), null, 0, 0, 0, 0, 62), now), Modifier.fillMaxWidth())
+                Text(SettingsRepo.petNameFor(settings, k).uppercase(), style = MaterialTheme.typography.labelSmall, maxLines = 1,
+                    color = if (selected) BacklitColors.White else BacklitColors.Dim)
+            }
+        }
+    }
+
     val pose = brain.pose(now, size)
-    MatrixPreview(GhostArt.frame(size, pose, now), Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp).clickable { brain.onLongPress(System.currentTimeMillis(), true) })
+    MatrixPreview(PetArt.frame(kind, size, pose, now), Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp).clickable { brain.onLongPress(System.currentTimeMillis(), true) })
 
     val mood = brain.mood(now)
     val state = when (pose.base) {
         Base.HAPPY -> "HAPPY"; Base.CONTENT -> "CONTENT"; Base.BORED -> "BORED"
         Base.SAD -> "SAD"; Base.ASLEEP -> "ASLEEP"; Base.MUNCH -> "SNACKING"
     }
-    Text("${settings.petName.uppercase()} IS $state", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp))
+    Text("${petName.uppercase()} IS $state", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp))
     Row(
         Modifier.padding(vertical = 8.dp).clickable(enabled = BuildConfig.DEBUG) {
             val next = when { mood >= 70 -> 55f; mood >= 40 -> 25f; mood >= 15 -> 5f; else -> 90f }
@@ -93,7 +113,7 @@ fun PetTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> 
     )
 
     var howOpen by remember { mutableStateOf(false) }
-    SettingRow("How ${settings.petName}'s mood works", if (howOpen) "−" else "+") { howOpen = !howOpen }
+    SettingRow("How $petName's mood works", if (howOpen) "−" else "+") { howOpen = !howOpen }
     if (howOpen) {
         Text(
             listOf(
@@ -113,15 +133,15 @@ fun PetTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> 
         modifier = Modifier.padding(top = 6.dp))
 
     Text("NAME", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
-    // Local text is the source of truth while editing (not re-keyed by saves), so typing and clearing work smoothly.
-    var name by remember { mutableStateOf(settings.petName) }
+    // Local text is the source of truth while editing (re-keyed only when the pet changes).
+    var name by remember(kind) { mutableStateOf(petName) }
     OutlinedTextField(
         value = name,
         onValueChange = { v ->
             name = v.take(12)
-            SettingsRepo.petNameToSave(name)?.let { clean -> if (clean != settings.petName) onUpdate { it.copy(petName = clean) } }
+            SettingsRepo.petNameToSave(name)?.let { clean -> if (clean != petName) onUpdate { SettingsRepo.withPetName(it, kind, clean) } }
         },
-        placeholder = { Text("Boo") },
+        placeholder = { Text(kind.defaultName) },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )
@@ -131,7 +151,7 @@ fun PetTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> 
     HourStepper("TO", settings.petSleepEnd) { h -> onUpdate { it.copy(petSleepEnd = h) } }
     Text("He sleeps (and his mood doesn't drop) between these hours.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
 
-    SquareChip("SHOW ON GLYPH", true, { runtime.preview(PetPreviewAnimation.idFor(Base.HAPPY), 3000L) }, Modifier.fillMaxWidth().padding(vertical = 12.dp))
+    SquareChip("SHOW ON GLYPH", true, { runtime.preview(PetPreviewAnimation.idFor(kind, Base.HAPPY), 3000L) }, Modifier.fillMaxWidth().padding(vertical = 12.dp))
     Spacer(Modifier.height(8.dp))
 }
 

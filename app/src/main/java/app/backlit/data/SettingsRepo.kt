@@ -16,6 +16,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import java.io.IOException
 
 val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -56,8 +58,21 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val PET_SLEEP_START = intPreferencesKey("pet_sleep_start")
         private val PET_SLEEP_END = intPreferencesKey("pet_sleep_end")
         private val PET_BOUND = booleanPreferencesKey("pet_toy_ever_bound")
+        private val PET_KIND = stringPreferencesKey("pet_kind")
+        private val PET_NAMES = stringPreferencesKey("pet_names")
+        private val namesJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
 
-        fun cleanPetName(s: String): String = s.trim().take(12).trim().ifBlank { "Boo" }
+        /** The name to show for [kind]: the ghost keeps the original petName; the others live in petNames. */
+        fun petNameFor(s: Settings, kind: app.backlit.pet.PetKind): String =
+            if (kind == app.backlit.pet.PetKind.GHOST) cleanPetName(s.petName, kind.defaultName)
+            else s.petNames[kind.id]?.let { cleanPetName(it, kind.defaultName) } ?: kind.defaultName
+
+        fun withPetName(s: Settings, kind: app.backlit.pet.PetKind, name: String): Settings {
+            val clean = cleanPetName(name, kind.defaultName)
+            return if (kind == app.backlit.pet.PetKind.GHOST) s.copy(petName = clean) else s.copy(petNames = s.petNames + (kind.id to clean))
+        }
+
+        fun cleanPetName(s: String, fallback: String = "Boo"): String = s.trim().take(12).trim().ifBlank { fallback }
 
         /** What to save while the user edits the name; null while it's blank (keep the stored name). */
         fun petNameToSave(s: String): String? = s.trim().take(12).trim().ifBlank { null }
@@ -101,6 +116,8 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 petSleepStart = (this[PET_SLEEP_START] ?: d.petSleepStart).coerceIn(0, 23),
                 petSleepEnd = (this[PET_SLEEP_END] ?: d.petSleepEnd).coerceIn(0, 23),
                 petToyEverBound = this[PET_BOUND] ?: d.petToyEverBound,
+                petKind = app.backlit.pet.PetKind.byId(this[PET_KIND] ?: d.petKind).id,
+                petNames = runCatching { namesJson.decodeFromString<Map<String, String>>(this[PET_NAMES] ?: "{}") }.getOrDefault(emptyMap()),
             )
         }
 
@@ -130,6 +147,8 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[PET_SLEEP_START] = s.petSleepStart
             this[PET_SLEEP_END] = s.petSleepEnd
             this[PET_BOUND] = s.petToyEverBound
+            this[PET_KIND] = s.petKind
+            this[PET_NAMES] = namesJson.encodeToString(s.petNames)
         }
     }
 }

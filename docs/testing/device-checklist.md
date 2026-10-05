@@ -93,3 +93,11 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] Mood persists after toggling the toy off/on
 
 - [x] Glyph Toys picker shows Nothing-style dot-matrix images for all five Backlit toys
+
+## Multiple pets (Phone (3))
+
+- [x] PET tab chooser: six live tiles; switching updates preview, headline and Glyph
+- [x] Each new pet: pet hearts, dizzy, angry + steam, peekaboo, munch (frog tongue, robot cable)
+- [x] Signature moves: frog tongue + fly, penguin slide, axolotl bubbles, owl swivel, robot glitch
+- [x] AOD idle and charging fill for two pets
+- [x] Mood kept when switching; names are per pet; existing Boo name unchanged

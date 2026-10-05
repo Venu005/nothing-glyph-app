@@ -20,7 +20,8 @@ import app.backlit.alerts.AlertsRuntime
 import app.backlit.alerts.ToyPresence
 import app.backlit.data.Settings
 import app.backlit.data.SettingsRepo
-import app.backlit.pet.GhostArt
+import app.backlit.pet.PetArt
+import app.backlit.pet.PetKind
 import app.backlit.pet.MoodState
 import app.backlit.pet.PetBrain
 import app.backlit.pet.SleepWindow
@@ -186,8 +187,8 @@ class PetToyService : Service() {
                 val grid = runCatching {
                     when {
                         alert != null -> alerts!!.animationFor(alert).frame(profile.size, AlertsRuntime.now() - alert.startedAt)
-                        aod -> GhostArt.still(profile.size, b.pose(t, profile.size), Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).minute)
-                        else -> GhostArt.frame(profile.size, b.pose(t, profile.size), t)
+                        aod -> PetArt.still(PetKind.byId(settings.petKind), profile.size, b.pose(t, profile.size), Instant.ofEpochMilli(t).atZone(ZoneId.systemDefault()).minute)
+                        else -> PetArt.frame(PetKind.byId(settings.petKind), profile.size, b.pose(t, profile.size), t)
                     }
                 }.getOrElse { Log.e(TAG, "render failed", it); PixelGrid(profile.size) }
                 output?.push(FrameEncoder.encode(grid, settings.brightness, aod = alert == null && aod))

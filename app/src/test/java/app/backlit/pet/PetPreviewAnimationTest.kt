@@ -16,4 +16,15 @@ class PetPreviewAnimationTest {
         assertEquals("pet:munch", PetPreviewAnimation.idFor(Base.MUNCH))
         assertNull(PetPreviewAnimation.parse("pet:nope")); assertNull(PetPreviewAnimation.parse("charge:moon:still"))
     }
+
+    @Test
+    fun kindedIds() {
+        val f = PetPreviewAnimation.parse("pet:frog:happy")!!
+        assertEquals("pet:frog:happy", f.id)
+        assertEquals(PetArt.frame(PetKind.FROG, 25, Pose(Base.HAPPY, null, 0, 0, 0, 0, 62), 400), f.frame(25, 400))
+        assertEquals("pet:owl:munch", PetPreviewAnimation.idFor(PetKind.OWL, Base.MUNCH))
+        assertEquals("pet:happy", PetPreviewAnimation.idFor(PetKind.GHOST, Base.HAPPY))
+        assertNull(PetPreviewAnimation.parse("pet:cat:happy"))
+        assertNull(PetPreviewAnimation.parse("pet:frog:nope"))
+    }
 }
