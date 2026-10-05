@@ -60,6 +60,13 @@ Free, no ads, no analytics, no network access.
   Glyph Museum JSON, and Glyph Museum files import as editable drawings.
 - **Backlit Canvas** shows a drawing on the back; long-press for the next one. AOD shows its first frame.
 
+### Backlit Pet (Glyph Toy)
+- A little ghost with a mood meter. Long-press to pet him; shake him and he gets dizzy (or angry!);
+  tilt and his eyes follow; turn the phone face-down for a peekaboo; he munches while charging and
+  sleeps at night. Mood decays slowly while he's awake, never while he sleeps, and he never dies.
+- AOD shows a still pose, filling up like a battery while charging. The PET tab shows him live, with
+  his name, mood and sleep hours.
+
 ### Alerts
 - **Important contacts:** pick contacts and give each its own animation. It plays as their call
   starts, and again after a **missed call** (10 s, then a 5 s reminder every minute, up to 10, until
@@ -325,6 +332,7 @@ Backlit learned the format by reading the open-source editor; no code was copied
 | Alerts | [`2026-10-04-backlit-alerts-design.md`](docs/superpowers/specs/2026-10-04-backlit-alerts-design.md) | [`2026-10-04-backlit-alerts.md`](docs/superpowers/plans/2026-10-04-backlit-alerts.md) |
 | Charge toy | [`2026-10-04-backlit-charge-design.md`](docs/superpowers/specs/2026-10-04-backlit-charge-design.md) | [`2026-10-04-backlit-charge.md`](docs/superpowers/plans/2026-10-04-backlit-charge.md) |
 | Studio + Canvas | [`2026-10-05-backlit-studio-design.md`](docs/superpowers/specs/2026-10-05-backlit-studio-design.md) | [`2026-10-05-backlit-studio.md`](docs/superpowers/plans/2026-10-05-backlit-studio.md) |
+| Glyph Pet | [`2026-10-05-backlit-pet-design.md`](docs/superpowers/specs/2026-10-05-backlit-pet-design.md) | [`2026-10-05-backlit-pet.md`](docs/superpowers/plans/2026-10-05-backlit-pet.md) |
 
 Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](docs/privacy-policy.md) ·
 [Device checklist](docs/testing/device-checklist.md).

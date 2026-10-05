@@ -89,7 +89,7 @@ The first match wins:
 | DIZZY | a big shake (linear acceleration ≥ 12 m/s²), at most once per 1.5 s, when it doesn't trigger ANGRY | 2000 ms | −3 (10 s cooldown) |
 | ANGRY | the 3rd big shake within 10 s | 6000 ms | −5 |
 | CALMED | long press while ANGRY | 4000 ms | +10 |
-| PEEK | turned face-down (gravity z ≤ −7 m/s² for 0.5 s) after ≥ 2 s face-up or upright | 3200 ms | +5 |
+| PEEK | turned face-down (gravity z ≤ −7 m/s² for 0.5 s) after ≥ 2 s face-up or upright; rises over 1.2 s | 3900 ms | +5 |
 | BOO | while HAPPY in ACTIVE, at most once per 10 min, chance-based (seeded per bind) | 2600 ms | 0 |
 
 - A new reaction replaces the current one, except that ANGRY can only be replaced by CALMED.
