@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
                         Screen.SETUP -> SetupScreen(onDone = { screen = Screen.HOME })
                         Screen.ABOUT -> AboutScreen(onBack = { screen = Screen.HOME })
                         Screen.LOCATION -> LocationScreen(s, update, onBack = { screen = Screen.HOME })
-                        Screen.EDITOR -> EditorScreen(editingId, profile, onClose = { screen = Screen.HOME })
+                        Screen.EDITOR -> EditorScreen(editingId, profile, onClose = { screen = Screen.HOME }, onSaved = { editingId = it })
                     }
                 }
             }

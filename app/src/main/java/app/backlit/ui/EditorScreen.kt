@@ -40,6 +40,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,6 +52,8 @@ import androidx.compose.ui.unit.dp
 import app.backlit.alerts.AlertsRuntime
 import app.backlit.glyph.DeviceProfile
 import app.backlit.studio.Drawing
+import app.backlit.studio.DrawingBytes
+import app.backlit.studio.SaveTracker
 import app.backlit.studio.DrawingCodec
 import app.backlit.studio.EditorState
 import app.backlit.studio.MAX_FPS
@@ -62,6 +65,7 @@ import app.backlit.studio.Raster
 import app.backlit.studio.SHADE_VALUES
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.UUID
 import kotlin.math.floor
 import kotlin.math.hypot
 import kotlin.math.roundToInt
@@ -70,19 +74,31 @@ private enum class Tool { PEN, ERASE, LINE, CIRCLE, FILL }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit) {
+fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit, onSaved: (String) -> Unit = {}) {
     val context = LocalContext.current
     val runtime = remember { AlertsRuntime.get(context) }
     val scope = rememberCoroutineScope()
     val n = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25   // grid size; `size` is taken by Compose scopes
 
-    var editor by remember { mutableStateOf<EditorState?>(null) }
-    var savedId by remember { mutableStateOf(drawingId) }
-    var savedDoc by remember { mutableStateOf<Drawing?>(null) }
+    // The document, its frame and the save state survive activity recreation (rotation, theme change);
+    // undo history doesn't.
+    var workBytes by rememberSaveable { mutableStateOf<ByteArray?>(null) }
+    var workFrame by rememberSaveable { mutableIntStateOf(0) }
+    var savedIdState by rememberSaveable { mutableStateOf(drawingId) }
+    var savedBytes by rememberSaveable { mutableStateOf<ByteArray?>(null) }
+    val tracker = remember { SaveTracker(savedIdState, savedBytes?.let { DrawingBytes.decode(it) }) }
+    var editor by remember { mutableStateOf(workBytes?.let { DrawingBytes.decode(it) }?.let { EditorState.of(it).select(workFrame) }) }
     var failed by remember { mutableStateOf(false) }
     LaunchedEffect(drawingId) {
+        if (editor != null) return@LaunchedEffect
         val d = if (drawingId == null) Drawing.blank(n) else runtime.loadDrawing(drawingId, n)
-        if (d == null) failed = true else { editor = EditorState.of(d); savedDoc = if (drawingId == null) null else d }
+        if (d == null) failed = true else {
+            editor = EditorState.of(d)
+            if (drawingId != null) { tracker.finished(d); savedBytes = DrawingBytes.encode(d) }
+        }
+    }
+    LaunchedEffect(editor) {
+        editor?.let { workBytes = DrawingBytes.encode(it.doc); workFrame = it.current }
     }
 
     var tool by remember { mutableStateOf(Tool.PEN) }
@@ -96,7 +112,7 @@ fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit
     var frameMenu by remember { mutableStateOf<Int?>(null) }
 
     val state = editor
-    val dirty = state != null && state.doc != savedDoc
+    val dirty = state != null && savedBytes.let { tracker.dirty(state.doc) }
     fun leave() { if (dirty) askDiscard = true else onClose() }
     BackHandler { leave() }
 
@@ -112,10 +128,14 @@ fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit
     fun save(name: String? = null) {
         val named = if (name != null) state.rename(name) else state
         val fixed = if (named.doc.name.isBlank()) named.rename("Drawing") else named
+        editor = fixed                                                      // apply now: edits made during the write are kept
+        val id = tracker.begin(fixed.doc) { "import:" + UUID.randomUUID() } // fixed id: a second tap can't duplicate
+        savedIdState = id
+        onSaved(id)
         scope.launch {
-            savedId = runtime.saveDrawing(fixed.doc, savedId)
-            editor = fixed
-            savedDoc = fixed.doc
+            runtime.saveDrawing(fixed.doc, id)
+            tracker.finished(fixed.doc)
+            savedBytes = DrawingBytes.encode(fixed.doc)
         }
     }
 
@@ -259,8 +279,8 @@ fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit
 
         // ── save / show ──
         Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            SquareChip(if (dirty || savedId == null) "SAVE" else "SAVED", true, {
-                if (savedId == null && state.doc.name.isBlank()) askName = true else save()
+            SquareChip(if (dirty || tracker.id == null) "SAVE" else "SAVED", true, {
+                if (tracker.id == null && state.doc.name.isBlank()) askName = true else save()
             }, Modifier.weight(1f))
             SquareChip("SHOW ON GLYPH", false, {
                 val anim = DrawingCodec.encode(state.doc, AlertsRuntime.PREVIEW_ID)
