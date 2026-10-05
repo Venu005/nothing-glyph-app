@@ -32,6 +32,8 @@ data class Settings(
     val petSleepStart: Int = 23,
     val petSleepEnd: Int = 7,
     val petToyEverBound: Boolean = false,
+    val petKind: String = "ghost",
+    val petNames: Map<String, String> = emptyMap(),
 ) {
     val faceOptions: FaceOptions get() = FaceOptions(secondHand = secondHand, use24h = use24h)
 }

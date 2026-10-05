@@ -42,6 +42,7 @@ class SettingsRepoTest {
             chargeToyEverBound = true,
             canvasDrawingId = "import:q", canvasToyEverBound = true,
             petName = "Casper", petMood = 42.5f, petMoodAt = 123_456L, petSleepStart = 22, petSleepEnd = 6, petToyEverBound = true,
+            petKind = "owl", petNames = mapOf("owl" to "Professor", "frog" to "Kermie"),
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -124,5 +125,28 @@ class SettingsRepoTest {
         assertNull(SettingsRepo.petNameToSave("   "))
         assertEquals("Casper", SettingsRepo.petNameToSave(" Casper "))
         assertEquals("ABCDEFGHIJKL", SettingsRepo.petNameToSave("ABCDEFGHIJKLMNOP"))
+    }
+
+    @Test
+    fun petKindDefaultsToGhostAndKeepsGhostName() = runBlocking {
+        val r = repo()
+        r.update { it.copy(petName = "Casper") }                     // an existing user, before multi-pets
+        val s = r.settings.first()
+        assertEquals("ghost", s.petKind)
+        assertEquals("Casper", SettingsRepo.petNameFor(s, app.backlit.pet.PetKind.GHOST))
+    }
+
+    @Test
+    fun namesArePerPet() {
+        val s = Settings()
+        val owl = app.backlit.pet.PetKind.OWL
+        assertEquals("Hoot", SettingsRepo.petNameFor(s, owl))
+        val named = SettingsRepo.withPetName(s, owl, "Professor")
+        assertEquals("Professor", SettingsRepo.petNameFor(named, owl))
+        assertEquals("Boo", SettingsRepo.petNameFor(named, app.backlit.pet.PetKind.GHOST))
+        assertEquals("Ribbit", SettingsRepo.petNameFor(named, app.backlit.pet.PetKind.FROG))
+        val ghost = SettingsRepo.withPetName(named, app.backlit.pet.PetKind.GHOST, "Spooky")
+        assertEquals("Spooky", ghost.petName); assertEquals("Professor", SettingsRepo.petNameFor(ghost, owl))
+        assertEquals("Hoot", SettingsRepo.petNameFor(SettingsRepo.withPetName(s, owl, "   "), owl))
     }
 }
