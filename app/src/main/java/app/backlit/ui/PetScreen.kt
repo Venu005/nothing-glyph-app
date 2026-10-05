@@ -113,10 +113,15 @@ fun PetTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> 
         modifier = Modifier.padding(top = 6.dp))
 
     Text("NAME", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 4.dp))
-    var name by remember(settings.petName) { mutableStateOf(settings.petName) }
+    // Local text is the source of truth while editing (not re-keyed by saves), so typing and clearing work smoothly.
+    var name by remember { mutableStateOf(settings.petName) }
     OutlinedTextField(
         value = name,
-        onValueChange = { v -> name = v.take(12); onUpdate { it.copy(petName = SettingsRepo.cleanPetName(name)) } },
+        onValueChange = { v ->
+            name = v.take(12)
+            SettingsRepo.petNameToSave(name)?.let { clean -> if (clean != settings.petName) onUpdate { it.copy(petName = clean) } }
+        },
+        placeholder = { Text("Boo") },
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
     )

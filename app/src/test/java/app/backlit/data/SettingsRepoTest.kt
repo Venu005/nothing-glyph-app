@@ -117,4 +117,12 @@ class SettingsRepoTest {
         assertEquals("Spooky Ghost", SettingsRepo.cleanPetName("  Spooky Ghost  "))
         assertEquals("ABCDEFGHIJKL", SettingsRepo.cleanPetName("ABCDEFGHIJKLMNOP"))
     }
+
+    @Test
+    fun petNameEditsOnlySaveRealNames() {
+        assertNull(SettingsRepo.petNameToSave(""))          // cleared while typing: keep the old name, don't snap back to "Boo"
+        assertNull(SettingsRepo.petNameToSave("   "))
+        assertEquals("Casper", SettingsRepo.petNameToSave(" Casper "))
+        assertEquals("ABCDEFGHIJKL", SettingsRepo.petNameToSave("ABCDEFGHIJKLMNOP"))
+    }
 }

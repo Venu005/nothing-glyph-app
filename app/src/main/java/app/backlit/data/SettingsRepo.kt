@@ -59,6 +59,9 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
 
         fun cleanPetName(s: String): String = s.trim().take(12).trim().ifBlank { "Boo" }
 
+        /** What to save while the user edits the name; null while it's blank (keep the stored name). */
+        fun petNameToSave(s: String): String? = s.trim().take(12).trim().ifBlank { null }
+
         /** 50..100 in steps of 5 (nearest step, halves round up). */
         fun clampTarget(v: Int): Int = (((v.coerceIn(50, 100) + 2) / 5) * 5).coerceIn(50, 100)
 
