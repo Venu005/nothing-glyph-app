@@ -69,7 +69,11 @@ object GhostArt {
             else -> {
                 body(g, 0, Body(hemSpeed = 0))
                 val (lx, ly) = LOOKS[((minuteOfHour % 4) + 4) % 4]
-                eyes(g, if (pose.base == Base.SAD) "sad" else "open", px = lx, py = if (big) ly else 0)
+                when (pose.base) {
+                    Base.SAD -> eyes(g, "sad")
+                    Base.BORED -> eyes(g, "half", px = if (big) 1 else 0)           // the same side-eye as screen-on
+                    else -> eyes(g, "open", px = lx, py = if (big) ly else 0)
+                }
                 mouth(g, when (pose.base) { Base.HAPPY -> "wide"; Base.BORED -> "flat"; Base.SAD -> "frown"; else -> "small" })
             }
         }

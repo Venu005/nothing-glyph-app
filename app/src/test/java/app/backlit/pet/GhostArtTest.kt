@@ -50,4 +50,12 @@ class GhostArtTest {
         val up = GhostArt.frame(25, pose(r = Reaction.PEEK), 1300)     // fully up after ~1.2 s
         assertTrue(up[12, 4] >= 200)
     }
+
+    @Test
+    fun boredAodStillUsesTheHalfLiddedSideEye() {
+        val g = GhostArt.still(25, pose(Base.BORED), 0)
+        assertEquals(0, g[9, 10])                                    // no full-height open eye
+        assertEquals(255, g[10, 11]); assertEquals(255, g[11, 12])   // half-lidded, shifted 1 px to the side
+        assertEquals(255, g[12, 15]); assertEquals(255, g[11, 15])   // flat mouth
+    }
 }
