@@ -1,0 +1,163 @@
+<h2>All pets: every mood, reaction and always-on pose</h2>
+<p class="subtitle">One row per pet, drawn by one shared expression system: each pet is a "rig" (body, eye and mouth positions, extras). Big = 25×25, small = 13×13. Click any cell you'd like changed and tell me what in the terminal.</p>
+<div style="display:flex;gap:10px;margin:6px 0 14px">
+  <button class="mock-button" id="sz">Show 13×13</button>
+</div>
+<div id="rows"></div>
+<p id="err" style="color:#D71921;font-family:monospace;font-size:12px"></p>
+
+<style>
+  .petrow{margin:14px 0 22px}
+  .petname{font:700 15px ui-monospace,Menlo,monospace;color:#eee;margin-bottom:6px}
+  .cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px}
+  .cell{background:#0b0b0b;border:1px solid #262626;border-radius:6px;padding:6px;cursor:pointer;text-align:center}
+  .cell.selected{border-color:#D71921}
+  .cell canvas{display:block;margin:0 auto}
+  .lbl{color:#999;font:10px ui-monospace,Menlo,monospace;margin-top:4px}
+</style>
+
+<script>
+(function(){
+function mask(n,x,y){var c=(n-1)/2;return Math.hypot(x-c,y-c)<=n/2}
+function G(n){var g=new Float32Array(n*n);g.n=n;
+  g.p=function(x,y,b){x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=n||y>=n||!mask(n,x,y)||b<=0)return;var i=y*n+x;if(b>g[i])g[i]=Math.min(1,b)};
+  g.s=function(x,y,b){if(b==null)b=1;x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=n||y>=n||!mask(n,x,y))return;g[y*n+x]=b};
+  g.get=function(x,y){return (x<0||y<0||x>=n||y>=n)?0:g[y*n+x]};
+  return g}
+var O=0.9,F=0.22,L=0.5;
+function blob(g,cx,cy,a,b,fill,edge){var n=g.n;function inE(x,y){return Math.pow((x-cx)/a,2)+Math.pow((y-cy)/b,2)<=1}
+  for(var y=0;y<n;y++)for(var x=0;x<n;x++){if(!inE(x,y))continue;var e=!inE(x+1,y)||!inE(x-1,y)||!inE(x,y+1)||!inE(x,y-1);if(e){if(edge)g.s(x,y,edge)}else if(fill!=null)g.s(x,y,fill)}}
+function line(g,x0,y0,x1,y1,b){var st=Math.max(1,Math.ceil(Math.hypot(x1-x0,y1-y0)*2));for(var k=0;k<=st;k++){var f=k/st;g.s(x0+(x1-x0)*f,y0+(y1-y0)*f,b)}}
+function bm(g,rows,x0,y0,map){rows.forEach(function(r,j){for(var i=0;i<r.length;i++){var v=map[r[i]];if(v!=null)g.s(x0+i,y0+j,v)}})}
+function pts(g,list,dx,dy,b){list.forEach(function(p){g.s(p[0]+dx,p[1]+dy,b==null?1:b)})}
+var HEART=["101","111","010"],Z=["111","010","111"],BOLT=["01","11","10"];
+function float(t,big,amp){return Math.round(Math.sin(t/700)*(big?1:0.6)*(amp==null?1:amp))}
+
+// ───────── generic face parts (driven by each rig's anchors) ─────────
+function eyes(g,R,kind,o){var big=g.n>=25,A=big?R.e25:R.e13,dx=o.dx||0,dy=o.dy||0,lx=o.lx||0,ly=big?(o.ly||0):0;
+  var on=A.mode==="hole"?0:1;
+  A.cx.forEach(function(cx,i){var x=cx+dx,y=A.cy+dy,w=A.w,h=A.h,left=i===0;
+    function blk(xx,yy,ww,hh,v){for(var a=0;a<ww;a++)for(var c=0;c<hh;c++)g.s(xx+a,yy+c,v)}
+    if(kind==="open")blk(x+lx,y+ly,w,h,on);
+    else if(kind==="blink"||kind==="closed"){for(var a=-(w>1?0:1);a<w+(w>1?0:1);a++)g.s(x+a,y+h-1,big?1:0.5)}
+    else if(kind==="half")blk(x+(big?1:0),y+h-1,w,1,on);
+    else if(kind==="happy"){if(big){g.s(x-1,y+h-1,1);for(var a=0;a<w;a++)g.s(x+a,y+h-2,1);g.s(x+w,y+h-1,1)}else{g.s(x-1,y,1);g.s(x,y-1,1);g.s(x+1,y,1)}}
+    else if(kind==="sad"){blk(x,y+(h>1?1:0),w,h>1?h-1:1,on);g.s(left?x-1:x+w,y+h,0.6)}
+    else if(kind==="swirl"){var cells=[];for(var a=0;a<w;a++)for(var c=0;c<h;c++)cells.push([a,c]);if(cells.length===1)cells=[[0,-1],[1,0],[0,1],[-1,0]];var ph=Math.floor((o.t||0)/110)%cells.length;
+      if(big||cells.length>1)cells.forEach(function(cc,k){g.s(x+cc[0],y+cc[1],k===ph?(A.mode==="hole"?L:0.15):on)});}
+    else if(kind==="angry"){blk(x,y+h-1,w,1,on);if(big){var bx0=left?x-1:x+w,bx1=left?x+w:x-1;line(g,bx0,y-2,bx1,y-1,1)}else g.s(left?x+1:x-1,y-1,1)}
+    else if(kind==="wide"){blk(x-(big?1:0),y-(big?1:0),w+(big?2:0),h+(big?1:0),on)}});}
+var MOUTH={smile:[[-1,0],[0,1],[1,0]],wide:[[-2,0],[-1,1],[0,1],[1,1],[2,0]],flat:[[-1,0],[0,0],[1,0]],frown:[[-1,1],[0,0],[1,1]],
+  O:[[0,-1],[-1,0],[1,0],[0,1]],zig:[[-2,1],[-1,0],[0,1],[1,0],[2,1]],chomp:[[-1,0],[0,0],[1,0],[-1,1],[1,1]],small:[[0,0]]};
+function mouth(g,R,kind,o){var big=g.n>=25,M=big?R.m25:R.m13,dx=o.dx||0,dy=o.dy||0;if(R.mouth){R.mouth(g,kind,o);return}
+  var sc=M.sc||1;MOUTH[kind].forEach(function(p){var xs=p[0]*sc;g.s(M.x+xs+dx,M.y+p[1]+dy,1);if(sc>1&&p[0]!==0)g.s(M.x+xs-Math.sign(xs)+dx,M.y+p[1]+dy,1)})}
+function cheeks(g,R,o,v){var big=g.n>=25,C=big?R.c25:R.c13;if(!C)return;C.forEach(function(p){g.p(p[0]+(o.dx||0),p[1]+(o.dy||0),v)})}
+function hearts(g,t,count){var big=g.n>=25;for(var i=0;i<count;i++){var ph=((t/1300)+i/count)%1;var hx=big?(i%2?20:2):(i%2?11:1);var hy=(big?11:6)-ph*(big?9:5);
+  if(big)HEART.forEach(function(r,j){for(var k=0;k<3;k++)if(r[k]==="1")g.p(hx+k,Math.round(hy)+j,1-ph*0.7)});else g.p(hx,Math.round(hy),1-ph*0.7)}}
+
+// ───────── rigs ─────────
+var RIGS={
+ frog:{name:"Frog",
+  e25:{cx:[6,16],cy:9,w:2,h:2,mode:"hole"},e13:{cx:[3,9],cy:5,w:1,h:1,mode:"hole"},
+  m25:{x:12,y:16,sc:2},m13:{x:6,y:8,sc:1},c25:[[5,16],[19,16]],c13:[[2,8],[10,8]],top25:5,top13:4,
+  body:function(g,o){var big=g.n>=25,dx=o.dx||0,dy=o.dy||0,k=o.puff?1.08:1,b=o.b||O;
+    if(big){blob(g,12+dx,15+dy,9.5*k,6*k,F,b);[7,17].forEach(function(ex){blob(g,ex+dx,9+dy,3.4,3.4,L,b)});pts(g,[[7,21],[8,21],[9,21],[15,21],[16,21],[17,21]],dx,dy,0.75)}
+    else bm(g,["oo.....oo","oLo...oLo","ooooooooo","oFFFFFFFo","oFFFFFFFo",".oFFFFFo."],2+dx,4+dy,{o:b,L:L,F:F})},
+  signature:function(g,t){var big=g.n>=25;this.body(g,{});eyes(g,this,"open",{});mouth(g,this,"smile",{});var c=t%1500,fa=t/400;
+    if(big){var fx=Math.round(19+Math.cos(fa)*1.5),fy=Math.round(5+Math.sin(fa*1.3));if(c<1150){g.s(fx,fy,1);g.p(fx-1,fy-1,0.45);g.p(fx+1,fy-1,0.45)}if(c>800&&c<1200){var f=(c-800)/200;f=f>1?2-f:f;line(g,12,17,12+(fx-12)*f,17+(fy-17)*f,1)}}
+    else{if(c>800&&c<1200){g.s(8,7,1);g.s(9,6,1);g.s(10,5,1)}else g.s(10,3,1)}},
+  munch:function(g,t,o){var big=g.n>=25,c=t%2200;this.body(g,o);eyes(g,this,c>1300?"happy":"open",o);
+    if(big){var bx=23-Math.min(1,c/900)*4;if(c<1000)BOLT.forEach(function(r,j){for(var i=0;i<2;i++)if(r[i]==="1")g.s(Math.round(bx)+i,8+j+(o.dy||0),1)});
+      if(c>800&&c<1100){var f=(c-800)/150;f=f>1?2-f:f;line(g,12,17+(o.dy||0),12+(bx-12)*f,17+(8-17)*f+(o.dy||0),1)}mouth(g,this,c>1100?"chomp":"smile",o)}
+    else{if(c<900)g.s(11-Math.round(c/300),5,1);mouth(g,this,c>1100?"chomp":"smile",o)}}},
+ penguin:{name:"Penguin",
+  e25:{cx:[10,14],cy:9,w:1,h:2,mode:"hole"},e13:{cx:[5,7],cy:5,w:1,h:1,mode:"hole"},
+  m25:{x:12,y:12},m13:{x:6,y:6},c25:[[9,12],[15,12]],c13:null,top25:4,top13:3,
+  mouth:function(g,kind,o){var big=g.n>=25,dx=o.dx||0,dy=o.dy||0;var open=kind==="O"||kind==="chomp"||kind==="wide"||kind==="zig";
+    if(big){if(open){pts(g,[[11,12],[12,12],[13,12],[11,14],[12,14],[13,14]],dx,dy,1);g.s(12+dx,13+dy,0)}else pts(g,[[11,12],[12,12],[13,12],[12,13]],dx,dy,1)}
+    else{g.s(6+dx,6+dy,1);if(open)g.s(6+dx,7+dy,1)}},
+  body:function(g,o){var big=g.n>=25,dx=o.dx||0,dy=o.dy||0,k=o.puff?1.08:1,b=o.b||O;
+    if(big){blob(g,12+dx,13+dy,6.5*k,8.5*k,F,b);blob(g,10+dx,9.5+dy,2.6,2.6,L,null);blob(g,14+dx,9.5+dy,2.6,2.6,L,null);blob(g,12+dx,15.5+dy,4.3,5.5,L,null);
+      if(o.flap){line(g,5+dx,12+dy,2+dx,8+dy,b);line(g,19+dx,12+dy,22+dx,8+dy,b)}else{line(g,5+dx,11+dy,4+dx,16+dy,b);line(g,19+dx,11+dy,20+dx,16+dy,b)}
+      pts(g,[[9,22],[10,22],[11,22],[13,22],[14,22],[15,22]],dx,dy+(o.footLift||0),1)}
+    else{bm(g,["..ooooo..",".oLLoLLo.",".oLLoLLo.","ooLLLLLoo",".oLLLLLo.",".oLLLLLo.","..ooooo..","..X...X.."],2+dx,3+dy,{o:b,L:L,X:1});if(o.flap){g.s(1+dx,5+dy,b);g.s(11+dx,5+dy,b)}}},
+  signature:function(g,t){var big=g.n>=25,sx=Math.round(-15+(t%3000)/3000*30*(big?1:0.6));
+    if(big){blob(g,12+sx,16,8,4.2,F,O);blob(g,13+sx,17,5,2.4,L,null);g.s(20+sx,15,1);g.s(21+sx,16,1);g.s(17+sx,14,0);g.p(3+sx,19,0.35);g.p(1+sx,20,0.25)}else{blob(g,6+sx,9,4.2,2.3,F,O);g.s(10+sx,9,1)}}},
+ axolotl:{name:"Axolotl",
+  e25:{cx:[9,15],cy:12,w:1,h:2,mode:"bright"},e13:{cx:[4,8],cy:6,w:1,h:1,mode:"bright"},
+  m25:{x:12,y:16},m13:{x:6,y:7},c25:[[7,16],[17,16]],c13:[[3,8],[9,8]],top25:8,top13:4,
+  body:function(g,o){var big=g.n>=25,dx=o.dx||0,dy=o.dy||0,k=o.puff?1.08:1,b=o.b||O,t=o.t||0;var sp=o.gill==="fast"?100:o.gill==="still"?1e12:o.gill==="slow"?1400:550;var sw=Math.sin(t/sp);var droop=o.gill==="droop";
+    if(big){blob(g,12+dx,14+dy,7.5*k,5.5*k,F,b);[-1,1].forEach(function(sd){[[10,-2],[13,0],[16,2]].forEach(function(gl,i){var x0=12+sd*7+dx,y0=gl[0]+dy;var w=droop?2:Math.round(sw*(i===1?0.6:1)*(i===0?-1:1));
+      var x1=x0+sd*3,y1=y0+gl[1]+w;line(g,x0,y0,x1,y1,0.75*(b/O));g.s(x1,y1,b>=O?1:b);g.s(x1+sd,y1-1,0.8*(b/O));g.s(x1+sd,y1+1,0.8*(b/O))})})}
+    else{bm(g,["..ooooo..",".oFFFFFo.","oFFFFFFFo","oFFFFFFFo",".oFFFFFo.","..ooooo.."],2+dx,4+dy,{o:b,F:F});var w=droop?1:Math.round(sw);[[1,4],[0,7],[1,10]].forEach(function(p,i){var yo=i===1?0:w*(i===0?-1:1);if(droop)yo=1;g.s(p[0]+dx,p[1]+dy+yo,b>=O?1:b);g.s(12-p[0]+dx,p[1]+dy+yo,b>=O?1:b)})}},
+  signature:function(g,t){var big=g.n>=25;this.body(g,{t:t});eyes(g,this,"open",{});mouth(g,this,"O",{});
+    if(big){for(var i=0;i<3;i++){var q=((t/1000)+i/3)%1;var bx=12+Math.sin(q*7+i)*1.6,by=15-q*15;if(q>0.35){g.p(bx-1,by,1-q);g.p(bx+1,by,1-q);g.p(bx,by-1,1-q);g.p(bx,by+1,1-q)}else g.p(bx,by,1-q)}}
+    else{var q=(t/900)%1;g.p(6,7-q*7,1-q)}}},
+ owl:{name:"Owl",
+  e25:{cx:[9,15],cy:11,w:1,h:2,mode:"hole"},e13:{cx:[4,8],cy:5,w:1,h:1,mode:"hole"},
+  m25:{x:12,y:13},m13:{x:6,y:6},c25:null,c13:null,top25:5,top13:2,
+  mouth:function(g,kind,o){var big=g.n>=25,dx=o.dx||0,dy=o.dy||0;var open=kind==="O"||kind==="chomp"||kind==="wide"||kind==="zig";
+    if(big){g.s(12+dx,13+dy,1);g.s(12+dx,14+dy,1);if(open){g.s(11+dx,15+dy,1);g.s(13+dx,15+dy,1)}}else{g.s(6+dx,6+dy,1);if(open)g.s(6+dx,7+dy,0.7)}},
+  body:function(g,o){var big=g.n>=25,dx=o.dx||0,dy=o.dy||0,k=o.puff?1.08:1,b=o.b||O;
+    if(big){blob(g,12+dx,14+dy,7.5*k,8.5*k,F,b);pts(g,[[6,5],[7,6],[18,5],[17,6]],dx,dy,b);[9,15].forEach(function(ex){blob(g,ex+dx,11.5+dy,3,3,L,b>=O?1:b)});
+      pts(g,[[10,17],[11,18],[13,18],[14,17],[11,20],[12,21],[13,20]],dx,dy,0.6*(b/O));if(o.flap){line(g,4+dx,13+dy,1+dx,10+dy,b);line(g,20+dx,13+dy,23+dx,10+dy,b)}pts(g,[[10,23],[11,23],[13,23],[14,23]],dx,dy,1)}
+    else{bm(g,["o.......o",".ooooooo.","oLLoFoLLo","oLLLFLLLo","oLLoFoLLo","oFFFFFFFo",".oFdFdFo.","..ooooo.."],2+dx,2+dy,{o:b,L:L,F:F,d:0.6});if(o.flap){g.s(1+dx,6+dy,b);g.s(11+dx,6+dy,b)}}},
+  signature:function(g,t){var look=Math.round(Math.sin(t/420)*1.4);this.body(g,{});eyes(g,this,"open",{lx:Math.max(-1,Math.min(1,look))});mouth(g,this,"small",{})}},
+ robot:{name:"Robot",
+  e25:{cx:[9,14],cy:10,w:2,h:2,mode:"bright"},e13:{cx:[5,7],cy:5,w:1,h:1,mode:"bright"},
+  m25:{x:12,y:14,sc:1},m13:{x:6,y:7},c25:[[8,13],[16,13]],c13:null,top25:3,top13:1,
+  body:function(g,o){var big=g.n>=25,dx=o.dx||0,dy=o.dy||0,b=o.b||O,tip=o.tip==null?0.6:o.tip;
+    if(big){var p=o.puff?1:0;for(var y=6-p;y<=17+p;y++)for(var x=5-p;x<=19+p;x++){var edge=y===6-p||y===17+p||x===5-p||x===19+p;var corner=(y===6-p||y===17+p)&&(x===5-p||x===19+p);if(corner)continue;g.s(x+dx,y+dy,edge?b:F)}
+      for(var y=8;y<=15;y++)for(var x=7;x<=17;x++)g.s(x+dx,y+dy,(y===8||y===15||x===7||x===17)?0.45*(b/O):0);
+      pts(g,[[12,5],[12,4],[4,11],[4,12],[20,11],[20,12]],dx,dy,0.7*(b/O));g.s(12+dx,3+dy,tip);g.s(12+dx,18+dy,0.6*(b/O));
+      for(var y=19;y<=22;y++)for(var x=8;x<=16;x++){var e2=y===19||y===22||x===8||x===16;g.s(x+dx,y+dy,e2?b:F)}}
+    else{bm(g,["...o...","...X...","ooooooo","oFFFFFo","oFFFFFo","oFFFFFo","oFFFFFo","ooooooo","..ooo.."],3+dx,1+dy,{o:b,F:F,X:tip})}},
+  signature:function(g,t){var big=g.n>=25,h=G(g.n);this.body(h,{tip:1});eyes(h,this,"open",{});mouth(h,this,"flat",{});var n=g.n,seed=Math.floor(t/110);
+    for(var y=0;y<n;y++){var r=((y*73+seed*31)%11);var off=r<2?(r?2:-2):(r===2?1:0);if(!big)off=Math.sign(off);for(var x=0;x<n;x++){var sx=x-off;if(sx>=0&&sx<n&&h[y*n+sx]>0)g.p(x,y,h[y*n+sx])}}},
+  munch:function(g,t,o){var big=g.n>=25,c=t%2400;this.body(g,{dy:o.dy,tip:(Math.floor(t/200)%2)?1:0.4});eyes(g,this,c>1200?"happy":"open",o);mouth(g,this,c>1200?"wide":"flat",o);
+    if(big){var reach=Math.min(1,c/900);line(g,24,15,24-reach*3,12,0.8);if(c>900)g.p(20,12,(Math.floor(t/120)%2)?1:0.5)}else{if(c>600)g.s(11,6,(Math.floor(t/150)%2)?1:0.4)}}},
+};
+
+// ───────── shared moods & reactions ─────────
+function zz(g,t,R){var big=g.n>=25;for(var i=0;i<2;i++){var ph=((t/2400)+i*0.5)%1;if(big)Z.forEach(function(r,j){for(var k=0;k<3;k++)if(r[k]==="1")g.p(18+Math.round(ph*3)+k,Math.round((R.top25+1)-ph*5)+j,1-ph)});else g.p(10+Math.round(ph),Math.round(2-ph*2),1-ph)}}
+function steam(g,t,R){var big=g.n>=25;for(var i=0;i<2;i++){var ph=((t/900)+i*0.5)%1,side=i?1:-1;if(big){var x=12+side*(8+ph*3),y=R.top25-ph*4;g.p(x,y,1-ph);g.p(x+side,y,0.7*(1-ph));g.p(x,y-1,0.6*(1-ph))}else g.p(6+side*(5+ph*1.5),1-ph*2,1-ph)}}
+var STATES={
+ happy:function(g,R,t){var big=g.n>=25,c=t%2600,dy=c<500?Math.round(-Math.sin(c/500*Math.PI)*(big?2:1)):float(t,big);var o={dy:dy,t:t,flap:c<500&&Math.floor(c/120)%2===0,gill:"fast",tip:1};R.body(g,o);eyes(g,R,"happy",o);mouth(g,R,"wide",o);cheeks(g,R,o,0.5)},
+ content:function(g,R,t){var big=g.n>=25,dy=float(t,big);var o={dy:dy,t:t,lx:Math.round(Math.sin(t/2500)),tip:(Math.floor(t/600)%2)?1:0.3};R.body(g,o);eyes(g,R,(t%3200)<160?"blink":"open",o);mouth(g,R,"smile",o);cheeks(g,R,o,0.3)},
+ bored:function(g,R,t){var big=g.n>=25,dy=float(t,big,0.5),y=(t%7000)>5800;var o={dy:dy,t:t,gill:"slow",tip:0.3};R.body(g,o);eyes(g,R,y?"closed":"half",o);mouth(g,R,y?"O":"flat",o);
+   if(big&&!y&&Math.floor(t/350)%2)g.p(6,22,0.5)},
+ sad:function(g,R,t){var big=g.n>=25,sigh=(t%5200)>4300;var o={dy:sigh?1:0,t:t,b:0.7,gill:"droop",tip:0.2};R.body(g,o);eyes(g,R,"sad",o);mouth(g,R,"frown",o);
+   var A=big?R.e25:R.e13,tr=(t%2400)/2400;g.p(A.cx[1]+A.w,A.cy+A.h+1+tr*(big?4:2),0.6*(1-tr))},
+ asleep:function(g,R,t){var big=g.n>=25,br=0.5+0.25*(0.5+0.5*Math.sin(t/900));var o={dy:float(t,big,0.5),t:t,b:br,gill:"still",tip:0.15};R.body(g,o);eyes(g,R,"closed",o);mouth(g,R,"small",o);zz(g,t,R)},
+ pet:function(g,R,t){var big=g.n>=25;var o={dy:float(t,big),t:t,gill:"fast",tip:1,flap:Math.floor(t/150)%2===0};R.body(g,o);eyes(g,R,"happy",o);mouth(g,R,"wide",o);cheeks(g,R,o,0.7);hearts(g,t,big?3:2)},
+ dizzy:function(g,R,t){var big=g.n>=25,dx=Math.round(Math.sin(t/110)*(big?1.4:1));var o={dx:dx,dy:float(t,big),t:t*3,gill:"fast"};R.body(g,o);eyes(g,R,"swirl",{dx:dx,dy:o.dy,t:t});mouth(g,R,"zig",o)},
+ angry:function(g,R,t){var sh=(Math.floor(t/90)%2)&&(t%1500<500)?1:0;var o={dx:sh,puff:true,t:t,gill:"fast",tip:1};R.body(g,o);eyes(g,R,"angry",o);mouth(g,R,"zig",o);steam(g,t,R)},
+ calmed:function(g,R,t){if(t%4000<1600){var o={t:t,gill:"slow"};R.body(g,o);eyes(g,R,"closed",o);mouth(g,R,"small",o)}else STATES.pet(g,R,t)},
+ munch:function(g,R,t){var big=g.n>=25,o={dy:float(t,big),t:t};if(R.munch){R.munch(g,t,o);return}var c=t%2200;R.body(g,o);eyes(g,R,c>1000?"happy":"open",o);
+   if(c<1000){var M=big?R.m25:R.m13,x=(big?23:12)-c/1000*(big?(23-M.x-2):(12-M.x-1));if(big)BOLT.forEach(function(r,j){for(var i=0;i<2;i++)if(r[i]==="1")g.s(Math.round(x)+i,M.y-1+j+o.dy,1)});else g.s(Math.round(x),M.y+o.dy,1);mouth(g,R,"O",o)}
+   else mouth(g,R,(Math.floor(c/180)%2)?"chomp":"flat",o)},
+ peek:function(g,R,t){var big=g.n>=25,c=t%3900,rise=1200,off=c<rise?Math.round((1-c/rise)*(big?14:8)):0;var o={dy:off,t:t,tip:1};R.body(g,o);eyes(g,R,c<rise?"open":"wide",o);mouth(g,R,c<rise?"small":"O",o);
+   if(c>rise&&Math.floor(c/250)%2){if(big){for(var y=3;y<=6;y++)g.p(22,y,1);g.p(22,8,1)}else{g.p(11,3,1);g.p(11,5,1)}}},
+ yawn:function(g,R,t){var c=t%3600,o={dy:float(t,g.n>=25,0.5),t:t,gill:"slow",tip:0.3};R.body(g,o);if(c<1800){eyes(g,R,"closed",o);mouth(g,R,"O",o)}else{eyes(g,R,"half",o);mouth(g,R,"small",o)}},
+ signature:function(g,R,t){R.signature(g,t)},
+ aodIdle:function(g,R,t){var o={t:0,gill:"still",lx:1,tip:0.5};R.body(g,o);eyes(g,R,"open",o);mouth(g,R,"smile",o)},
+ aodBored:function(g,R,t){var o={t:0,gill:"still",tip:0.3};R.body(g,o);eyes(g,R,"half",o);mouth(g,R,"flat",o)},
+ aodSleep:function(g,R,t){var o={t:0,b:0.55,gill:"still",tip:0.15};R.body(g,o);eyes(g,R,"closed",o);mouth(g,R,"small",o);if(g.n>=25)Z.forEach(function(r,j){for(var k=0;k<3;k++)if(r[k]==="1")g.p(19+k,R.top25-2+j,0.8)});else g.p(10,1,0.8)},
+ aodFill:function(g,R,t){var big=g.n>=25,h=G(g.n);var o={t:0,gill:"still",tip:1};R.body(h,o);var n=g.n;var ys=[];for(var i=0;i<h.length;i++)if(Math.abs(h[i]-F)<1e-3)ys.push(Math.floor(i/n));
+   var top=Math.min.apply(null,ys),bot=Math.max.apply(null,ys),lv=0.62,fillTop=Math.round(bot-(bot-top)*lv);
+   for(var i=0;i<h.length;i++){var y=Math.floor(i/n);if(Math.abs(h[i]-F)<1e-3)h[i]=y>=fillTop?0.42:0}
+   for(var i=0;i<h.length;i++)if(h[i]>0)g.p(i%n,Math.floor(i/n),h[i]);eyes(g,R,"happy",o);mouth(g,R,"smile",o)},
+};
+var COLS=[["happy","Happy"],["content","Content"],["bored","Bored"],["sad","Sad"],["asleep","Asleep"],["pet","Pet"],["dizzy","Dizzy"],["angry","Angry"],["calmed","Calmed"],["munch","Munch"],["peek","Peekaboo"],["yawn","Yawn"],["signature","Signature"],["aodIdle","AOD idle"],["aodBored","AOD bored"],["aodSleep","AOD asleep"],["aodFill","AOD charging"]];
+var big=true,root=document.getElementById("rows"),petIds=Object.keys(RIGS);
+petIds.forEach(function(pid){var row=document.createElement("div");row.className="petrow";row.innerHTML='<div class="petname">'+RIGS[pid].name+'</div>';var cells=document.createElement("div");cells.className="cells";
+  COLS.forEach(function(c){var d=document.createElement("div");d.className="cell";d.dataset.choice=pid+":"+c[0];d.onclick=function(){toggleSelect(d)};d.innerHTML='<canvas id="cv-'+pid+'-'+c[0]+'"></canvas><div class="lbl">'+c[1]+'</div>';cells.appendChild(d)});
+  row.appendChild(cells);root.appendChild(row)});
+document.getElementById("sz").onclick=function(e){big=!big;e.target.textContent=big?"Show 13×13":"Show 25×25"};
+function draw(cv,g,px){var n=g.n,ctx=cv.getContext("2d");if(cv.width!==n*px){cv.width=cv.height=n*px}ctx.fillStyle="#0b0b0b";ctx.fillRect(0,0,cv.width,cv.height);
+  for(var y=0;y<n;y++)for(var x=0;x<n;x++){if(!mask(n,x,y))continue;var b=g[y*n+x];ctx.beginPath();ctx.arc(x*px+px/2,y*px+px/2,px*.38,0,7);ctx.fillStyle=b>0?"rgba(255,255,255,"+(0.1+0.9*b)+")":"#1a1a1a";ctx.fill()}}
+var t0=performance.now();
+function frame(now){var t=Math.max(0,now-t0);petIds.forEach(function(pid){COLS.forEach(function(c){try{var g=G(big?25:13);STATES[c[0]](g,RIGS[pid],t);draw(document.getElementById("cv-"+pid+"-"+c[0]),g,big?4:7)}catch(e){document.getElementById("err").textContent="Error in "+pid+"/"+c[0]+": "+e.message}})});requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+})();
+</script>
