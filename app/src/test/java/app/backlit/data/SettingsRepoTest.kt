@@ -41,6 +41,7 @@ class SettingsRepoTest {
             chargeStyle = "buddy", chargeTarget = 85, chargePlugInAnim = "import:abc", chargeDoneAnim = "import:def",
             chargeToyEverBound = true,
             canvasDrawingId = "import:q", canvasToyEverBound = true,
+            petName = "Casper", petMood = 42.5f, petMoodAt = 123_456L, petSleepStart = 22, petSleepEnd = 6, petToyEverBound = true,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -101,5 +102,19 @@ class SettingsRepoTest {
         val s = repo().settings.first()
         assertEquals("", s.canvasDrawingId)
         assertEquals(false, s.canvasToyEverBound)
+    }
+
+    @Test
+    fun petDefaults() = runBlocking {
+        val s = repo().settings.first()
+        assertEquals("Boo", s.petName); assertEquals(70f, s.petMood); assertEquals(0L, s.petMoodAt)
+        assertEquals(23, s.petSleepStart); assertEquals(7, s.petSleepEnd); assertEquals(false, s.petToyEverBound)
+    }
+
+    @Test
+    fun petNameIsCleaned() {
+        assertEquals("Boo", SettingsRepo.cleanPetName("   "))
+        assertEquals("Spooky Ghost", SettingsRepo.cleanPetName("  Spooky Ghost  "))
+        assertEquals("ABCDEFGHIJKL", SettingsRepo.cleanPetName("ABCDEFGHIJKLMNOP"))
     }
 }

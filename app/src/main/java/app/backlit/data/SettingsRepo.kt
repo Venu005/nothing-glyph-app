@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
@@ -49,6 +50,14 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val CHARGE_BOUND = booleanPreferencesKey("charge_toy_ever_bound")
         private val CANVAS_DRAWING = stringPreferencesKey("canvas_drawing_id")
         private val CANVAS_BOUND = booleanPreferencesKey("canvas_toy_ever_bound")
+        private val PET_NAME = stringPreferencesKey("pet_name")
+        private val PET_MOOD = floatPreferencesKey("pet_mood")
+        private val PET_MOOD_AT = longPreferencesKey("pet_mood_at")
+        private val PET_SLEEP_START = intPreferencesKey("pet_sleep_start")
+        private val PET_SLEEP_END = intPreferencesKey("pet_sleep_end")
+        private val PET_BOUND = booleanPreferencesKey("pet_toy_ever_bound")
+
+        fun cleanPetName(s: String): String = s.trim().take(12).trim().ifBlank { "Boo" }
 
         /** 50..100 in steps of 5 (nearest step, halves round up). */
         fun clampTarget(v: Int): Int = (((v.coerceIn(50, 100) + 2) / 5) * 5).coerceIn(50, 100)
@@ -83,6 +92,12 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 chargeToyEverBound = this[CHARGE_BOUND] ?: d.chargeToyEverBound,
                 canvasDrawingId = this[CANVAS_DRAWING] ?: d.canvasDrawingId,
                 canvasToyEverBound = this[CANVAS_BOUND] ?: d.canvasToyEverBound,
+                petName = cleanPetName(this[PET_NAME] ?: d.petName),
+                petMood = (this[PET_MOOD] ?: d.petMood).coerceIn(0f, 100f),
+                petMoodAt = this[PET_MOOD_AT] ?: d.petMoodAt,
+                petSleepStart = (this[PET_SLEEP_START] ?: d.petSleepStart).coerceIn(0, 23),
+                petSleepEnd = (this[PET_SLEEP_END] ?: d.petSleepEnd).coerceIn(0, 23),
+                petToyEverBound = this[PET_BOUND] ?: d.petToyEverBound,
             )
         }
 
@@ -106,6 +121,12 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[CHARGE_BOUND] = s.chargeToyEverBound
             this[CANVAS_DRAWING] = s.canvasDrawingId
             this[CANVAS_BOUND] = s.canvasToyEverBound
+            this[PET_NAME] = s.petName
+            this[PET_MOOD] = s.petMood
+            this[PET_MOOD_AT] = s.petMoodAt
+            this[PET_SLEEP_START] = s.petSleepStart
+            this[PET_SLEEP_END] = s.petSleepEnd
+            this[PET_BOUND] = s.petToyEverBound
         }
     }
 }

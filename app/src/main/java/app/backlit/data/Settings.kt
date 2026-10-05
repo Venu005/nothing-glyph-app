@@ -26,6 +26,12 @@ data class Settings(
     val chargeToyEverBound: Boolean = false,
     val canvasDrawingId: String = "",
     val canvasToyEverBound: Boolean = false,
+    val petName: String = "Boo",
+    val petMood: Float = 70f,
+    val petMoodAt: Long = 0L,
+    val petSleepStart: Int = 23,
+    val petSleepEnd: Int = 7,
+    val petToyEverBound: Boolean = false,
 ) {
     val faceOptions: FaceOptions get() = FaceOptions(secondHand = secondHand, use24h = use24h)
 }
