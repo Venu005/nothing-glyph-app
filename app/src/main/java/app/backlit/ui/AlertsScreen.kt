@@ -43,6 +43,7 @@ import app.backlit.alerts.AlertConfig
 import app.backlit.alerts.AlertsRuntime
 import app.backlit.alerts.ContactRule
 import app.backlit.alerts.DeviceRule
+import app.backlit.alerts.KIND_DRAWING
 import app.backlit.alerts.NameMatch
 import app.backlit.alerts.importFromUri
 import app.backlit.anim.BuiltInAnimations
@@ -172,6 +173,14 @@ fun AlertsTab(profile: DeviceProfile, onEditDrawing: (String?) -> Unit = {}) {
                     MiniPreview(anim, size)
                     Text(anim.name, style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
                     if (anim.id.startsWith("import:")) {
+                        val entry = config.imports.firstOrNull { it.id == anim.id }
+                        val isDrawing = entry?.kind == KIND_DRAWING
+                        Text(if (isDrawing) "DRAWING" else "IMPORT", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+                        Text(if (isDrawing) "EDIT" else "EDIT IN STUDIO", style = MaterialTheme.typography.labelSmall,
+                            modifier = Modifier.clickable {
+                                if (isDrawing) onEditDrawing(anim.id)
+                                else scope.launch { runtime.copyImportToDrawing(anim.id, size)?.let { onEditDrawing(it) } }
+                            }.padding(vertical = 4.dp))
                         Text("DELETE", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Red,
                             modifier = Modifier.clickable { runtime.deleteImport(anim.id) }.padding(vertical = 4.dp))
                     }
