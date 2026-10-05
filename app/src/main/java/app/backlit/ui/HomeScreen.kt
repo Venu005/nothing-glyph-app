@@ -45,16 +45,18 @@ import kotlinx.coroutines.delay
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-enum class Screen { HOME, SETUP, LOCATION, ABOUT }
+enum class Screen { HOME, SETUP, LOCATION, ABOUT, EDITOR }
 
 @Composable
 fun HomeScreen(
     settings: Settings,
     profile: DeviceProfile,
+    tab: Int,
+    onTab: (Int) -> Unit,
     onUpdate: ((Settings) -> Settings) -> Unit,
     onNavigate: (Screen) -> Unit,
+    onEdit: (String?) -> Unit,
 ) {
-    var tab by rememberSaveable { mutableIntStateOf(0) }
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -80,18 +82,18 @@ fun HomeScreen(
             Spacer(Modifier.height(12.dp))
         }
 
-        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            SquareChip("CLOCK", selected = tab == 0, onClick = { tab = 0 }, modifier = Modifier.weight(1f))
-            SquareChip("MUSIC", selected = tab == 1, onClick = { tab = 1 }, modifier = Modifier.weight(1f))
-            SquareChip("ALERTS", selected = tab == 2, onClick = { tab = 2 }, modifier = Modifier.weight(1f))
-            SquareChip("CHARGE", selected = tab == 3, onClick = { tab = 3 }, modifier = Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            listOf("CLOCK", "MUSIC", "ALERTS", "CHARGE", "STUDIO").forEachIndexed { i, label ->
+                SquareChip(label, selected = tab == i, onClick = { onTab(i) }, modifier = Modifier.weight(1f))
+            }
         }
 
         when (tab) {
             0 -> ClockTab(settings, profile, onUpdate, onNavigate)
             1 -> MusicTab(settings, profile, onUpdate)
-            2 -> AlertsTab(profile)
-            else -> ChargeTab(settings, profile, onUpdate)
+            2 -> AlertsTab(profile, onEdit)
+            3 -> ChargeTab(settings, profile, onUpdate)
+            else -> StudioTab(settings, profile, onUpdate, onEdit)
         }
 
         SettingRow("Glyph Toy setup", "→") { onNavigate(Screen.SETUP) }

@@ -56,7 +56,7 @@ private const val DISCLOSURE =
         "caller's name against your important contacts. Nothing else is read, stored or sent."
 
 @Composable
-fun AlertsTab(profile: DeviceProfile) {
+fun AlertsTab(profile: DeviceProfile, onEditDrawing: (String?) -> Unit = {}) {
     val context = LocalContext.current
     val runtime = remember { AlertsRuntime.get(context) }
     val config by runtime.config.collectAsStateWithLifecycle(initialValue = AlertConfig())

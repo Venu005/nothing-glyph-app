@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -29,6 +30,7 @@ import app.backlit.glyph.DeviceProfile
 import app.backlit.ui.AboutScreen
 import app.backlit.ui.BacklitColors
 import app.backlit.ui.BacklitTheme
+import app.backlit.ui.EditorScreen
 import app.backlit.ui.HomeScreen
 import app.backlit.ui.LocationScreen
 import app.backlit.ui.Screen
@@ -47,6 +49,8 @@ class MainActivity : ComponentActivity() {
             BacklitTheme {
                 val settings by repo.settings.collectAsStateWithLifecycle(initialValue = null)
                 var screen by rememberSaveable { mutableStateOf<Screen?>(null) }
+                var tab by rememberSaveable { mutableIntStateOf(0) }
+                var editingId by rememberSaveable { mutableStateOf<String?>(null) }
                 val scope = rememberCoroutineScope()
                 val update: ((Settings) -> Settings) -> Unit = { t -> scope.launch { repo.update(t) } }
 
@@ -60,12 +64,16 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(s.locationMode) {
                         LocationRefresher.refreshIfStale(this@MainActivity, repo, s, System.currentTimeMillis())
                     }
-                    BackHandler(enabled = screen != Screen.HOME && screen != null) { screen = Screen.HOME }
+                    BackHandler(enabled = screen != Screen.HOME && screen != Screen.EDITOR && screen != null) { screen = Screen.HOME }
                     when (screen) {
-                        null, Screen.HOME -> HomeScreen(s, profile, update) { screen = it }
+                        null, Screen.HOME -> HomeScreen(s, profile, tab, { tab = it }, update, { screen = it }) { id ->
+                            editingId = id
+                            screen = Screen.EDITOR
+                        }
                         Screen.SETUP -> SetupScreen(onDone = { screen = Screen.HOME })
                         Screen.ABOUT -> AboutScreen(onBack = { screen = Screen.HOME })
                         Screen.LOCATION -> LocationScreen(s, update, onBack = { screen = Screen.HOME })
+                        Screen.EDITOR -> EditorScreen(editingId, profile, onClose = { screen = Screen.HOME })
                     }
                 }
             }
