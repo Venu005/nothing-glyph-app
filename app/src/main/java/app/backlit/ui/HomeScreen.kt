@@ -3,6 +3,7 @@ package app.backlit.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -82,9 +83,9 @@ fun HomeScreen(
             Spacer(Modifier.height(12.dp))
         }
 
-        Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            listOf("CLOCK", "MUSIC", "ALERTS", "CHARGE", "STUDIO").forEachIndexed { i, label ->
-                SquareChip(label, selected = tab == i, onClick = { onTab(i) }, modifier = Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            listOf("CLOCK", "MUSIC", "ALERTS", "CHARGE", "STUDIO", "PET").forEachIndexed { i, label ->
+                SquareChip(label, selected = tab == i, onClick = { onTab(i) })
             }
         }
 
@@ -93,7 +94,8 @@ fun HomeScreen(
             1 -> MusicTab(settings, profile, onUpdate)
             2 -> AlertsTab(profile, onEdit)
             3 -> ChargeTab(settings, profile, onUpdate)
-            else -> StudioTab(settings, profile, onUpdate, onEdit)
+            4 -> StudioTab(settings, profile, onUpdate, onEdit)
+            else -> PetTab(settings, profile, onUpdate)
         }
 
         SettingRow("Glyph Toy setup", "→") { onNavigate(Screen.SETUP) }
