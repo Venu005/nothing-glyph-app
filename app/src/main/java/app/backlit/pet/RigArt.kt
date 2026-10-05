@@ -215,7 +215,11 @@ object RigArt {
     private fun aodFill(g: PixelGrid, r: Rig, lv: Double) {
         val h = PixelGrid(g.size)
         r.body(h, BodyOpts(gill = Gill.STILL, tip = 1.0))
-        val fv = (F * 255).toInt()                                         // ChargeKit maps 0.22 → 56
+        // Fill the body's F cells; a body with none (the penguin at 13×13 is all light patch) fills its L cells instead.
+        val fv = (F * 255).toInt().let { f ->                                // ChargeKit maps 0.22 → 56, 0.5 → 128
+            val hasF = (0 until g.size * g.size).any { abs(h[it % g.size, it / g.size] - f) <= 1 }
+            if (hasF) f else (L * 255).toInt()
+        }
         val ys = (0 until g.size * g.size).filter { abs(h[it % g.size, it / g.size] - fv) <= 1 }.map { it / g.size }
         if (ys.isNotEmpty()) {
             val top = ys.min(); val bot = ys.max()

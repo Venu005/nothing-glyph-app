@@ -56,4 +56,12 @@ class PetArtTest {
         val frames = PetKind.entries.map { PetArt.still(it, 25, pose(Base.CONTENT), 0) }
         assertEquals(frames.size, frames.toSet().size)
     }
+
+    @Test
+    fun aodFillGrowsForEveryPetAt13() {
+        for (kind in rigPets) {
+            fun lit(level: Int) = PetArt.still(kind, 13, pose(Base.MUNCH, level = level), 0).raw().count { it in 100..115 }
+            assertTrue("$kind 13", lit(30) <= lit(62) && lit(62) <= lit(95) && lit(30) < lit(95))
+        }
+    }
 }
