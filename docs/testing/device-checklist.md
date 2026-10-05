@@ -91,3 +91,5 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] AOD idle still (eyes change per minute) and AOD sleep still
 - [x] SHOW ON GLYPH plays a happy hop
 - [x] Mood persists after toggling the toy off/on
+
+- [x] Glyph Toys picker shows Nothing-style dot-matrix images for all five Backlit toys
