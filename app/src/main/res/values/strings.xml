@@ -6,4 +6,6 @@
     <string name="music_toy_summary">Reacts to the music playing on your phone. Long press to change style.</string>
     <string name="charge_toy_name">Backlit Charge</string>
     <string name="charge_toy_summary">Your battery level, and a little show while charging. Long press to change style.</string>
+    <string name="canvas_toy_name">Backlit Canvas</string>
+    <string name="canvas_toy_summary">Shows your own drawings from Backlit Studio. Long press for the next one.</string>
 </resources>
