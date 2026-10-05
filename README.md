@@ -62,7 +62,9 @@ Free, no ads, no analytics, no network access.
 - **Backlit Canvas** shows a drawing on the back; long-press for the next one. AOD shows its first frame.
 
 ### Backlit Pet (Glyph Toy)
-- **Boo**, a little ghost who lives on the matrix. You can rename him.
+- **Six pets to choose from** in the PET tab: Ghost (Boo), Frog (Ribbit), Penguin (Waddles), Axolotl (Lotl),
+  Owl (Hoot) and Robot (Bolt). They share one mood; each has its own name and signature move (tongue and fly,
+  belly-slide, bubbles, head swivel, glitch).
 - **Reactions:**
   - **Long-press:** you pet him and hearts float up.
   - **Shake:** he gets dizzy. Shake him hard three times and he gets angry and steams; a long press calms him down.
