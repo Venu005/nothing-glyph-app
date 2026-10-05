@@ -1,0 +1,111 @@
+<h2>Pixel studio: which editor layout?</h2>
+<p class="subtitle">Both canvases really work: tap or drag to draw, pick a shade, and toggle Mirror. Only the pencil, eraser, shades and mirror are live; the other tools are for layout. Click the layout you prefer.</p>
+
+<style>
+  .phones{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+  .phone{width:340px;background:#000;border:1px solid #333;border-radius:28px;padding:14px 14px 18px;color:#fff;font-family:ui-monospace,Menlo,monospace;font-size:11px;user-select:none}
+  .bar{display:flex;justify-content:space-between;align-items:center;margin:4px 2px 10px;letter-spacing:.08em}
+  .title{font-weight:900;font-size:15px;letter-spacing:.12em}
+  .cv{width:100%;aspect-ratio:1;display:block;touch-action:none;cursor:crosshair}
+  .row{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .chip{border:1px solid #333;padding:6px 7px;flex:1;text-align:center;cursor:pointer;min-width:0;white-space:nowrap}
+  .chip.on{border-color:#fff;background:#fff;color:#000}
+  .chip.red{border-color:#D71921;color:#D71921}
+  .lbl{color:#888;letter-spacing:.1em;margin-top:10px}
+  .frames{display:flex;gap:6px;margin-top:6px;overflow:hidden}
+  .fr{width:48px;height:48px;border:1px solid #333;position:relative;flex:none}
+  .fr.on{border-color:#fff}
+  .fr span{position:absolute;right:2px;bottom:1px;color:#888;font-size:9px}
+  .add{width:48px;height:48px;border:1px dashed #555;display:flex;align-items:center;justify-content:center;color:#888;flex:none;font-size:18px}
+  .slider{height:2px;background:#333;margin:12px 4px;position:relative}.slider:after{content:"";position:absolute;left:0;width:45%;height:2px;background:#fff}
+  .sw{width:22px;height:22px;border-radius:50%;border:2px solid #333;cursor:pointer}
+  .sw.on{border-color:#fff}
+  .dock{display:flex;justify-content:space-between;border-top:1px solid #222;margin-top:10px;padding-top:10px}
+  .tool{width:36px;height:36px;border:1px solid #333;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px}
+  .tool.on{border-color:#fff;background:#fff;color:#000}
+  .drawer{border:1px solid #333;margin-top:10px;padding:8px}
+  .optlabel{text-align:center;margin-top:10px}
+</style>
+
+<div class="options" style="display:block">
+<div class="phones">
+
+  <!-- ===== A: Stacked ===== -->
+  <div class="option" data-choice="a" onclick="toggleSelect(this)" style="flex-direction:column;align-items:center;border:none;background:none;padding:0">
+    <div class="phone" onclick="event.stopPropagation()">
+      <div class="bar"><span>← BACK</span><span class="title">HEART WINK</span><span>▶ PLAY</span></div>
+      <canvas class="cv" id="cvA"></canvas>
+      <div class="row" id="toolsA">
+        <div class="chip on" data-t="pen">PEN</div><div class="chip" data-t="erase">ERASE</div><div class="chip">LINE</div><div class="chip">○</div><div class="chip">FILL</div><div class="chip">TEXT</div>
+      </div>
+      <div class="row">
+        <div class="chip on" data-s="255" id="sA255">BRIGHT</div><div class="chip" data-s="150" id="sA150">MED</div><div class="chip" data-s="70" id="sA70">DIM</div><div class="chip" id="mirA">MIRROR</div>
+      </div>
+      <div class="row"><div class="chip">↶</div><div class="chip">↷</div><div class="chip">←</div><div class="chip">↑</div><div class="chip">↓</div><div class="chip">→</div><div class="chip">CLEAR</div></div>
+      <div class="lbl">FRAMES · 3 / 24</div>
+      <div class="frames"><div class="fr on"><span>1</span></div><div class="fr"><span>2</span></div><div class="fr"><span>3 ×2</span></div><div class="add">+</div></div>
+      <div class="lbl">SPEED · 8 FPS &nbsp; · &nbsp; HOLD FRAME: ×1 ×2 ×3 ×4</div><div class="slider"></div>
+      <div class="row"><div class="chip on">SAVE</div><div class="chip">SHOW ON GLYPH</div></div>
+    </div>
+    <div class="optlabel"><h3>A · Stacked</h3><p>Everything visible at once: tools, shades, edit buttons, frames and speed in rows under the canvas. Nothing hidden, but it's a busy screen.</p></div>
+  </div>
+
+  <!-- ===== B: Focus ===== -->
+  <div class="option" data-choice="b" onclick="toggleSelect(this)" style="flex-direction:column;align-items:center;border:none;background:none;padding:0">
+    <div class="phone" onclick="event.stopPropagation()">
+      <div class="bar"><span>←</span><span class="title">HEART WINK</span><span>↶ ↷ &nbsp;⋯</span></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;flex-direction:column;gap:10px" id="swB">
+          <div class="sw on" data-s="255" style="background:#fff"></div>
+          <div class="sw" data-s="150" style="background:#999"></div>
+          <div class="sw" data-s="70" style="background:#555"></div>
+          <div class="sw" data-s="0" style="background:#1c1c1c" title="eraser"></div>
+        </div>
+        <canvas class="cv" id="cvB" style="flex:1;width:auto"></canvas>
+      </div>
+      <div class="dock" id="toolsB">
+        <div class="tool on" data-t="pen">✎</div><div class="tool">╱</div><div class="tool">○</div><div class="tool">▧</div><div class="tool">T</div><div class="tool" id="mirB">⇋</div><div class="tool">✥</div>
+      </div>
+      <div class="drawer">
+        <div style="display:flex;justify-content:space-between"><span class="lbl" style="margin:0">FRAMES · 3 / 24 &nbsp;▶</span><span style="color:#888">8 FPS ⌄</span></div>
+        <div class="frames"><div class="fr on"><span>1</span></div><div class="fr"><span>2</span></div><div class="fr"><span>3 ×2</span></div><div class="add">+</div></div>
+      </div>
+      <div class="row"><div class="chip on">SAVE</div><div class="chip">SHOW ON GLYPH</div></div>
+    </div>
+    <div class="optlabel"><h3>B · Focus</h3><p>A bigger canvas with the shades as dots on the side (the dark dot erases), one icon toolbar, and frames in a compact strip. Speed, hold, shift and clear sit behind the ⋯ / ✥ / 8 FPS menus.</p></div>
+  </div>
+
+</div>
+</div>
+
+<script>
+(function(){
+const N=25;
+function mask(x,y){const c=(N-1)/2;return Math.hypot(x-c,y-c)<=N/2}
+function editor(id,getShade,getMirror){
+  const cv=document.getElementById(id),ctx=cv.getContext('2d');const px=Array(N*N).fill(0);
+  // seed: a little heart so the canvas isn't empty
+  ["..XXX...XXX..",".XXXXX.XXXXX.","XXXXXXXXXXXXX","XXXXXXXXXXXXX",".XXXXXXXXXXX.","..XXXXXXXXX..","...XXXXXXX...","....XXXXX....",".....XXX.....","......X......"].forEach((r,j)=>[...r].forEach((c,i)=>{if(c==="X")px[(8+j)*N+6+i]=255}));
+  function size(){const w=cv.clientWidth;cv.width=w*2;cv.height=w*2;draw()}
+  function draw(){const s=cv.width/N;ctx.fillStyle="#000";ctx.fillRect(0,0,cv.width,cv.height);
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(!mask(x,y))continue;const v=px[y*N+x];ctx.beginPath();ctx.arc(x*s+s/2,y*s+s/2,s*.4,0,7);ctx.fillStyle=v?`rgba(255,255,255,${0.12+0.88*v/255})`:"#1c1c1c";ctx.fill()}
+    if(getMirror()){ctx.strokeStyle="#D71921";ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(cv.width/2,0);ctx.lineTo(cv.width/2,cv.height);ctx.stroke();ctx.setLineDash([])}}
+  function paint(e){const r=cv.getBoundingClientRect();const x=Math.floor((e.clientX-r.left)/r.width*N),y=Math.floor((e.clientY-r.top)/r.height*N);
+    if(x<0||y<0||x>=N||y>=N||!mask(x,y))return;const v=getShade();px[y*N+x]=v;if(getMirror())px[y*N+(N-1-x)]=v;draw()}
+  let down=false;cv.addEventListener('pointerdown',e=>{down=true;cv.setPointerCapture(e.pointerId);paint(e)});
+  cv.addEventListener('pointermove',e=>{if(down)paint(e)});cv.addEventListener('pointerup',()=>down=false);
+  new ResizeObserver(size).observe(cv);return{draw}
+}
+// A
+let shadeA=255,eraseA=false,mirrorA=false;
+const A=editor('cvA',()=>eraseA?0:shadeA,()=>mirrorA);
+document.querySelectorAll('[data-s][id^=sA]').forEach(el=>el.onclick=()=>{shadeA=+el.dataset.s;eraseA=false;document.querySelectorAll('[id^=sA]').forEach(o=>o.classList.toggle('on',o===el));document.querySelectorAll('#toolsA .chip').forEach(o=>o.classList.toggle('on',o.dataset.t==='pen'))});
+document.querySelectorAll('#toolsA [data-t]').forEach(el=>el.onclick=()=>{eraseA=el.dataset.t==='erase';document.querySelectorAll('#toolsA [data-t]').forEach(o=>o.classList.toggle('on',o===el))});
+document.getElementById('mirA').onclick=e=>{mirrorA=!mirrorA;e.target.classList.toggle('on',mirrorA);A.draw()};
+// B
+let shadeB=255,mirrorB=false;
+const B=editor('cvB',()=>shadeB,()=>mirrorB);
+document.querySelectorAll('#swB .sw').forEach(el=>el.onclick=()=>{shadeB=+el.dataset.s;document.querySelectorAll('#swB .sw').forEach(o=>o.classList.toggle('on',o===el))});
+document.getElementById('mirB').onclick=e=>{mirrorB=!mirrorB;e.currentTarget.classList.toggle('on',mirrorB);B.draw()};
+})();
+</script>
