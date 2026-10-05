@@ -40,6 +40,7 @@ class SettingsRepoTest {
             musicStyle = "wave", musicSensitivity = Sensitivity.HIGH,
             chargeStyle = "buddy", chargeTarget = 85, chargePlugInAnim = "import:abc", chargeDoneAnim = "import:def",
             chargeToyEverBound = true,
+            canvasDrawingId = "import:q", canvasToyEverBound = true,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -93,5 +94,12 @@ class SettingsRepoTest {
         val r = repo()
         r.update { it.copy(chargeTarget = 7) }
         assertEquals(50, r.settings.first().chargeTarget)
+    }
+
+    @Test
+    fun canvasDefaults() = runBlocking {
+        val s = repo().settings.first()
+        assertEquals("", s.canvasDrawingId)
+        assertEquals(false, s.canvasToyEverBound)
     }
 }

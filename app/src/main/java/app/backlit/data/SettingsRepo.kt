@@ -47,6 +47,8 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val CHARGE_PLUG_ANIM = stringPreferencesKey("charge_plugin_anim")
         private val CHARGE_DONE_ANIM = stringPreferencesKey("charge_done_anim")
         private val CHARGE_BOUND = booleanPreferencesKey("charge_toy_ever_bound")
+        private val CANVAS_DRAWING = stringPreferencesKey("canvas_drawing_id")
+        private val CANVAS_BOUND = booleanPreferencesKey("canvas_toy_ever_bound")
 
         /** 50..100 in steps of 5 (nearest step, halves round up). */
         fun clampTarget(v: Int): Int = (((v.coerceIn(50, 100) + 2) / 5) * 5).coerceIn(50, 100)
@@ -79,6 +81,8 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 chargePlugInAnim = this[CHARGE_PLUG_ANIM] ?: d.chargePlugInAnim,
                 chargeDoneAnim = this[CHARGE_DONE_ANIM] ?: d.chargeDoneAnim,
                 chargeToyEverBound = this[CHARGE_BOUND] ?: d.chargeToyEverBound,
+                canvasDrawingId = this[CANVAS_DRAWING] ?: d.canvasDrawingId,
+                canvasToyEverBound = this[CANVAS_BOUND] ?: d.canvasToyEverBound,
             )
         }
 
@@ -100,6 +104,8 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[CHARGE_PLUG_ANIM] = s.chargePlugInAnim
             this[CHARGE_DONE_ANIM] = s.chargeDoneAnim
             this[CHARGE_BOUND] = s.chargeToyEverBound
+            this[CANVAS_DRAWING] = s.canvasDrawingId
+            this[CANVAS_BOUND] = s.canvasToyEverBound
         }
     }
 }
