@@ -8,4 +8,6 @@
     <string name="charge_toy_summary">Your battery level, and a little show while charging. Long press to change style.</string>
     <string name="canvas_toy_name">Backlit Canvas</string>
     <string name="canvas_toy_summary">Shows your own drawings from Backlit Studio. Long press for the next one.</string>
+    <string name="pet_toy_name">Backlit Pet</string>
+    <string name="pet_toy_summary">A little ghost that lives on your Glyph. Long press to pet him.</string>
 </resources>
