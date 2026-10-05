@@ -10,12 +10,14 @@ import java.io.File
 class AnimationLibrary(private val dir: File) {
     private val cache = mutableMapOf<String, ImportedAnimation>()
 
+    @Synchronized
     fun save(anim: ImportedAnimation) {
         dir.mkdirs()
         file(anim.id).writeText(MuseumFormat.toJson(anim))
         cache[anim.id] = anim
     }
 
+    @Synchronized
     fun load(entry: AnimIndexEntry): ImportedAnimation? {
         cache[entry.id]?.let { return it }
         val f = file(entry.id)
@@ -24,6 +26,7 @@ class AnimationLibrary(private val dir: File) {
         return (result as? MuseumFormat.Result.Ok)?.animation?.also { cache[entry.id] = it }
     }
 
+    @Synchronized
     fun delete(id: String) {
         cache.remove(id)
         file(id).delete()

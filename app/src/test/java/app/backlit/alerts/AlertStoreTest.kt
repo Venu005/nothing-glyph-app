@@ -1,6 +1,7 @@
 package app.backlit.alerts
 
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -34,5 +35,16 @@ class AlertStoreTest {
         )
         s.update { cfg }
         assertEquals(cfg, s.config.first())
+    }
+
+    @Test
+    fun oldImportIndexWithoutKindStillDecodes() = runBlocking {
+        val prefs = PreferenceDataStoreFactory.create(scope = scope, produceFile = { tmp.root.resolve("old.preferences_pb") })
+        prefs.edit { it[androidx.datastore.preferences.core.stringPreferencesKey("anim_imports")] = """[{"id":"import:a","name":"Old","sourceV":1}]""" }
+        val c = AlertStore(prefs).config.first()
+        assertEquals(listOf(AnimIndexEntry("import:a", "Old", 1, kind = "import", fps = 0)), c.imports)
+        val s = AlertStore(prefs)
+        s.update { it.copy(imports = it.imports + AnimIndexEntry("import:d", "Mine", 4, kind = KIND_DRAWING, fps = 12)) }
+        assertEquals(AnimIndexEntry("import:d", "Mine", 4, KIND_DRAWING, 12), s.config.first().imports.last())
     }
 }

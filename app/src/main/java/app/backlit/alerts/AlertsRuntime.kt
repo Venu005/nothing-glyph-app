@@ -22,11 +22,20 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.io.File
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.map
+import app.backlit.studio.DrawingCodec
+import app.backlit.studio.Drawing
 import java.util.UUID
 
 sealed interface ImportOutcome {
     data class Ok(val name: String, val sourceSize: Int) : ImportOutcome
     data object Invalid : ImportOutcome
+}
+
+sealed interface DrawingImport {
+    data class Ok(val id: String, val name: String, val truncated: Boolean, val simplified: Boolean) : DrawingImport
+    data object Invalid : DrawingImport
 }
 
 /** Process-wide alert state: triggers in, ActiveAlert out. Main thread. */
@@ -62,14 +71,57 @@ class AlertsRuntime private constructor(private val app: Context) {
     /** Called by toys when they bind/unbind so the app-matrix player can step in or out. */
     fun toyChanged() = player.sync()
 
+    val drawings: Flow<List<AnimIndexEntry>> = store.config.map { c -> c.imports.filter { it.kind == KIND_DRAWING } }
+
+    @Volatile private var previewSlot: GlyphAnimation? = null
+
+    /** "Show on Glyph" for frames that have no library id yet (the Studio editor). */
+    fun previewAnimation(anim: GlyphAnimation, durationMs: Long) {
+        previewSlot = anim
+        preview(PREVIEW_ID, durationMs)
+    }
+
+    /** Creates (id = null) or overwrites a drawing; returns its id. */
+    suspend fun saveDrawing(d: Drawing, id: String?): String {
+        val newId = id ?: ("import:" + UUID.randomUUID())
+        withContext(Dispatchers.IO) { library.save(DrawingCodec.encode(d, newId)) }
+        val entry = AnimIndexEntry(newId, d.name, if (d.size >= 25) 1 else 4, KIND_DRAWING, d.fps)
+        store.update { c ->
+            c.copy(imports = if (c.imports.any { it.id == newId }) c.imports.map { if (it.id == newId) entry else it } else c.imports + entry)
+        }
+        return newId
+    }
+
+    suspend fun loadDrawing(id: String, deviceSize: Int): Drawing? {
+        val entry = store.config.first().imports.firstOrNull { it.id == id && it.kind == KIND_DRAWING } ?: return null
+        val anim = withContext(Dispatchers.IO) { library.load(entry) } ?: return null
+        return DrawingCodec.decode(anim, entry.name, entry.fps, deviceSize).drawing
+    }
+
+    suspend fun importAsDrawing(json: String, name: String, deviceSize: Int): DrawingImport {
+        val parsed = MuseumFormat.parse(json, "import:tmp", name) as? MuseumFormat.Result.Ok ?: return DrawingImport.Invalid
+        val r = DrawingCodec.decode(parsed.animation, name, fps = 0, size = deviceSize)
+        val id = saveDrawing(r.drawing, null)
+        return DrawingImport.Ok(id, r.drawing.name, r.truncated, r.simplified && parsed.animation.sourceSize == deviceSize)
+    }
+
+    suspend fun copyImportToDrawing(importId: String, deviceSize: Int): String? {
+        val entry = store.config.first().imports.firstOrNull { it.id == importId } ?: return null
+        val anim = withContext(Dispatchers.IO) { library.load(entry) } ?: return null
+        val r = DrawingCodec.decode(anim, "${entry.name} (edit)", fps = if (entry.kind == KIND_DRAWING) entry.fps else 0, size = deviceSize)
+        return saveDrawing(r.drawing, null)
+    }
+
     fun preview(animationId: String, durationMs: Long = AlertCoordinator.SHORT_MS) =
         dispatch { coordinator.preview(animationId, now(), durationMs) }
 
     fun animationFor(alert: ActiveAlert): GlyphAnimation =
-        ChargePreviewAnimation.parse(alert.animationId) ?: library.resolve(
-            alert.animationId, current.imports,
-            fallback = if (alert.kind == AlertKind.CALL) BuiltInAnimations.DEFAULT_CONTACT else BuiltInAnimations.DEFAULT_DEVICE,
-        )
+        (if (alert.animationId == PREVIEW_ID) previewSlot else null)
+            ?: ChargePreviewAnimation.parse(alert.animationId)
+            ?: library.resolve(
+                alert.animationId, current.imports,
+                fallback = if (alert.kind == AlertKind.CALL) BuiltInAnimations.DEFAULT_CONTACT else BuiltInAnimations.DEFAULT_DEVICE,
+            )
 
     /** For the Charge toy: an imported animation by id, or null (unset, deleted, or not an import). */
     fun importedAnimation(id: String): GlyphAnimation? = library.importedOnly(id, current.imports)
@@ -114,6 +166,7 @@ class AlertsRuntime private constructor(private val app: Context) {
 
     companion object {
         private const val TAG = "BacklitAlerts"
+        const val PREVIEW_ID = "preview:studio"
         @Volatile private var instance: AlertsRuntime? = null
 
         fun get(context: Context): AlertsRuntime =
