@@ -1,10 +1,11 @@
 # Backlit
 
-**Clocks, music and alerts for the Glyph Matrix on the back of Nothing phones.**
+**Clocks, music, a pet ghost, your own drawings and alerts for the Glyph Matrix on the back of Nothing phones.**
 
 Backlit is an Android app for the **Nothing Phone (3)** (25×25 Glyph Matrix) and **Nothing Phone (4a) Pro**
-(13×13). It adds two Glyph Toys you cycle to with the Glyph Button, plus event animations that light up
-the matrix when an important contact calls or one of your Bluetooth devices connects. The companion app
+(13×13). It adds five Glyph Toys you cycle to with the Glyph Button (Clock, Music, Charge, Canvas and Pet),
+a pixel studio for drawing your own animations, and event animations that light up the matrix when an
+important contact calls or one of your Bluetooth devices connects. The companion app
 uses a raw, dot-matrix look (pure black, Doto headings, one red accent) and shows a live preview of
 exactly what the LEDs will show.
 
@@ -61,11 +62,22 @@ Free, no ads, no analytics, no network access.
 - **Backlit Canvas** shows a drawing on the back; long-press for the next one. AOD shows its first frame.
 
 ### Backlit Pet (Glyph Toy)
-- A little ghost with a mood meter. Long-press to pet him; shake him and he gets dizzy (or angry!);
-  tilt and his eyes follow; turn the phone face-down for a peekaboo; he munches while charging and
-  sleeps at night. Mood decays slowly while he's awake, never while he sleeps, and he never dies.
-- AOD shows a still pose, filling up like a battery while charging. The PET tab shows him live, with
-  his name, mood and sleep hours.
+- **Boo**, a little ghost who lives on the matrix. You can rename him.
+- **Reactions:**
+  - **Long-press:** you pet him and hearts float up.
+  - **Shake:** he gets dizzy. Shake him hard three times and he gets angry and steams; a long press calms him down.
+  - **Tilt:** his eyes follow.
+  - **Face-down:** turn the phone face-down for a peekaboo.
+  - **Charging:** he munches.
+  - **Night:** he sleeps, and a long press makes him yawn.
+- **Mood (0–100):** petting, peekaboo, calming him and charging raise it. It slowly drops while he's
+  awake and ignored, about −10 an hour, so he gets **bored** after a few hours (half-lidded side-eye,
+  yawns) and then **sad** (droopy eyes, a tear). It never drops while he sleeps, and he never dies.
+  Mood is worked out from timestamps, so nothing runs in the background.
+- **AOD:** still poses that update once a minute. You see his mood face, asleep with a "z" at night,
+  or **filling up like a battery** while charging.
+- **PET tab:** a live preview, "BOO IS HAPPY" with a 10-dot meter, "MOOD 63 / 100 · Gets bored in ~2 h",
+  a collapsible "how his mood works" card, his name and sleep hours, and Show on Glyph.
 
 ### Alerts
 - **Important contacts:** pick contacts and give each its own animation. It plays as their call
@@ -83,11 +95,11 @@ Free, no ads, no analytics, no network access.
 
 ## Supported devices
 
-| Device | Grid | Clock | Music | Alerts |
-|---|---|---|---|---|
-| Nothing Phone (3) | 25×25 | ✅ active + AOD | ✅ | ✅ (verified on device) |
-| Nothing Phone (4a) Pro | 13×13 | ✅ AOD only | ❌ (AOD-only device) | designed, **not yet verified on hardware** |
-| Other phones | — | preview only in the app | — | — |
+| Device | Grid | Clock · Charge · Canvas · Pet | Music | Studio | Alerts |
+|---|---|---|---|---|---|
+| Nothing Phone (3) | 25×25 | ✅ active + AOD (verified on device) | ✅ | ✅ | ✅ (verified on device) |
+| Nothing Phone (4a) Pro | 13×13 | ✅ AOD only (designed, **not yet verified on hardware**) | ❌ (AOD-only device) | ✅ draws at 13×13 | designed, **not yet verified on hardware** |
+| Other phones | — | preview only in the app | — | preview only | — |
 
 `minSdk 34`, `targetSdk`/`compileSdk 37`. Developed and tested on a Phone (3) (model A024) running Android 16.
 
@@ -201,7 +213,9 @@ app/src/main/java/app/backlit/
 │   ├── PixelGrid.kt         size×size brightness grid (0–255) with the round LED mask
 │   ├── Draw.kt, PixelFont.kt  anti-aliased lines, discs, 3×5 digits
 │   ├── faces/               AnalogFace, DayRingFace, Face registry
-│   └── viz/                 MirrorBars, MirrorPeaks, IdleLine, VizStyles
+│   ├── viz/                 MirrorBars, MirrorPeaks, IdleLine, VizStyles
+│   ├── charge/              Sprout, Buddy, Big number, Moon charge styles + ChargeKit helpers
+│   └── ToyPreviewXml.kt     Nothing-style Glyph Toys picker images, generated from real frames
 ├── anim/            Pure Kotlin event animations
 │   ├── GlyphAnimation.kt    interface, bitmap + midpoint-circle helpers
 │   ├── Heartbeat, SmileyWink, Ringing, Burst, Link, Bounce, BuiltInAnimations
@@ -213,14 +227,22 @@ app/src/main/java/app/backlit/
 │   ├── Rules, NameMatch, CallNotificationTracker, AlertCoordinator, AnimationLibrary   (pure)
 │   └── AlertStore, AlertsRuntime, ToyPresence, CallAlertListener,
 │       BluetoothAlertReceiver, ImportHelper                                            (Android)
+├── charge/          ChargeSession state machine, ChargePreviewAnimation (pure)
+├── studio/          Pixel studio: Drawing, EditorState (undo), Raster, text font, DrawingCodec,
+│                    Canvas toy helpers (pure)
+├── pet/             Glyph Pet: PetMood (timestamp decay), PetBrain (state machine), GhostArt,
+│                    PetInsight (hints), PetPreviewAnimation (pure)
 ├── data/            Settings (DataStore), sunrise/sunset maths, location, offline cities
 ├── glyph/           The only package that talks to the Nothing SDK
 │   ├── GlyphOutput.kt       connect/register/push with retry; toy or app-matrix mode
 │   ├── FrameEncoder.kt      0–255 design brightness → SDK 0–2047 (with a minimum visible level)
 │   ├── FramePacer.kt        fixed-rate frame scheduling
-│   ├── ClockToyService, MusicToyService   the two Glyph Toys
+│   ├── ClockToyService, MusicToyService, ChargeToyService,
+│   │   CanvasToyService, PetToyService     the five Glyph Toys
+│   ├── PlugWatcher.kt       remembers plug-in time so Charge can replay after Nothing's animation
 │   └── AppMatrixPlayer.kt   plays alerts when no Backlit toy is showing
-├── ui/              Jetpack Compose screens (Home tabs CLOCK | MUSIC | ALERTS, Setup, Location, About)
+├── ui/              Jetpack Compose screens (scrolling tabs CLOCK | MUSIC | ALERTS | CHARGE | STUDIO | PET,
+│                    full-screen pixel editor, Setup, Location, About)
 └── MainActivity.kt
 app/src/test/        JVM unit tests mirroring the packages above
 app/src/debug/       debug-only spike probes
@@ -249,7 +271,9 @@ docs/                specs, plans, privacy policy, Play listing, device checklis
   - `ToyPresence` makes sure the toy and the app-matrix player never use the per-process
     `GlyphMatrixManager` at the same time.
 - **Nothing runs when you aren't looking.** The toys start work on `onBind` and release
-  everything (audio, SDK, coroutines) on `onUnbind`. There are no foreground services and no wakelocks.
+  everything (audio, sensors, SDK, coroutines) on `onUnbind`. There are no foreground services and no wakelocks.
+  The pet's accelerometer runs only while his toy is showing with the screen on. Moods and charge
+  sessions are worked out from timestamps instead of background timers.
 
 ---
 
@@ -263,6 +287,9 @@ docs/                specs, plans, privacy policy, Play listing, device checklis
 | Notification access | see incoming/missed call notifications to match important contacts | when you add an important contact |
 | `BLUETOOTH_CONNECT` (Nearby devices) | notice chosen Bluetooth devices connecting | when you add a device |
 
+The pet's motion sensing (shake, tilt, face-down) uses the accelerometer, which needs no permission.
+Sharing a drawing uses Android's share sheet through a private FileProvider.
+
 - No network calls, analytics, ads or accounts.
 - Audio is analysed in real time and never recorded or stored.
 - Call notifications are checked for the caller's name and then ignored. Only the contacts and
@@ -274,7 +301,7 @@ docs/                specs, plans, privacy policy, Play listing, device checklis
 
 ## Testing
 
-Unit tests (JVM, ~150 tests):
+Unit tests (JVM, ~265 tests):
 
 ```bash
 ./gradlew :app:testDebugUnitTest
@@ -283,7 +310,10 @@ Unit tests (JVM, ~150 tests):
 They cover pixel-exact face rendering, sunrise/sunset maths, the spectrum analyzer and music state
 machine, every visualizer style, all built-in animations at both grid sizes, Glyph Museum
 parsing/validation/resampling, contact-name matching, call-notification tracking, alert timing
-(cooldowns, missed-call reminders, priorities) and settings/rules persistence.
+(cooldowns, missed-call reminders, priorities), charge sessions and styles, the pixel editor
+(every tool, undo, frames) and drawing ↔ Glyph Museum round trips, the pet's mood decay (sleep
+windows, multi-day gaps, frequent saves), reactions and ghost art, and settings/rules persistence. A
+golden test keeps the Glyph Toys picker images in sync with the toys.
 
 On-device checks are listed in [`docs/testing/device-checklist.md`](docs/testing/device-checklist.md).
 
@@ -317,6 +347,8 @@ Backlit learned the format by reading the open-source editor; no code was copied
   the contact's animation as the call starts, and again for missed calls.
 - **Nothing's charge animation plays first.** Plugging in shows Nothing's own battery Glyph for about
   3 s, with no setting to turn it off. Backlit Charge replays its plug-in animation when the matrix comes back.
+- **AOD updates once a minute.** In always-on mode, toys (including the pet) show still poses that
+  refresh about once a minute. Animations, and the pet's motion sensing, run while the screen is on.
 - **The Music toy needs the Phone (3).** The (4a) Pro only runs always-on toys, which update once a minute.
 - **Phone (4a) Pro hasn't been tested on real hardware yet.** Its 13×13 layouts are designed and
   previewable in the app.
@@ -341,9 +373,12 @@ Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](doc
 
 ## Roadmap
 
+- **Tilt sand timer:** falling sand that follows gravity; flip the phone to start a 1–25 min timer.
+- **Message badge:** scrolling text like "ON A CALL" or "BACK IN 5" for a face-down phone.
+- **Blow out the candles:** pixel birthday candles you blow out into the mic.
 - **Next-event countdown:** your next calendar event on the matrix.
-- **OTP on Glyph:** show verification codes on the matrix (parked).
-- **AI reactions:** animations while you talk to ChatGPT, Gemini or Claude (parked, design started).
+- **Later ideas:** animated weather, gentle reminders (water, stretch).
+- **Parked:** OTP on Glyph, AI reactions (ChatGPT, Gemini, Claude).
 - **Play Store release:** signing key, store listing and screenshots.
 
 ---
