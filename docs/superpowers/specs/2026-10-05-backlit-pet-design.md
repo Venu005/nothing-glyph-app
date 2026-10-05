@@ -51,7 +51,7 @@ Port the geometry, timings and brightness (0..1 → ×255) exactly, at 25×25 an
 
 ## 3. Behaviour
 
-### 3.1 Mood (0..100, persisted)
+### 3.1 Mood (0..100, a fractional value, persisted)
 - It starts at **70** for a new pet.
 - **Gains:**
   - **pet** (long press) +15, at most once per 30 s (a press inside the cooldown still plays the reaction)
@@ -60,7 +60,7 @@ Port the geometry, timings and brightness (0..1 → ×255) exactly, at 25×25 an
   - **calmed** +10
   - all capped at 100
 - **Losses:**
-  - **decay** −1 per 6 min while awake
+  - **decay** continuous, −1 per 6 awake minutes. It is fractional, so frequent saves don't lose progress.
   - **big shake** −3, at most once per 10 s
   - **angry** −5
   - all floored at 0
@@ -115,7 +115,7 @@ The first match wins:
 
 | Unit | Responsibility |
 |---|---|
-| `PetMood` | `data class MoodState(mood: Int, at: Long)`, `SleepWindow(startHour, endHour)` with `contains(epochMs, zone)`, and `decay(state, now, sleep, zone)` counting awake minutes; gain/loss helpers with caps and floors |
+| `PetMood` | `data class MoodState(mood: Double, at: Long)`, `SleepWindow(startHour, endHour)` with `contains(epochMs, zone)`, and `decay(state, now, sleep, zone)` counting awake minutes; gain/loss helpers with caps and floors |
 | `PetBrain` | state machine: `onLongPress(now)`, `onShake(magnitude, now)`, `onGravity(x, y, z, now)`, `onCharging(on, now)`, `tick(now)`, with `active: Boolean` per event; owns cooldowns, the shake window, face-down tracking, the temporary-awake window, the boo schedule (injected `Random`) and charging minutes. It exposes `pose(now): Pose` and `mood(now): Int`, and a `dirty` flag plus `snapshot(): MoodState` for persistence |
 | `Pose` | `base: Base`, `reaction: Reaction?`, `reactionStart: Long`, `look: Pair<Int,Int>`, `lean: Int`, `level: Int` (battery, for AOD fill) |
 | `GhostArt` | `frame(size, pose, now): PixelGrid` for ACTIVE and `still(size, pose, minuteOfHour): PixelGrid` for AOD; a line-for-line port of the mockup's body/eyes/mouth/blush/hearts/steam/z/bolt helpers and every state |
@@ -138,7 +138,7 @@ The first match wins:
 | Field | Default |
 |---|---|
 | `petName` | "Boo" (≤ 12 chars, trimmed; blank → "Boo") |
-| `petMood` | 70 |
+| `petMood` | 70.0 (Float, so the fractional mood survives saves) |
 | `petMoodAt` | 0 (0 means "new pet": treat as now) |
 | `petSleepStart` / `petSleepEnd` | 23 / 7 |
 | `petToyEverBound` | false |
@@ -150,7 +150,7 @@ The first match wins:
   and the phone's current charging state (from the sticky battery intent). It shows the resting face, and taps on
   the preview play PET locally (preview only, no mood change).
 - **"<NAME> IS HAPPY / CONTENT / BORED / SAD / ASLEEP / SNACKING"** headline and a **10-dot mood meter**.
-  In debug builds (`BuildConfig.DEBUG`), tapping the meter cycles the stored mood through 90 → 55 → 25 → 5, for testing.
+  In debug builds (`BuildConfig.DEBUG`, which needs `buildFeatures.buildConfig = true`), tapping the meter cycles the stored mood through 90 → 55 → 25 → 5, for testing.
   Release builds ignore the tap.
 - **Name** text field.
 - **Sleep hours:** start and end chips with − / + (whole hours).
