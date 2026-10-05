@@ -42,4 +42,12 @@ class GhostArtTest {
         assertTrue(g[12, 4] >= 200)                                   // dome top (12, 11−7)
         assertTrue(g[5, 15] >= 200 && g[19, 15] >= 200)               // sides
     }
+
+    @Test
+    fun peekabooRisesSlowlyFromTheBottom() {
+        val mid = GhostArt.frame(25, pose(r = Reaction.PEEK), 600)     // halfway up: dome top not yet at its resting row
+        assertEquals(0, mid[12, 4])
+        val up = GhostArt.frame(25, pose(r = Reaction.PEEK), 1300)     // fully up after ~1.2 s
+        assertTrue(up[12, 4] >= 200)
+    }
 }

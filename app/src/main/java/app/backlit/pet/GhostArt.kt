@@ -180,10 +180,11 @@ object GhostArt {
 
     private fun peek(g: PixelGrid, t: Long) {
         val big = g.size >= 25
-        val c = t % 3200
-        val off = if (c < 500) ((1 - c / 500.0) * (if (big) 14 else 8)).px() else 0
-        body(g, t, Body(dy = off, hemSpeed = 80)); eyes(g, if (c < 500) "open" else "wide", dy = off); mouth(g, if (c < 500) "small" else "O", dy = off)
-        if (c > 500 && (c / 250) % 2 == 1L) {
+        val c = t % Reaction.PEEK.ms
+        val rise = 1200L                                              // slow enough to see him peek up
+        val off = if (c < rise) ((1 - c / rise.toDouble()) * (if (big) 14 else 8)).px() else 0
+        body(g, t, Body(dy = off, hemSpeed = 80)); eyes(g, if (c < rise) "open" else "wide", dy = off); mouth(g, if (c < rise) "small" else "O", dy = off)
+        if (c > rise && (c / 250) % 2 == 1L) {
             if (big) { for (y in 3..6) g.p(21, y, 1.0); g.p(21, 8, 1.0) } else { g.p(11, 3, 1.0); g.p(11, 5, 1.0) }
         }
     }

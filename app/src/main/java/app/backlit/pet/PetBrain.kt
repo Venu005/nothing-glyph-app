@@ -7,7 +7,7 @@ import kotlin.random.Random
 
 enum class Base { HAPPY, CONTENT, BORED, SAD, ASLEEP, MUNCH }
 
-enum class Reaction(val ms: Long) { PET(2600), YAWN(3600), DIZZY(2000), ANGRY(6000), CALMED(4000), PEEK(3200), BOO(2600) }
+enum class Reaction(val ms: Long) { PET(2600), YAWN(3600), DIZZY(2000), ANGRY(6000), CALMED(4000), PEEK(3900), BOO(2600) }
 
 data class Pose(
     val base: Base,
