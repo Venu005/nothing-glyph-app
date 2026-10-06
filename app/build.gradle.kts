@@ -43,6 +43,13 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.findByName("release")
         }
+        // The real release build (R8 on, not debuggable) signed with the local debug key: installable for testing
+        // without the upload key. Never uploaded.
+        create("staging") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+        }
     }
 
     buildFeatures { compose = true; buildConfig = true }
