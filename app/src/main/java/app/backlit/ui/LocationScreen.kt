@@ -74,6 +74,7 @@ fun LocationScreen(settings: Settings, onUpdate: ((Settings) -> Settings) -> Uni
             showCities = false
             if (source.hasPermission()) useApproximate() else launcher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
+        Text("Read on your phone only, rounded to about 1 km, and never sent anywhere.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
         SettingRow(
             "Choose a city",
             if (settings.locationMode == LocationMode.CITY) (settings.placeName ?: "●") else "",
