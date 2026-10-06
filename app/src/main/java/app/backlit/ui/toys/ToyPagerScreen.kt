@@ -47,14 +47,14 @@ fun ToyPagerScreen(
     HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { toys[it].key }) { page ->
         val id = toys[page]
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-            ToyHeader(onBack, ToyCatalog.isSetUp(settings, id), onTurnOn = { if (!ToysManager.open(context)) onOpen(Route.Setup) })
+            ToyHeader(onBack, ToyCatalog.isSetUp(settings, id), onTurnOn = { if (!ToysManager.open(context)) onOpen(Route.Setup(Route.Toy(id))) })
             Text(id.label, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
             PagerDots(toys.size, page)
             when (id) {
-                ToyId.CLOCK -> ClockTab(settings, profile, onUpdate) { onOpen(Route.Location) }
+                ToyId.CLOCK -> ClockTab(settings, profile, onUpdate) { onOpen(Route.Location(Route.Toy(ToyId.CLOCK))) }
                 ToyId.MUSIC -> MusicTab(settings, profile, onUpdate)
                 ToyId.CHARGE -> ChargeTab(settings, profile, onUpdate)
-                ToyId.CANVAS -> StudioTab(settings, profile, onUpdate) { onOpen(Route.Editor(it)) }
+                ToyId.CANVAS -> StudioTab(settings, profile, onUpdate) { onOpen(Route.Editor(it, Route.Toy(ToyId.CANVAS))) }
                 ToyId.PET -> PetTab(settings, profile, onUpdate)
                 ToyId.SAND -> SandTab(settings, profile, onUpdate)
                 ToyId.BADGE -> BadgeTab(settings, profile, onUpdate)

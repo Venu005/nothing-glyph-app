@@ -60,8 +60,9 @@ first-run welcome replaces the per-tab setup notices.
 - `Settings`, then `Location`, `Privacy`, `Setup`, `About`
 
 **Back:**
-- Editor → Studio
-- Location, Privacy, Setup and About → Settings
+- Editor, Location and Setup → wherever you opened them from (Studio, Alerts or the Canvas page; Settings or the Clock page;
+  Settings or a toy page). They remember their origin in the route.
+- Privacy and About → Settings
 - Toy, Studio, Alerts and Settings → Home
 - Home → leaves the app
 - Welcome → Home (and marks it seen)

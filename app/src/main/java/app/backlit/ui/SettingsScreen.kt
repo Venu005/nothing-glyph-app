@@ -23,11 +23,11 @@ fun SettingsScreen(settings: Settings, onUpdate: ((Settings) -> Settings) -> Uni
         PageHeader("SETTINGS", onBack)
         Section("GLYPH")
         BrightnessRow(settings.brightness) { pct -> onUpdate { it.copy(brightness = pct) } }
-        SettingRow("Glyph Toys setup", "→") { if (!ToysManager.open(context)) onOpen(Route.Setup) }
-        SettingRow("Setup steps", "→") { onOpen(Route.Setup) }
+        SettingRow("Glyph Toys setup", "→") { if (!ToysManager.open(context)) onOpen(Route.Setup(Route.Settings)) }
+        SettingRow("Setup steps", "→") { onOpen(Route.Setup(Route.Settings)) }
         Section("CLOCK")
         val where = when (settings.locationMode) { LocationMode.FIXED -> "06–18"; else -> settings.placeName ?: "—" }
-        SettingRow("Sun times", "$where →") { onOpen(Route.Location) }
+        SettingRow("Sun times", "$where →") { onOpen(Route.Location(Route.Settings)) }
         Section("APP")
         SettingRow("Privacy policy", "→") { onOpen(Route.Privacy) }
         SettingRow("About", "→") { onOpen(Route.About) }

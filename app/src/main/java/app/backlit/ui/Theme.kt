@@ -20,7 +20,7 @@ object BacklitColors {
     val Black = Color(0xFF000000)
     val White = Color(0xFFFFFFFF)
     val Dim = Color(0xFF888888)
-    val Line = Color(0xFF262626)
+    val Line = Color(0xFF333333)
     val Red = Color(0xFFD71921)
     val LedOff = Color(0xFF1C1C1C)
 }
