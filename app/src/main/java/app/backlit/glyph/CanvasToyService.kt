@@ -41,6 +41,8 @@ class CanvasToyService : Service() {
     private var settings = Settings()
     private var alerts: AlertsRuntime? = null
     private var drawings: List<AnimIndexEntry> = emptyList()
+    /** Nothing is drawn until the drawing list has loaded, so the "no drawings" hint never flashes first. */
+    private var drawingsLoaded = false
     private var shownId: String? = null
     private var shownSince = 0L
 
@@ -74,7 +76,7 @@ class CanvasToyService : Service() {
         output = GlyphOutput(this, profile) { kick() }.also { it.connect() }
         s.launch { repo.update { if (it.canvasToyEverBound) it else it.copy(canvasToyEverBound = true) } }
         s.launch { repo.settings.collect { settings = it; kick() } }
-        s.launch { rt.drawings.collect { drawings = it; kick() } }
+        s.launch { rt.drawings.collect { drawings = it; drawingsLoaded = true; kick() } }
         s.launch { rt.bus.collect { kick() } }
         return messenger.binder
     }
@@ -99,7 +101,7 @@ class CanvasToyService : Service() {
 
     private fun kick() {
         val s = scope ?: return
-        if (renderJob?.isActive == true) return
+        if (!drawingsLoaded || renderJob?.isActive == true) return
         handler.removeCallbacks(rekick)
         renderJob = s.launch {
             val pacer = FramePacer(FRAME_MS)
@@ -134,7 +136,8 @@ class CanvasToyService : Service() {
     private fun current(now: Long): GlyphAnimation? {
         val id = CanvasHint.pick(settings.canvasDrawingId, drawings.map { it.id })
         if (id != shownId) { shownId = id; shownSince = now }
-        return id?.let { alerts?.importedAnimation(it) }
+        // Load from the list we just received (the runtime's own copy may not have caught up yet).
+        return id?.let { alerts?.library?.importedOnly(it, drawings) }
     }
 
     private companion object {

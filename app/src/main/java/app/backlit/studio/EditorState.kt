@@ -10,6 +10,8 @@ class EditorState private constructor(
     val current: Int,
     private val past: List<Snap>,
     private val future: List<Snap>,
+    /** True right after a TEXT stamp: placing text again replaces it instead of drawing over it. */
+    private val lastWasText: Boolean = false,
 ) {
     private data class Snap(val doc: Drawing, val current: Int)
 
@@ -53,7 +55,11 @@ class EditorState private constructor(
         return paint(cells.map { (it % n) to (it / n) }, shade, mirror = false)
     }
 
-    fun text(text: String, shade: Int, mirror: Boolean) = paint(PixelFontText.points(PixelFontText.clean(text), doc.size), shade, mirror)
+    fun text(text: String, shade: Int, mirror: Boolean): EditorState {
+        val base = if (lastWasText) undo() else this
+        val next = base.paint(PixelFontText.points(PixelFontText.clean(text), doc.size), shade, mirror)
+        return EditorState(next.doc, next.current, next.past, next.future, lastWasText = true)
+    }
 
     fun shift(dx: Int, dy: Int): EditorState {
         val n = doc.size

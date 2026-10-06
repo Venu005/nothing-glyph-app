@@ -32,6 +32,9 @@ object PixelFontText {
 
     fun clean(text: String): String = text.uppercase().filter { it in GLYPHS }.take(MAX_CHARS)
 
+    /** For the text field while typing: keeps the keyboard's case (changing it mid-word confuses the IME); [clean] uppercases on use. */
+    fun cleanTyping(text: String): String = text.filter { it.uppercaseChar() in GLYPHS }.take(MAX_CHARS)
+
     /** The rows of [c], or null when the font has no such character. */
     fun glyph(c: Char): List<String>? = GLYPHS[c]
 
