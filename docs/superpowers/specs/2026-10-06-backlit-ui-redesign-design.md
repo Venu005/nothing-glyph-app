@@ -193,7 +193,8 @@ unchanged.
 ## 8. Testing
 - **`LogoGeometry`:**
   - 30 ring dots + 4 sparkles + 1 red dot
-  - everything inside the safe zone (dot edges ≤ 33.1 from the centre; the outermost sparkle reaches 33.03)
+  - the ring and red dot inside the 66 dp safe zone (edges ≤ 33 from the centre); the outer sparkles may reach into the
+    72 dp visible area (edges ≤ 36; the farthest is about 34.2)
   - the brightest ring dot is the one nearest L
 - **Logo goldens:**
   - `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` are up to date
