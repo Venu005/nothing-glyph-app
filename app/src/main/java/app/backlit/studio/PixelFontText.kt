@@ -32,6 +32,9 @@ object PixelFontText {
 
     fun clean(text: String): String = text.uppercase().filter { it in GLYPHS }.take(MAX_CHARS)
 
+    /** The rows of [c], or null when the font has no such character. */
+    fun glyph(c: Char): List<String>? = GLYPHS[c]
+
     fun width(text: String): Int {
         val g = text.mapNotNull { GLYPHS[it] }
         return if (g.isEmpty()) 0 else g.sumOf { it[0].length } + g.size - 1
