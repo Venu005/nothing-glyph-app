@@ -46,7 +46,7 @@
     <path
         android:fillColor="#FFFFFFFF"
         android:fillAlpha="1.00"
-        android:pathData="M69.77,33.94a2.30,2.30 0 1,0 4.60,0a2.30,2.30 0 1,0 -4.60,0" />
+        android:pathData="M69.77,33.94a2.30,2.30 0 1,0 4.60,0a2.30,2.30 0 1,0 -4.60,0M69.09,34.91a4.00,4.00 0 1,0 8.00,0a4.00,4.00 0 1,0 -8.00,0" />
     <path
         android:fillColor="#FFFFFFFF"
         android:fillAlpha="0.97"
@@ -63,8 +63,4 @@
         android:fillColor="#FFFFFFFF"
         android:fillAlpha="0.70"
         android:pathData="M71.59,28.91a1.50,1.50 0 1,0 3.00,0a1.50,1.50 0 1,0 -3.00,0M77.59,34.91a1.50,1.50 0 1,0 3.00,0a1.50,1.50 0 1,0 -3.00,0M67.59,38.91a1.50,1.50 0 1,0 3.00,0a1.50,1.50 0 1,0 -3.00,0M75.59,30.91a1.50,1.50 0 1,0 3.00,0a1.50,1.50 0 1,0 -3.00,0" />
-    <path
-        android:fillColor="#FFD71921"
-        android:fillAlpha="1.00"
-        android:pathData="M69.09,34.91a4.00,4.00 0 1,0 8.00,0a4.00,4.00 0 1,0 -8.00,0" />
 </vector>

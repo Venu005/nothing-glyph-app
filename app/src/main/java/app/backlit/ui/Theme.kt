@@ -37,11 +37,12 @@ val SpaceGrotesk = FontFamily(
 )
 
 private val typography = Typography(
-    displaySmall = TextStyle(fontFamily = Doto, fontWeight = FontWeight.Black, fontSize = 32.sp, letterSpacing = 1.sp),
+    displaySmall = TextStyle(fontFamily = Doto, fontWeight = FontWeight.Black, fontSize = 24.sp, letterSpacing = 1.sp),
+    headlineSmall = TextStyle(fontFamily = Doto, fontWeight = FontWeight.Black, fontSize = 24.sp, letterSpacing = 1.sp),
     titleMedium = TextStyle(fontFamily = Doto, fontWeight = FontWeight.Black, fontSize = 16.sp),
     bodyLarge = TextStyle(fontFamily = SpaceGrotesk, fontSize = 15.sp),
     bodyMedium = TextStyle(fontFamily = SpaceGrotesk, fontSize = 13.sp),
-    labelSmall = TextStyle(fontFamily = SpaceGrotesk, fontSize = 11.sp, letterSpacing = 2.sp),
+    labelSmall = TextStyle(fontFamily = SpaceGrotesk, fontSize = 10.sp, letterSpacing = 2.sp),
 )
 
 @Composable

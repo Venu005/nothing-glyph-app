@@ -108,4 +108,19 @@ class EditorStateTest {
         assertEquals(0, s.current)
         assertEquals(1, s.undo().doc.frames.size)
     }
+    @Test
+    fun placingTextAgainReplacesTheLastText() {
+        val vm = blank().text("VM", 3, false)
+        val venu = vm.text("VENU", 3, false)
+        assertTrue(venu.frame.shades.contentEquals(blank().text("VENU", 3, false).frame.shades))   // not VM + VENU mixed
+        assertTrue(venu.undo().frame.shades.contentEquals(blank().frame.shades))                   // one undo removes it
+    }
+
+    @Test
+    fun textAfterAnotherEditStampsOnTop() {
+        val vm = blank().text("VM", 3, false).paint(listOf(1 to 12), 3, false)
+        val both = vm.text("HI", 3, false)
+        val vmPixels = blank().text("VM", 3, false).frame.shades
+        for (i in vmPixels.indices) if (vmPixels[i] > 0) assertTrue(both.frame.shades[i] > 0)
+    }
 }

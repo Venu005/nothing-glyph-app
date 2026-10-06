@@ -69,6 +69,11 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val BADGE_ACTIVE = intPreferencesKey("badge_active")
         private val BADGE_ACTIVE_SINCE = longPreferencesKey("badge_active_since")
         private val BADGE_BOUND = booleanPreferencesKey("badge_toy_ever_bound")
+        private val WELCOME_SEEN = booleanPreferencesKey("welcome_seen")
+        private val CLOCK_BOUND = booleanPreferencesKey("clock_toy_ever_bound")
+        private val MUSIC_BOUND = booleanPreferencesKey("music_toy_ever_bound")
+        /** Set on the first write after the clock/music flag split; until then a used clock or music counts as on. */
+        private val TOY_FLAGS_V2 = booleanPreferencesKey("toy_flags_v2")
         private val namesJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
 
         /** The name to show for [kind]: the ghost keeps the original petName; the others live in petNames. */
@@ -102,6 +107,9 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
 
         fun parseSensitivity(s: String?): Sensitivity =
             Sensitivity.entries.firstOrNull { it.name == s } ?: Sensitivity.MED
+
+        /** Before the split, one flag covered both the clock and music toys: honour it once for either. */
+        private fun Preferences.legacyBound(): Boolean = this[TOY_FLAGS_V2] != true && this[BOUND] == true
 
         private fun Preferences.toSettings(): Settings {
             val d = Settings()
@@ -142,6 +150,9 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 badgeActive = (this[BADGE_ACTIVE] ?: d.badgeActive).coerceAtLeast(0),
                 badgeActiveSince = this[BADGE_ACTIVE_SINCE] ?: d.badgeActiveSince,
                 badgeToyEverBound = this[BADGE_BOUND] ?: d.badgeToyEverBound,
+                welcomeSeen = this[WELCOME_SEEN] ?: d.welcomeSeen,
+                clockToyEverBound = (this[CLOCK_BOUND] ?: d.clockToyEverBound) || legacyBound(),
+                musicToyEverBound = (this[MUSIC_BOUND] ?: d.musicToyEverBound) || legacyBound(),
             )
         }
 
@@ -182,6 +193,10 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[BADGE_ACTIVE] = s.badgeActive
             this[BADGE_ACTIVE_SINCE] = s.badgeActiveSince
             this[BADGE_BOUND] = s.badgeToyEverBound
+            this[WELCOME_SEEN] = s.welcomeSeen
+            this[CLOCK_BOUND] = s.clockToyEverBound
+            this[MUSIC_BOUND] = s.musicToyEverBound
+            this[TOY_FLAGS_V2] = true
         }
     }
 }

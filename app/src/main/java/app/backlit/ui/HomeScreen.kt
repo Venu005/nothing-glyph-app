@@ -23,8 +23,11 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -32,7 +35,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import app.backlit.alerts.AlertConfig
+import app.backlit.alerts.AlertsRuntime
 import app.backlit.data.DayLightResolver
 import app.backlit.data.LocationMode
 import app.backlit.data.Settings
@@ -42,130 +48,72 @@ import app.backlit.render.FaceContext
 import app.backlit.render.Mode
 import app.backlit.render.faces.DayRingFace
 import app.backlit.render.faces.Faces
-import kotlinx.coroutines.delay
+import app.backlit.studio.CanvasHint
+import app.backlit.ui.components.BacklitLogo
+import app.backlit.ui.components.Section
+import app.backlit.ui.components.ToolCard
+import app.backlit.ui.components.ToyCard
+import app.backlit.ui.home.ToyCatalog
+import app.backlit.ui.home.ToyThumbs
+import app.backlit.ui.nav.Route
 import java.time.LocalDateTime
 import java.time.ZoneId
-
-enum class Screen { HOME, SETUP, LOCATION, ABOUT, EDITOR }
+import kotlinx.coroutines.delay
 
 @Composable
-fun HomeScreen(
-    settings: Settings,
-    profile: DeviceProfile,
-    tab: Int,
-    onTab: (Int) -> Unit,
-    onUpdate: ((Settings) -> Settings) -> Unit,
-    onNavigate: (Screen) -> Unit,
-    onEdit: (String?) -> Unit,
-) {
+fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Unit) {
+    val context = LocalContext.current
+    val runtime = remember { AlertsRuntime.get(context) }
+    val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
+    val toys = remember(profile) { ToyCatalog.visible(hideMusic = profile == DeviceProfile.PHONE_4A_PRO) }
+    val drawings by runtime.drawings.collectAsState(initial = emptyList())
+    val config by runtime.config.collectAsState(initial = AlertConfig())
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) { while (true) { delay(50); now = System.currentTimeMillis() } }
+    val zone = ZoneId.systemDefault()
+    val canvasAnim = remember(settings.canvasDrawingId, drawings) {
+        CanvasHint.pick(settings.canvasDrawingId, drawings.map { it.id })?.let { runtime.importedAnimation(it) }
+    }
+    val on = ToyCatalog.setUpCount(settings, toys)
 
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
-    ) {
-        Text("BACKLIT", style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(top = 20.dp))
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
+        Row(Modifier.fillMaxWidth().padding(top = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+            BacklitLogo(28.dp)
+            Spacer(Modifier.width(8.dp))
+            Text("BACKLIT", style = MaterialTheme.typography.displaySmall)
+            Spacer(Modifier.weight(1f))
+            Text("⚙", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable { onOpen(Route.Settings) }.padding(4.dp))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)) {
             val supported = profile != DeviceProfile.UNSUPPORTED
-            Box(Modifier.size(7.dp).background(if (supported) BacklitColors.Red else BacklitColors.Dim, CircleShape))
+            Box(Modifier.size(6.dp).background(if (supported && on == 0) BacklitColors.Red else BacklitColors.White, CircleShape))
             Spacer(Modifier.width(6.dp))
             Text(
-                if (supported) "LIVE ON MATRIX · ${profile.label}" else "THIS PHONE HAS NO GLYPH MATRIX · PREVIEW ONLY",
-                style = MaterialTheme.typography.labelSmall,
-                color = BacklitColors.Dim,
+                if (supported) "LIVE ON MATRIX · ${profile.label} · $on OF ${toys.size} TOYS ON" else "THIS PHONE HAS NO GLYPH MATRIX · PREVIEW ONLY",
+                style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim,
             )
         }
 
-        if (profile != DeviceProfile.UNSUPPORTED && !settings.toyEverBound) {
-            Box(
-                Modifier.fillMaxWidth().border(1.dp, BacklitColors.Red).clickable { onNavigate(Screen.SETUP) }.padding(12.dp),
-            ) {
-                Text("TOY NOT SET UP YET — TAP TO SET UP →", style = MaterialTheme.typography.bodyMedium)
-            }
-            Spacer(Modifier.height(12.dp))
-        }
-
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("CLOCK", "MUSIC", "ALERTS", "CHARGE", "STUDIO", "PET", "TIMER", "BADGE").forEachIndexed { i, label ->
-                SquareChip(label, selected = tab == i, onClick = { onTab(i) })
+        Section("GLYPH TOYS")
+        toys.chunked(2).forEach { pair ->
+            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                pair.forEach { id ->
+                    ToyCard(
+                        ToyThumbs.frame(id, settings, size, now, zone, canvasAnim), id.label, ToyCatalog.isSetUp(settings, id),
+                        onClick = { onOpen(Route.Toy(id)) }, modifier = Modifier.weight(1f),
+                    )
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
             }
         }
 
-        when (tab) {
-            0 -> ClockTab(settings, profile, onUpdate, onNavigate)
-            1 -> MusicTab(settings, profile, onUpdate)
-            2 -> AlertsTab(profile, onEdit)
-            3 -> ChargeTab(settings, profile, onUpdate)
-            4 -> StudioTab(settings, profile, onUpdate, onEdit)
-            5 -> PetTab(settings, profile, onUpdate)
-            6 -> SandTab(settings, profile, onUpdate)
-            else -> BadgeTab(settings, profile, onUpdate)
+        Section("TOOLS")
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ToolCard(ToyThumbs.studio(size, now), "STUDIO", "${drawings.size} DRAWINGS", { onOpen(Route.Studio) }, Modifier.weight(1f))
+            ToolCard(ToyThumbs.alerts(size, now), "ALERTS", "${config.contacts.size} CONTACTS · ${config.devices.size} DEVICES", { onOpen(Route.Alerts) }, Modifier.weight(1f))
         }
-
-        SettingRow("Glyph Toy setup", "→") { onNavigate(Screen.SETUP) }
-        SettingRow("About", "→") { onNavigate(Screen.ABOUT) }
-        DashedDivider()
         Spacer(Modifier.height(32.dp))
     }
-}
-
-@Composable
-private fun ClockTab(
-    settings: Settings,
-    profile: DeviceProfile,
-    onUpdate: ((Settings) -> Settings) -> Unit,
-    onNavigate: (Screen) -> Unit,
-) {
-    val now by produceState(LocalDateTime.now()) {
-        while (true) {
-            delay(TickSchedule.delayToNextTick(System.currentTimeMillis(), perSecond = true))
-            value = LocalDateTime.now()
-        }
-    }
-    var previewSize by rememberSaveable { mutableIntStateOf(profile.size) }
-    val resolver = remember { DayLightResolver() }
-    val face = Faces.byId(settings.faceId)
-    val ctx = FaceContext(
-        hour = now.hour, minute = now.minute, second = now.second,
-        size = previewSize,
-        mode = if (previewSize == 13) Mode.AOD else Mode.ACTIVE,
-        options = settings.faceOptions,
-        dayLight = resolver.resolve(settings, now.toLocalDate(), ZoneId.systemDefault()),
-    )
-    val grid = face.render(ctx)
-
-    MatrixPreview(grid, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp))
-
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-        Text(
-            listOf(25, 13).joinToString("   ") { if (it == previewSize) "[${it}×$it]" else "${it}×$it" },
-            style = MaterialTheme.typography.labelSmall,
-            color = BacklitColors.Dim,
-            modifier = Modifier.clickable { previewSize = if (previewSize == 25) 13 else 25 }.padding(8.dp),
-        )
-    }
-
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Faces.all.forEach { f ->
-            SquareChip(f.label, selected = f.id == face.id, onClick = { onUpdate { it.copy(faceId = f.id) } }, modifier = Modifier.weight(1f))
-        }
-    }
-
-    if (face.id == "analog") {
-        SettingRow("Second hand", if (settings.secondHand) "ON" else "OFF") {
-            onUpdate { it.copy(secondHand = !it.secondHand) }
-        }
-    }
-    if (face.id == DayRingFace.id) {
-        // Only faces that show digits have a time format; the analog face has none.
-        SettingRow("Time format", if (settings.use24h) "24H" else "12H") {
-            onUpdate { it.copy(use24h = !it.use24h) }
-        }
-        val where = when (settings.locationMode) {
-            LocationMode.FIXED -> "06–18"
-            else -> settings.placeName ?: "—"
-        }
-        SettingRow("Sun times", "$where →") { onNavigate(Screen.LOCATION) }
-    }
-    BrightnessRow(settings.brightness) { pct -> onUpdate { it.copy(brightness = pct) } }
 }
 
 @Composable

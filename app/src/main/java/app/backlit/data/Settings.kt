@@ -43,6 +43,9 @@ data class Settings(
     val badgeActive: Int = 0,
     val badgeActiveSince: Long = 0L,
     val badgeToyEverBound: Boolean = false,
+    val welcomeSeen: Boolean = false,
+    val clockToyEverBound: Boolean = false,
+    val musicToyEverBound: Boolean = false,
 ) {
     val faceOptions: FaceOptions get() = FaceOptions(secondHand = secondHand, use24h = use24h)
 }

@@ -26,7 +26,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -295,7 +297,8 @@ fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit
         AlertDialog(
             onDismissRequest = { askText = false },
             title = { Text("Text") },
-            text = { OutlinedTextField(value = text, onValueChange = { text = PixelFontText.clean(it) }, singleLine = true,
+            text = { OutlinedTextField(value = text, onValueChange = { text = PixelFontText.cleanTyping(it) }, singleLine = true,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false),
                 supportingText = { Text("Up to ${PixelFontText.MAX_CHARS}: A–Z 0–9 ! ? . - : + ♥") }) },
             confirmButton = { TextButton(onClick = { editor = state.text(text, shade, mirror); askText = false }) { Text("PLACE") } },
             dismissButton = { TextButton(onClick = { askText = false }) { Text("CANCEL") } },

@@ -1,0 +1,46 @@
+<h2>Eclipse: pick the final version</h2>
+<p class="subtitle">Four refinements of the Eclipse. Each is shown as the icon on dark and light wallpaper, small, as the themed icon, and in a <b>wordmark lock-up</b> (icon + BACKLIT in the dot font, used inside the app and on the Play Store). Click the one you like.</p>
+<div class="options" id="opts" style="display:flex;flex-direction:column;gap:14px"></div>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@900&display=swap" rel="stylesheet">
+<style>
+  .row{display:flex;gap:22px;align-items:center;flex-wrap:wrap;padding:14px;border-radius:8px}
+  .dark{background:linear-gradient(135deg,#1d1d1f,#3a3a3c)}
+  .light{background:linear-gradient(135deg,#e9e6df,#cfcac0)}
+  .black{background:#000}
+  .wrap{display:flex;gap:12px;flex-wrap:wrap}
+  .ico{border-radius:50%;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .lbl{font-size:12px;color:#ddd;text-align:center;margin-top:6px;font-family:sans-serif}
+  .light .lbl{color:#222}
+  .word{font-family:'Doto',monospace;font-weight:900;font-size:34px;color:#fff;letter-spacing:2px}
+</style>
+<script>
+(function(){
+const RED="#D71921";
+function dot(cx,cy,r,fill){return `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${r.toFixed(2)}" fill="${fill}"/>`}
+function ring(rr,N,r,f){let s="";for(let i=0;i<N;i++){const a=i/N*Math.PI*2;s+=dot(54+Math.cos(a)*rr,54+Math.sin(a)*rr,r,`rgba(255,255,255,${f(a)})`)}return s}
+const light=-Math.PI*0.25; // light from the upper right
+const lit=a=>Math.max(0,Math.cos(a-light));
+const V=[
+ {id:"c1",name:"C1 · Original",desc:"As you picked it: an inner ring of bright dots plus a faint outer ring, brighter towards the upper right, with the red dot on the ring.",
+  draw:m=>`<circle cx="54" cy="54" r="21" fill="#000"/>`+ring(27,28,2.4,a=>0.45+0.55*lit(a))+ring(33,36,1.6,a=>0.15+0.35*lit(a))+dot(54+Math.cos(light)*27,54+Math.sin(light)*27,3.1,m?"#fff":RED)},
+ {id:"c2",name:"C2 · Bold ring",desc:"One ring of bigger, evenly bright dots. It's the cleanest and boldest, and the easiest to read at small sizes. The red dot is the \"diamond\" at the top right.",
+  draw:m=>ring(28,22,3.2,a=>1)+dot(54+Math.cos(light)*28,54+Math.sin(light)*28,4.2,m?"#fff":RED).replace(/^/,"")},
+ {id:"c3",name:"C3 · Diamond ring",desc:"The moment just before totality: the glow fades around the ring and bursts into a bright cluster at the top right, with the red dot at its heart. It's the most dramatic option.",
+  draw:m=>{let s=ring(27,30,2.3,a=>0.12+0.88*Math.pow(lit(a),3));const cx=54+Math.cos(light)*27,cy=54+Math.sin(light)*27;
+   [[0,-6],[6,0],[-4,4],[4,-4]].forEach(([dx,dy])=>{s+=dot(cx+dx,cy+dy,1.5,"rgba(255,255,255,.7)")});s+=dot(cx,cy,4,m?"#fff":RED);return s}},
+ {id:"c4",name:"C4 · Halo",desc:"Three rings that get fainter as they spread out, as if light is leaking around the moon. The black centre is bigger, so it reads like the Glyph Matrix with its centre switched off.",
+  draw:m=>`<circle cx="54" cy="54" r="19" fill="#000"/>`+ring(23,24,2.5,a=>0.9)+ring(29,30,2,a=>0.5)+ring(35,36,1.5,a=>0.22)+dot(54+Math.cos(light)*23,54+Math.sin(light)*23,3,m?"#fff":RED)},
+];
+function svg(v,size,mono,bg){return `<svg class="ico" width="${size}" height="${size}" viewBox="9 9 90 90" xmlns="http://www.w3.org/2000/svg"><rect width="108" height="108" fill="${bg}"/>${v.draw(mono)}</svg>`}
+function lock(v){return `<div style="display:flex;align-items:center;gap:12px">${svg(v,52,false,"#000").replace('class="ico"','')}<span class="word">BACKLIT</span></div>`}
+const box=document.getElementById("opts");
+V.forEach(v=>{const el=document.createElement("div");el.className="option";el.dataset.choice=v.id;el.style.flexDirection="column";el.style.alignItems="stretch";
+  el.innerHTML=`<div class="wrap">
+   <div class="row dark"><div>${svg(v,112,false,"#000")}<div class="lbl">Backlit</div></div><div>${svg(v,56,false,"#000")}</div><div>${svg(v,36,false,"#000")}</div></div>
+   <div class="row light"><div>${svg(v,112,false,"#000")}<div class="lbl">Backlit</div></div></div>
+   <div class="row dark"><div>${svg(v,80,true,"#2b2b2d")}<div class="lbl">themed</div></div></div>
+   <div class="row black">${lock(v)}</div></div>
+   <div class="content"><h3>${v.name}</h3><p>${v.desc}</p></div>`;
+  el.onclick=()=>toggleSelect(el);box.appendChild(el)});
+})();
+</script>

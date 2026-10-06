@@ -32,6 +32,9 @@ Free, no ads, no analytics, no network access.
 
 ## Features
 
+The app opens on a grid of live toy cards; tap one for its page and swipe between toys. The icon is the
+"Diamond ring" logo (`render/LogoGeometry.kt`), also used for the themed icon and the Play Store icon (`docs/store/icon-512.png`).
+
 ### Backlit Clock (Glyph Toy)
 - **Analog:** anti-aliased hands. The minute hand moves on whole minutes so it never shimmers, and a
   second-hand dot runs around the rim (Phone (3), optional).
@@ -265,8 +268,12 @@ app/src/main/java/app/backlit/
 │   │   CanvasToyService, PetToyService     the five Glyph Toys
 │   ├── PlugWatcher.kt       remembers plug-in time so Charge can replay after Nothing's animation
 │   └── AppMatrixPlayer.kt   plays alerts when no Backlit toy is showing
-├── ui/              Jetpack Compose screens (scrolling tabs CLOCK | MUSIC | ALERTS | CHARGE | STUDIO | PET,
-│                    full-screen pixel editor, Setup, Location, About)
+├── ui/              Jetpack Compose screens: Welcome, Home grid, toy pager, Studio + pixel editor, Alerts,
+│   │                Settings, Privacy, Setup, Location, About
+│   ├── home/        ToyCatalog (order, set-up status), ToyThumbs (live card previews)   (pure)
+│   ├── nav/         Route (screens, Back, save/restore)   (pure)
+│   ├── components/  Nothing-style components: BacklitLogo, ToyCard, ToolCard, ToyHeader, PagerDots…
+│   └── toys/        ToyPagerScreen, ClockTab
 └── MainActivity.kt
 app/src/test/        JVM unit tests mirroring the packages above
 app/src/debug/       debug-only spike probes
@@ -386,6 +393,7 @@ Backlit learned the format by reading the open-source editor; no code was copied
 
 | Part | Spec | Plan |
 |---|---|---|
+| UI redesign + logo (part 1) | [`2026-10-06-backlit-ui-redesign-design.md`](docs/superpowers/specs/2026-10-06-backlit-ui-redesign-design.md) | [`2026-10-06-backlit-ui-redesign-part1.md`](docs/superpowers/plans/2026-10-06-backlit-ui-redesign-part1.md) |
 | Core + Clock toy | [`2026-10-03-backlit-clocks-design.md`](docs/superpowers/specs/2026-10-03-backlit-clocks-design.md) | [`2026-10-03-backlit-clocks.md`](docs/superpowers/plans/2026-10-03-backlit-clocks.md) |
 | Music toy | [`2026-10-03-backlit-music-design.md`](docs/superpowers/specs/2026-10-03-backlit-music-design.md) | [`2026-10-03-backlit-music.md`](docs/superpowers/plans/2026-10-03-backlit-music.md) |
 | Alerts | [`2026-10-04-backlit-alerts-design.md`](docs/superpowers/specs/2026-10-04-backlit-alerts-design.md) | [`2026-10-04-backlit-alerts.md`](docs/superpowers/plans/2026-10-04-backlit-alerts.md) |

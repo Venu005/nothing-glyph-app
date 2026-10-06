@@ -12,6 +12,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
 import org.junit.Test
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import org.junit.rules.TemporaryFolder
 
 class SettingsRepoTest {
@@ -46,6 +48,7 @@ class SettingsRepoTest {
             sandPresets = listOf(2, 7, 45), sandAlert = "chime", sandExact = true,
             sandTimer = "{\"phase\":\"RUNNING\",\"endAt\":5}", sandToyEverBound = true,
             badgeMessages = "[{\"text\":\"HI\"}]", badgeActive = 3, badgeActiveSince = 777L, badgeToyEverBound = true,
+            welcomeSeen = true, clockToyEverBound = true, musicToyEverBound = true,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -181,5 +184,28 @@ class SettingsRepoTest {
         val s = repo().settings.first()
         assertEquals("", s.badgeMessages); assertEquals(0, s.badgeActive)
         assertEquals(0L, s.badgeActiveSince); assertEquals(false, s.badgeToyEverBound)
+    }
+
+    @Test
+    fun redesignFlagDefaults() = runBlocking {
+        val s = repo().settings.first()
+        assertEquals(false, s.welcomeSeen); assertEquals(false, s.clockToyEverBound); assertEquals(false, s.musicToyEverBound)
+    }
+    @Test
+    fun clockAndMusicStayOnForUsersWhoUsedThemBeforeTheSplit() = runBlocking {
+        val store = PreferenceDataStoreFactory.create(scope = scope, produceFile = { tmp.root.resolve("m.preferences_pb") })
+        store.edit {
+            it[booleanPreferencesKey("toy_ever_bound")] = true
+            it[booleanPreferencesKey("clock_toy_ever_bound")] = false      // written as false by part 1 before the fix
+            it[booleanPreferencesKey("music_toy_ever_bound")] = false
+        }
+        val r = SettingsRepo(store)
+        assertEquals(true, r.settings.first().clockToyEverBound)
+        assertEquals(true, r.settings.first().musicToyEverBound)
+        r.update { it.copy(brightness = 50) }                                 // the first write makes it permanent
+        assertEquals(true, r.settings.first().clockToyEverBound)
+        val fresh = SettingsRepo(PreferenceDataStoreFactory.create(scope = scope, produceFile = { tmp.root.resolve("n.preferences_pb") }))
+        fresh.update { it.copy(brightness = 50) }
+        assertEquals(false, fresh.settings.first().clockToyEverBound)       // nobody used them: still off
     }
 }

@@ -26,4 +26,11 @@ class PixelFontTextTest {
         val s = PixelFontText.points("1", 13)                 // w = 3 → x0 = 5, y0 = 4; '1' row 0 is "010"
         assertTrue(6 to 4 in s)
     }
+    @Test
+    fun typingKeepsCaseSoTheKeyboardDoesNotFight() {
+        assertEquals("venu", PixelFontText.cleanTyping("venu"))
+        assertEquals("Vm!", PixelFontText.cleanTyping("Vm!#"))
+        assertEquals("abcdef", PixelFontText.cleanTyping("abcdefgh"))
+        assertEquals("VENU", PixelFontText.clean(PixelFontText.cleanTyping("venu")))
+    }
 }
