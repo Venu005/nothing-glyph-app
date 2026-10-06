@@ -57,12 +57,11 @@ first-run welcome replaces the per-tab setup notices.
 - `Toy(id)`: the pager, opened at that toy.
 - `Studio`, then `Editor(drawingId?)`
 - `Alerts`
-- `Settings`, then `Location`, `Privacy`
-- `About`
+- `Settings`, then `Location`, `Privacy`, `Setup`, `About`
 
 **Back:**
 - Editor → Studio
-- Location and Privacy → Settings
+- Location, Privacy, Setup and About → Settings
 - Toy, Studio, Alerts and Settings → Home
 - Home → leaves the app
 - Welcome → Home (and marks it seen)
@@ -89,8 +88,9 @@ The back stack is a pure function, `Route.parent()`, so it can be unit tested.
 - **Status line** (labelSmall, grey), then the page content: `SettingRow`s, `ChipRow`s and `Section`s.
 - **`BottomActionBar`:** fixed at the bottom on black, with a 1 dp top line and 12/16/18 dp padding. It contains:
   - **SHOW ON GLYPH:** a white pill that plays the toy's preview through `AlertsRuntime.preview`, as each tab does today.
-  - **TURN ON IN GLYPH TOYS:** a red-outlined pill with a red dot, shown when the toy isn't set up. It opens the setup
-    sheet (the two steps from today's `SetupScreen`).
+  - **TURN ON IN GLYPH TOYS:** a red-outlined pill with a red dot, shown when the toy isn't set up. It opens Nothing's
+    Glyph Toys screen directly through the existing `ToysManager.open()`, and falls back to the setup steps (`SetupScreen`)
+    on systems without it.
 - **Scrolling:** the content area scrolls, and its bottom padding is the bar's measured height plus 16 dp, so nothing
   sits under the bar.
 - **Off-screen pages** don't run their live-preview tickers. Only the settled page animates.
@@ -182,7 +182,8 @@ unchanged.
    - the design tokens and components
    - `ToyCatalog` and `Route`
    - Home, Settings and Welcome
-   - the pager with toy pages that, at first, wrap today's tab bodies unchanged under the new hero and bar
+   - the pager with toy pages that, at first, show the new header, name and pager dots above today's tab bodies, which are
+    unchanged and still include their own preview and Show on Glyph. The hero and bottom bar arrive with the split in part 2
    - Studio and Alerts restyled headers
 
    This part is shippable on its own.
@@ -192,7 +193,7 @@ unchanged.
 ## 8. Testing
 - **`LogoGeometry`:**
   - 30 ring dots + 4 sparkles + 1 red dot
-  - everything inside the safe zone (r ≤ 33 from the centre)
+  - everything inside the safe zone (dot edges ≤ 33.1 from the centre; the outermost sparkle reaches 33.03)
   - the brightest ring dot is the one nearest L
 - **Logo goldens:**
   - `ic_launcher_foreground.xml` and `ic_launcher_monochrome.xml` are up to date
