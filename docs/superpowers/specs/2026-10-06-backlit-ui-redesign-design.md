@@ -164,7 +164,7 @@ unchanged.
 |---|---|
 | `render/LogoGeometry` | pure dot list (x, y, r, colour, alpha) for the C3 logo, in the 108 viewport |
 | `render/LogoXml` | vector drawable XML for the foreground and the monochrome icon |
-| `ui/home/ToyCatalog` | `ToyEntry(id, name)`, the list order, `visible(profile)` (no Music on the 4a Pro), `isSetUp(settings, id)` (the existing `…ToyEverBound` flags, with the Clock using `toyEverBound`), and `setUpCount` |
+| `ui/home/ToyCatalog` | `ToyEntry(id, name)`, the list order, `visible(profile)` (no Music on the 4a Pro), `isSetUp(settings, id)` (the per-toy `…ToyEverBound` flags: the new `clockToyEverBound` and `musicToyEverBound`, then the existing charge, canvas, pet, sand and badge flags), and `setUpCount` |
 | `ui/nav/Route` | the sealed routes, `parent()`, and saving and restoring (`Route.save()` / `Route.restore(String)`) |
 | `ui/components/*` | the shared components above |
 | `ui/home/HomeScreen` | the grid |
@@ -172,7 +172,7 @@ unchanged.
 | `ui/toys/*Toy.kt` | one file per toy holding its Hero and Content, moved out of today's `*Screen.kt` files |
 | `ui/SettingsScreen`, `ui/WelcomeScreen` | new |
 | `data/Settings.welcomeSeen` | a new boolean, default false |
-| `data/Settings.musicToyEverBound` | a new boolean, default false, set by `MusicToyService` on bind like the other toys (Music had no flag) |
+| `data/Settings.clockToyEverBound`, `musicToyEverBound` | new booleans, default false, set by `ClockToyService` and `MusicToyService` on bind. Today both set the shared `toyEverBound`, which keeps its meaning "any Backlit toy was used" (it drives Welcome). Migration: none. A user who used either before shows "TURN ON" until the toy binds once more |
 
 `MainActivity` holds a `Route` (`rememberSaveable` via `Route.save/restore`) and a `BackHandler` that uses `parent()`.
 
@@ -203,7 +203,7 @@ unchanged.
   - `isSetUp` maps each toy to its flag
   - `setUpCount`
 - **`Route`:** `parent()` for every route, and the save/restore round trip, including `Toy(id)` and `Editor(id)` / `Editor(null)`.
-- **Settings:** the `welcomeSeen` and `musicToyEverBound` defaults and round trip.
+- **Settings:** the `welcomeSeen`, `clockToyEverBound` and `musicToyEverBound` defaults and round trip.
 - **Privacy text:** `res/raw/privacy_policy.txt` equals `docs/privacy-policy.md`.
 - **All existing tests stay green.**
 - **Device checklist:**
