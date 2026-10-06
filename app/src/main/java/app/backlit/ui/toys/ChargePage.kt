@@ -40,6 +40,7 @@ import app.backlit.ui.components.Section
 import app.backlit.ui.components.SheetAction
 import app.backlit.ui.components.rememberTicker
 import app.backlit.ui.home.ToyId
+import app.backlit.ui.toys.ChargeAnimSlot
 import app.backlit.ui.toys.StatusInputs
 import app.backlit.ui.toys.ToyAction
 import app.backlit.ui.toys.ToyStatus
@@ -53,7 +54,7 @@ fun ChargePage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings)
     val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
     val style = ChargeStyles.byId(settings.chargeStyle)
     var moment by rememberSaveable { mutableStateOf(Moment.CHARGING) }
-    var sheet by rememberSaveable { mutableStateOf<String?>(null) }   // "style" | "plug" | "done"
+    var sheet by rememberSaveable { mutableStateOf<String?>(null) }   // "style", or a ChargeAnimSlot name
     var message by remember { mutableStateOf<String?>(null) }
     val battery = remember {
         context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), android.content.Context.RECEIVER_NOT_EXPORTED)?.let {
@@ -84,8 +85,8 @@ fun ChargePage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings)
         Text("Plays once per charge when your battery reaches this level. If your phone stops charging early (battery protection), set it at or below that limit.",
             style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
         Section("CUSTOM ANIMATIONS")
-        SettingRow("Plug-in animation", "${(names[settings.chargePlugInAnim] ?: "Style default").uppercase()} →") { sheet = "plug" }
-        SettingRow("Done animation", "${(names[settings.chargeDoneAnim] ?: "Style default").uppercase()} →") { sheet = "done" }
+        SettingRow("Plug-in animation", "${(names[settings.chargePlugInAnim] ?: "Style default").uppercase()} →") { sheet = ChargeAnimSlot.PLUG_IN.name }
+        SettingRow("Done animation", "${(names[settings.chargeDoneAnim] ?: "Style default").uppercase()} →") { sheet = ChargeAnimSlot.DONE.name }
         SettingRow("Import from Glyph Museum", "→") { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
         message?.let { Notice(it) }
         Text("Imported animations play instead of the style's own, but can't show your level.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
@@ -103,16 +104,20 @@ fun ChargePage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings)
                 }
             }
         }
-        "plug", "done" -> OptionSheet(if (sheet == "plug") "PLUG-IN ANIMATION" else "DONE ANIMATION", { sheet = null }) {
-            val current = if (sheet == "plug") settings.chargePlugInAnim else settings.chargeDoneAnim
-            (listOf("" to "Style default") + names.toList()).forEach { (id, name) ->
-                val chosen = id == current || (id == "" && current !in names)
-                SheetAction((if (chosen) "● " else "○ ") + name) {
-                    onUpdate { if (sheet == "plug") it.copy(chargePlugInAnim = id) else it.copy(chargeDoneAnim = id) }
-                    sheet = null
+        null -> Unit
+        else -> {
+            val slot = ChargeAnimSlot.valueOf(sheet!!)
+            OptionSheet(slot.title, { sheet = null }) {
+                val current = slot.current(settings)
+                (listOf("" to "Style default") + names.toList()).forEach { (id, name) ->
+                    val chosen = id == current || (id == "" && current !in names)
+                    SheetAction((if (chosen) "● " else "○ ") + name) {
+                        onUpdate(ChargeAnimSlot.update(slot, id))   // slot fixed now; the update runs after the sheet closes
+                        sheet = null
+                    }
                 }
+                if (names.isEmpty()) Text("No imported animations yet.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
             }
-            if (names.isEmpty()) Text("No imported animations yet.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
         }
     }
 }

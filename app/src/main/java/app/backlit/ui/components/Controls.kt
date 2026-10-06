@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -114,7 +116,7 @@ private fun ActionButton(spec: ActionSpec, modifier: Modifier) {
 /** The fixed bar at the bottom of a page; reports its height so the page can pad its content above it. */
 @Composable
 fun BottomActionBar(primary: ActionSpec?, secondary: ActionSpec? = null, onHeight: (Int) -> Unit = {}, modifier: Modifier = Modifier) {
-    if (primary == null && secondary == null) { onHeight(0); return }
+    if (primary == null && secondary == null) return
     Column(modifier.fillMaxWidth().background(BacklitColors.Black).onSizeChanged { onHeight(it.height) }) {
         Box(Modifier.fillMaxWidth().height(1.dp).background(BacklitColors.Line))
         Row(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -134,7 +136,8 @@ fun OptionSheet(title: String, onDismiss: () -> Unit, content: @Composable () ->
         contentColor = BacklitColors.White,
         dragHandle = { Box(Modifier.padding(top = 10.dp).size(width = 36.dp, height = 4.dp).background(BacklitColors.Line, Pill)) },
     ) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
+        // Scrolls, so long galleries and their actions (REMOVE, SAVE) stay reachable, also above the keyboard.
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).imePadding().padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(vertical = 10.dp))
             content()
         }

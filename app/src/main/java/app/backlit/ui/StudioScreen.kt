@@ -10,6 +10,8 @@ import app.backlit.ui.components.OptionSheet
 import app.backlit.ui.components.PageHeader
 import app.backlit.ui.components.SheetAction
 import app.backlit.ui.components.rememberTicker
+import app.backlit.ui.components.LiveSelection
+import app.backlit.ui.components.plural
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
@@ -62,7 +64,9 @@ import kotlinx.coroutines.launch
 fun StudioScreen(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit, onEdit: (String?) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     val runtime = remember { AlertsRuntime.get(context) }
-    val drawings by runtime.drawings.collectAsStateWithLifecycle(initialValue = emptyList())
+    // null until the first real emission, so a rotation's empty start never closes an open sheet.
+    val loaded by runtime.drawings.collectAsStateWithLifecycle<List<AnimIndexEntry>?>(initialValue = null)
+    val drawings = loaded.orEmpty()
     val scope = rememberCoroutineScope()
     val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
     val onCanvas = CanvasHint.pick(settings.canvasDrawingId, drawings.map { it.id })
@@ -79,7 +83,7 @@ fun StudioScreen(settings: Settings, profile: DeviceProfile, onUpdate: ((Setting
     Box(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = with(LocalDensity.current) { barPx.toDp() } + 16.dp)) {
             PageHeader("STUDIO", onBack)
-            Text("${drawings.size} DRAWINGS · TAP ONE FOR OPTIONS", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+            Text("${plural(drawings.size, "DRAWING")} · TAP ONE FOR OPTIONS", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
             message?.let { Notice(it) }
             if (drawings.isEmpty()) CenterNote("Draw your own pictures and animations for the Glyph. Use them for calls, devices, charging, or on the Canvas toy.")
             drawings.chunked(2).forEach { pair ->
@@ -103,7 +107,8 @@ fun StudioScreen(settings: Settings, profile: DeviceProfile, onUpdate: ((Setting
 
     // The sheet looks its drawing up in the live list, so a drawing deleted elsewhere closes it instead of crashing.
     val open = drawings.firstOrNull { it.id == openId }
-    if (openId != null && open == null) openId = null
+    val selection = remember { LiveSelection() }
+    LaunchedEffect(openId, loaded) { val k = selection.resolve(openId, open != null, loaded != null); if (k != openId) openId = k }
     if (open != null) OptionSheet(open.name.uppercase(), { openId = null }) {
         val anim = remember(open) { runtime.library.load(open) }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { MatrixPreview(anim?.frame(size, now) ?: PixelGrid(size), Modifier.fillMaxWidth(0.5f)) }

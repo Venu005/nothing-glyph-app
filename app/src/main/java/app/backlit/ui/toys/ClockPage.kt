@@ -26,7 +26,7 @@ import java.time.ZoneId
 
 @Composable
 fun ClockPage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit, chrome: PageChrome, onOpenLocation: () -> Unit) {
-    val nowMs = rememberTicker(1000, chrome.active)
+    val nowMs = rememberTicker(250, chrome.active)   // 4×/s so the seconds never lag the real clock
     val zone = ZoneId.systemDefault()
     val now = Instant.ofEpochMilli(nowMs).atZone(zone)
     var previewSize by rememberSaveable { mutableIntStateOf(profile.size) }

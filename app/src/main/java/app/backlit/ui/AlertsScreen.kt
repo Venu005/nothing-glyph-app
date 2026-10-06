@@ -12,6 +12,7 @@ import app.backlit.ui.components.PageHeader
 import app.backlit.ui.components.SegmentedControl
 import app.backlit.ui.components.SheetAction
 import app.backlit.ui.components.rememberTicker
+import app.backlit.ui.components.LiveSelection
 import app.backlit.ui.alerts.AlertsAttention
 import app.backlit.ui.alerts.AlertsSegment
 import app.backlit.ui.alerts.Attention
@@ -85,7 +86,9 @@ private const val DISCLOSURE =
 fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     val runtime = remember { AlertsRuntime.get(context) }
-    val config by runtime.config.collectAsStateWithLifecycle(initialValue = AlertConfig())
+    // null until the first real emission, so a rotation's empty start never closes an open sheet.
+    val loadedConfig by runtime.config.collectAsStateWithLifecycle<AlertConfig?>(initialValue = null)
+    val config = loadedConfig ?: AlertConfig()
     val scope = rememberCoroutineScope()
     val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
@@ -181,7 +184,8 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
     // Rule sheet: looks the rule up in the live config, so a removed rule just closes the sheet.
     val contact = ruleKey?.takeIf { it.startsWith("c:") }?.let { k -> config.contacts.firstOrNull { "c:${it.name}" == k } }
     val device = ruleKey?.takeIf { it.startsWith("d:") }?.let { k -> config.devices.firstOrNull { "d:${it.address}" == k } }
-    if (ruleKey != null && contact == null && device == null) ruleKey = null
+    val ruleSelection = remember { LiveSelection() }
+    LaunchedEffect(ruleKey, loadedConfig) { val k = ruleSelection.resolve(ruleKey, contact != null || device != null, loadedConfig != null); if (k != ruleKey) ruleKey = k }
     if (contact != null || device != null) {
         val title = contact?.name ?: device!!.name
         val selected = contact?.animationId ?: device!!.animationId
@@ -222,7 +226,8 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
     }
 
     val ownAnim = animId?.let { id -> config.imports.firstOrNull { it.id == id } }
-    if (animId != null && ownAnim == null) animId = null
+    val animSelection = remember { LiveSelection() }
+    LaunchedEffect(animId, loadedConfig) { val k = animSelection.resolve(animId, ownAnim != null, loadedConfig != null); if (k != animId) animId = k }
     if (ownAnim != null) OptionSheet(ownAnim.name.uppercase(), { animId = null }) {
         val isDrawing = ownAnim.kind == KIND_DRAWING
         SheetAction(if (isDrawing) "EDIT IN STUDIO" else "COPY TO STUDIO AND EDIT") {

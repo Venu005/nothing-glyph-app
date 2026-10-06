@@ -55,8 +55,6 @@ fun ToyPageScaffold(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    var barPx by remember { mutableIntStateOf(0) }
-    val barDp = with(LocalDensity.current) { barPx.toDp() }
     val spec = when (action) {
         null -> null
         ToyAction.TurnOn -> ActionSpec("TURN ON IN GLYPH TOYS", ActionStyle.ATTENTION, chrome.onTurnOn)
@@ -64,8 +62,10 @@ fun ToyPageScaffold(
         ToyAction.NewDrawing -> ActionSpec("+ NEW DRAWING", ActionStyle.PRIMARY, onNewDrawing)
         is ToyAction.ShowOnGlyph -> ActionSpec("SHOW ON GLYPH", ActionStyle.PRIMARY, onShow)
     }
-    Box(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = barDp + 16.dp)) {
+    // The bar sits below the scroll area (not over it), so a focused field — e.g. the pet's name with the
+    // keyboard open — is always scrolled into the visible part.
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 16.dp)) {
             ToyHeader(chrome.onBack, chrome.setUp, chrome.supported, chrome.onTurnOn)
             HeroPreview(hero, heroClick)
             Text(name, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
@@ -73,6 +73,6 @@ fun ToyPageScaffold(
             Text(status, style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp))
             content()
         }
-        BottomActionBar(spec, onHeight = { barPx = it }, modifier = Modifier.align(Alignment.BottomCenter))
+        BottomActionBar(spec)
     }
 }
