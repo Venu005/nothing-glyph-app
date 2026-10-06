@@ -182,7 +182,17 @@ Release bundle (R8-minified; signed only if `keystore.properties` exists, see be
 
 ### Release signing
 
-Create an upload key (keep the `.jks` outside the repo and back it up):
+**Test the real release build first.** `staging` is the release build (R8 shrinking on, not debuggable) signed with
+your local debug key, so it installs over the debug build without the upload key:
+
+```bash
+./gradlew :app:assembleStaging && adb install -r app/build/outputs/apk/staging/app-staging.apk
+```
+
+Then go through `docs/testing/device-checklist.md` on it. Crashes that appear only here usually mean R8 removed something
+reached by reflection — add a keep rule to `app/proguard-rules.pro`.
+
+**Upload key.** Create it yourself (keep the `.jks` outside the repo, back it up, and never share its passwords):
 
 ```bash
 keytool -genkeypair -v -keystore ~/keys/backlit-upload.jks -alias backlit -keyalg RSA -keysize 4096 -validity 10000
@@ -196,6 +206,15 @@ storePassword=<password>
 keyAlias=backlit
 keyPassword=<password>
 ```
+
+Then build the bundle to upload, and turn on **Play App Signing** in Play Console (Google keeps the app signing key;
+a lost upload key can be reset):
+
+```bash
+./gradlew :app:bundleRelease
+```
+
+The AAB is `app/build/outputs/bundle/release/app-release.aab`.
 
 ---
 
