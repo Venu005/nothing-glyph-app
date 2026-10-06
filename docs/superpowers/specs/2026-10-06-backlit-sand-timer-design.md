@@ -81,8 +81,10 @@ The timer stores the duration `D`, which bulb is "full side up" (`fullSide`, ±1
 
 ### Sand vs time
 - The time is the truth. The neck gate releases grains at `total / D` grains per ms of running time.
-- About every second, the sim checks the grain count in the top-side bulb against the target count, `round(total × L / D)`. If they differ by more than
-  one grain, the gate rate is adjusted for the next second to close the gap, so the sand finishes with the clock.
+- About every second the gate rate is recomputed from the grains resting in the up bulb (the gate cell is not counted)
+  against `should = ceil(total × L / D)`. If there are more grains than that, the rate is `base + extra / 1000` grains/ms.
+  If there are fewer, the rate is 0 until the clock catches up. If they match, the rate is `base`. This way the sand finishes
+  with the clock.
 - **On (re)entering the toy** (bind, back from an alert or after AOD), the grid is rebuilt with `SandLayout` for the current
   fraction. The stream isn't shown in the rebuilt still.
 
@@ -140,10 +142,9 @@ The timer stores the duration `D`, which bulb is "full side up" (`fullSide`, ±1
 | Field | Default | Notes |
 |---|---|---|
 | `sandPresets` | `[1,3,5,10,25]` | stored as a JSON string, cleaned on read |
-| `sandPresetIndex` | `2` (5 min) | clamped to the list |
 | `sandAlert` | `"vibrate"` | `glyph` / `vibrate` / `chime`, unknown → vibrate |
 | `sandExact` | `false` | |
-| `sandTimer` | `""` | `TimerState` as JSON, so the timer survives restarts. Empty means READY with the selected preset |
+| `sandTimer` | `""` | `TimerState` as JSON (including the selected preset index), so the timer survives restarts. Empty means READY at 5 min |
 | `sandToyEverBound` | `false` | as for the other toys |
 
 ## 5. Edge cases
@@ -172,8 +173,8 @@ The timer stores the duration `D`, which bulb is "full side up" (`fullSide`, ±1
   - long press in each phase, including the 2 s double press
   - the preset cycle wraps
   - restore round-trip
-- **SandLayout:** the grain count equals `round(total × frac)` on top plus the rest below, the stream adds 2 cells, and the layout is left-right
-  symmetric without the stream.
+- **SandLayout:** the grain count equals `round(total × frac)` on top plus the rest below, the stream adds 2 cells, and the layout is balanced
+  left-right to within one grain per bulb without the stream.
 - **SandArt:**
   - all views at both sizes are inside the mask with lit pixels
   - "Flip me" at 0 ms equals the DONE picture and at ≥1200 ms equals it rotated 180°
