@@ -15,8 +15,8 @@ it over to time things: a focus session, tea or a short break. It aims to be equ
   and the time already run.
 - **Laying it on its side pauses it.** Laying it face-down on a desk keeps it running.
 - **Long press** cycles the presets. While the timer runs, it first shows the minutes left, so it never wipes a running timer by accident.
-- **When time is up,** the "Flip me" moment plays, and the done alert fires on time even if another toy is showing
-  or the screen is asleep.
+- **When time is up,** the "Flip me" moment plays, and the done alert fires even if another toy is showing or
+  the screen is asleep. It is on time with "Ring exactly on time" switched on, and otherwise within about a minute.
 - **TIMER tab** with a live preview, presets, the done alert setting and an optional "Ring exactly on time" switch.
 - **No new runtime permission prompts.** Battery use is like the Pet toy: the accelerometer only runs while the toy is
   showing.
