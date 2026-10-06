@@ -96,8 +96,13 @@ The page has three layers:
   - **Tap a row → sheet:** an animation picker grid (built-ins, imports and drawings, with a live tile each); PREVIEW ON GLYPH; REMOVE.
   - **Bottom:** `+ ADD CONTACT` (system contact picker, as today).
   - **"About alerts" row:** expands the disclosure text, the Nothing ringtone-lights note, and the always-on tip.
-- **DEVICES segment:** the same row and sheet. **Bottom:** `+ ADD DEVICE`, which opens a sheet listing the paired Bluetooth
-  devices, or "No paired Bluetooth devices found."
+- **DEVICES segment (Bluetooth connect alerts):** each row is a paired Bluetooth device you chose (earbuds, car, watch…).
+  Its animation plays on the Glyph when that device connects, exactly as today (`BluetoothAlertReceiver`, unchanged).
+  - **Rows:** a device glyph circle, the device name, the animation name, and a live mini preview.
+  - **Tap a row → sheet:** the same animation picker; PREVIEW ON GLYPH; REMOVE.
+  - **Bottom:** `+ ADD DEVICE`, which opens a sheet listing the paired Bluetooth devices (asking for Nearby devices first if
+    needed), or "No paired Bluetooth devices found."
+  - **Segment hint line:** "Plays when the device connects."
 - **ANIMATIONS segment:**
   - **Gallery:** a 3-column gallery of every animation, each a live tile with its name.
   - **Tap:** preview on the Glyph.
