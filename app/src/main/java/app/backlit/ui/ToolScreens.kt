@@ -13,14 +13,6 @@ import app.backlit.glyph.DeviceProfile
 import app.backlit.ui.components.PageHeader
 
 @Composable
-fun StudioScreen(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit, onEdit: (String?) -> Unit, onBack: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-        PageHeader("STUDIO", onBack)
-        StudioTab(settings, profile, onUpdate, onEdit)
-    }
-}
-
-@Composable
 fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
         PageHeader("ALERTS", onBack)

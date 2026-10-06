@@ -1,6 +1,23 @@
 package app.backlit.ui
 
 import app.backlit.ui.components.Notice
+import app.backlit.ui.components.ActionSpec
+import app.backlit.ui.components.ActionStyle
+import app.backlit.ui.components.BottomActionBar
+import app.backlit.ui.components.CenterNote
+import app.backlit.ui.components.GalleryCard
+import app.backlit.ui.components.OptionSheet
+import app.backlit.ui.components.PageHeader
+import app.backlit.ui.components.SheetAction
+import app.backlit.ui.components.rememberTicker
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.mutableIntStateOf
+import app.backlit.render.PixelGrid
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.border
@@ -42,94 +59,77 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
-fun StudioTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit, onEdit: (String?) -> Unit) {
+fun StudioScreen(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit, onEdit: (String?) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     val runtime = remember { AlertsRuntime.get(context) }
     val drawings by runtime.drawings.collectAsStateWithLifecycle(initialValue = emptyList())
     val scope = rememberCoroutineScope()
     val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
-    var expanded by rememberSaveable { mutableStateOf<String?>(null) }
-    var renaming by remember { mutableStateOf<AnimIndexEntry?>(null) }
-    var deleting by remember { mutableStateOf<AnimIndexEntry?>(null) }
-    var message by remember { mutableStateOf<String?>(null) }
     val onCanvas = CanvasHint.pick(settings.canvasDrawingId, drawings.map { it.id })
-
+    var openId by rememberSaveable { mutableStateOf<String?>(null) }
+    var renaming by rememberSaveable { mutableStateOf(false) }
+    var confirmDelete by rememberSaveable { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    val now = rememberTicker(50)
+    var barPx by remember { mutableIntStateOf(0) }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) scope.launch { message = importDrawingFromUri(context, runtime, uri, size) }
     }
 
-    if (profile != DeviceProfile.UNSUPPORTED && !settings.canvasToyEverBound) {
-        Notice("Turn on Backlit Canvas in Glyph Toys (Settings → Glyph Interface → Glyph Toys) to show a drawing on the back.")
-    }
-    message?.let { Notice(it) }
-
-    Text("MY DRAWINGS", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp, bottom = 6.dp))
-    if (drawings.isEmpty()) {
-        Text("Draw your own pictures and animations for the Glyph. Use them for calls, devices, charging, or on the Canvas toy.",
-            style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
-    }
-    drawings.chunked(3).forEach { row ->
-        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            row.forEach { e ->
-                val anim = remember(e) { runtime.library.load(e) }
-                Column(
-                    Modifier.weight(1f).border(1.dp, if (expanded == e.id) BacklitColors.White else BacklitColors.Line)
-                        .clickable { expanded = if (expanded == e.id) null else e.id }.padding(4.dp),
-                ) {
-                    LoopingPreview(anim, size)
-                    Text(e.name.uppercase(), style = MaterialTheme.typography.labelSmall, maxLines = 1)
-                    if (e.id == onCanvas) Text("● ON CANVAS", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Red)
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = with(LocalDensity.current) { barPx.toDp() } + 16.dp)) {
+            PageHeader("STUDIO", onBack)
+            Text("${drawings.size} DRAWINGS · TAP ONE FOR OPTIONS", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+            message?.let { Notice(it) }
+            if (drawings.isEmpty()) CenterNote("Draw your own pictures and animations for the Glyph. Use them for calls, devices, charging, or on the Canvas toy.")
+            drawings.chunked(2).forEach { pair ->
+                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    pair.forEach { e ->
+                        val anim = remember(e) { runtime.library.load(e) }
+                        val frames = (anim as? ImportedAnimation)?.durations?.size ?: 1
+                        GalleryCard(anim?.frame(size, now) ?: PixelGrid(size), e.name, if (e.id == onCanvas) "● ON CANVAS" else "$frames FRAME" + (if (frames == 1) "" else "S"),
+                            e.id == onCanvas, { openId = e.id; renaming = false; confirmDelete = false }, Modifier.weight(1f))
+                    }
+                    if (pair.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
-            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
         }
-        val open = row.firstOrNull { it.id == expanded }
-        if (open != null) {
-            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                SquareChip("EDIT", true, { onEdit(open.id) }, Modifier.weight(1f))
-                SquareChip("CANVAS", false, { onUpdate { it.copy(canvasDrawingId = open.id) } }, Modifier.weight(1f))
-                SquareChip("SHARE", false, {
-                    (runtime.library.load(open) as ImportedAnimation?)?.let { shareAnimation(context, it, open.name) }
-                }, Modifier.weight(1f))
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                SquareChip("RENAME", false, { renaming = open }, Modifier.weight(1f))
-                SquareChip("DELETE", false, { deleting = open }, Modifier.weight(1f))
-            }
-        }
-    }
-
-    SquareChip("+ NEW DRAWING", true, { onEdit(null) }, Modifier.fillMaxWidth().padding(top = 12.dp))
-    SquareChip("IMPORT FROM GLYPH MUSEUM", false, {
-        importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
-    }, Modifier.fillMaxWidth().padding(vertical = 8.dp))
-    Spacer(Modifier.height(8.dp))
-
-    renaming?.let { e ->
-        var name by remember(e.id) { mutableStateOf(e.name) }
-        AlertDialog(
-            onDismissRequest = { renaming = null },
-            title = { Text("Rename") },
-            text = { OutlinedTextField(value = name, onValueChange = { name = it.take(MAX_NAME) }, singleLine = true) },
-            confirmButton = {
-                TextButton(onClick = {
-                    scope.launch {
-                        runtime.loadDrawing(e.id, size)?.let { d -> runtime.saveDrawing(d.copy(name = name.trim().ifBlank { e.name }), e.id) }
-                    }
-                    renaming = null
-                }) { Text("SAVE") }
-            },
-            dismissButton = { TextButton(onClick = { renaming = null }) { Text("CANCEL") } },
+        BottomActionBar(
+            primary = ActionSpec("+ NEW DRAWING", ActionStyle.PRIMARY) { onEdit(null) },
+            secondary = ActionSpec("IMPORT", ActionStyle.OUTLINE) { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
+            onHeight = { barPx = it }, modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
-    deleting?.let { e ->
-        AlertDialog(
-            onDismissRequest = { deleting = null },
-            title = { Text("Delete \"${e.name}\"?") },
-            text = { Text("Contacts, devices or charging that use it go back to their default.") },
-            confirmButton = { TextButton(onClick = { runtime.deleteImport(e.id); expanded = null; deleting = null }) { Text("DELETE") } },
-            dismissButton = { TextButton(onClick = { deleting = null }) { Text("CANCEL") } },
-        )
+
+    // The sheet looks its drawing up in the live list, so a drawing deleted elsewhere closes it instead of crashing.
+    val open = drawings.firstOrNull { it.id == openId }
+    if (openId != null && open == null) openId = null
+    if (open != null) OptionSheet(open.name.uppercase(), { openId = null }) {
+        val anim = remember(open) { runtime.library.load(open) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { MatrixPreview(anim?.frame(size, now) ?: PixelGrid(size), Modifier.fillMaxWidth(0.5f)) }
+        when {
+            renaming -> {
+                var name by remember(open.id) { mutableStateOf(open.name) }
+                OutlinedTextField(value = name, onValueChange = { name = it.take(MAX_NAME) }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                SheetAction("SAVE") {
+                    scope.launch { runtime.loadDrawing(open.id, size)?.let { d -> runtime.saveDrawing(d.copy(name = name.trim().ifBlank { open.name }), open.id) } }
+                    renaming = false
+                }
+            }
+            confirmDelete -> {
+                Text("Delete \"${open.name}\"? Contacts, devices or charging that use it go back to their default.", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(vertical = 8.dp))
+                SheetAction("DELETE", danger = true) { runtime.deleteImport(open.id); openId = null }
+                SheetAction("CANCEL") { confirmDelete = false }
+            }
+            else -> {
+                SheetAction("EDIT") { openId = null; onEdit(open.id) }
+                if (open.id != onCanvas) SheetAction("SHOW ON CANVAS") { onUpdate { it.copy(canvasDrawingId = open.id) }; openId = null }
+                SheetAction("SHOW ON GLYPH") { anim?.let { runtime.previewAnimation(it, it.loopMs.coerceIn(3000L, 10_000L)) } }
+                SheetAction("SHARE") { (anim as ImportedAnimation?)?.let { shareAnimation(context, it, open.name) } }
+                SheetAction("RENAME") { renaming = true }
+                SheetAction("DELETE", danger = true) { confirmDelete = true }
+            }
+        }
     }
 }
 
