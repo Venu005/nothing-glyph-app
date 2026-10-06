@@ -130,3 +130,13 @@ Date: ______  Build: ______  Nothing OS: ______
 - [ ] Always-on still shows the icon + short word / minutes left
 - [ ] 4a Pro: always-on still with a 5×5 icon and 3-letter text
 - [ ] The new icons (car, headphones, food) look right
+
+## UI redesign — part 1
+- [ ] Launcher icon is the Diamond ring (home screen, app drawer); with themed icons on it is monochrome
+- [ ] First run after a fresh install shows Welcome; GET STARTED goes Home; an upgrade from an earlier version goes straight Home
+- [ ] Home: logo + BACKLIT, status line with the right "N OF M TOYS ON", 7 live toy cards (6 on the 4a Pro), Studio and Alerts cards
+- [ ] Tap a card → its page; swipe left/right through all toys; ← and system Back return to the grid
+- [ ] TURN ON (status) opens Glyph Toys
+- [ ] Studio and Alerts pages work as before (editor opens and Back returns to Studio)
+- [ ] Settings: brightness changes the toys; setup, sun times, privacy policy and about open and Back returns to Settings
+- [ ] Rotate on a toy page: the same toy stays open
