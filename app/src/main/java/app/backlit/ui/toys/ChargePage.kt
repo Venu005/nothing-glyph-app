@@ -1,5 +1,8 @@
 package app.backlit.ui
 
+import androidx.compose.runtime.DisposableEffect
+import android.content.Context
+import android.content.BroadcastReceiver
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
@@ -56,13 +59,24 @@ fun ChargePage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings)
     var moment by rememberSaveable { mutableStateOf(Moment.CHARGING) }
     var sheet by rememberSaveable { mutableStateOf<String?>(null) }   // "style", or a ChargeAnimSlot name
     var message by remember { mutableStateOf<String?>(null) }
-    val battery = remember {
-        context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED), android.content.Context.RECEIVER_NOT_EXPORTED)?.let {
-            it.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) * 100 / it.getIntExtra(BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
-        }?.takeIf { it >= 0 }
+    // Live battery level while the page is open.
+    var battery by remember { mutableStateOf<Int?>(null) }
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(c: Context?, i: Intent?) {
+                i ?: return
+                val level = i.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
+                val scale = i.getIntExtra(BatteryManager.EXTRA_SCALE, 100).coerceAtLeast(1)
+                if (level >= 0) battery = level * 100 / scale
+            }
+        }
+        receiver.onReceive(context, context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED), Context.RECEIVER_NOT_EXPORTED))
+        onDispose { runCatching { context.unregisterReceiver(receiver) } }
     }
     val now = rememberTicker(50, chrome.active)
-    val t = now % ChargePreviewAnimation.durationMs(moment)
+    // The preview starts from the beginning whenever the style or moment changes.
+    val startedAt = remember(style.id, moment) { now }
+    val t = (now - startedAt).coerceAtLeast(0) % ChargePreviewAnimation.durationMs(moment)
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) message = importFromUri(context, runtime, uri, size)
     }

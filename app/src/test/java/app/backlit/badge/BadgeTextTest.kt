@@ -72,4 +72,15 @@ class BadgeTextTest {
         assertEquals("DO", short(m, ten))
         assertEquals("", short(BadgeMessage("", "moon"), ten))
     }
+    @Test
+    fun theScrollSpanStaysTheSameForTheWholeCountdown() {
+        val span = BadgeText.spanText(back, use24h = false)
+        assertEquals("BACK IN 5:00", span)
+        assertEquals("IN A MEETING UNTIL 12:30AM", BadgeText.spanText(meeting.copy(untilMinuteOfDay = 30), use24h = false))
+        assertEquals("DO NOT DISTURB", BadgeText.spanText(BadgeMessage("DO NOT DISTURB", "moon"), false))
+        // the frame's loop length uses the span, so "BACK IN 9:59" and "BACK SOON" scroll on the same loop
+        val a = BadgeArt.frame(25, back, "BACK IN 9:59", 4_000, BadgeArt.FLASH_MS, span)
+        val b = BadgeArt.frame(25, back, "BACK IN 9:59", 4_000 + (BadgeFont.width(25, span) + 29) * 55L, BadgeArt.FLASH_MS, span)
+        assertEquals(a.raw().toList(), b.raw().toList())
+    }
 }

@@ -1,5 +1,9 @@
 package app.backlit.ui
 
+import androidx.lifecycle.compose.currentStateAsState
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.compose.runtime.LaunchedEffect
 import android.app.AlarmManager
 import android.content.Intent
 import android.net.Uri
@@ -53,6 +57,11 @@ fun SandPage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
     var howOpen by rememberSaveable { mutableStateOf(false) }
     val canExact = context.getSystemService(AlarmManager::class.java)?.canScheduleExactAlarms() == true
     val exactOn = settings.sandExact && canExact
+    // Coming back from system settings: re-arm the timer's alarm with the access Android now gives us.
+    val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    LaunchedEffect(lifecycleState.isAtLeast(Lifecycle.State.RESUMED), canExact) {
+        if (lifecycleState.isAtLeast(Lifecycle.State.RESUMED) && st.phase == Phase.RUNNING) SandAlarm.sync(context, st, settings.sandExact && canExact)
+    }
 
     ToyPageScaffold(
         chrome, "SAND", SandArt.still(shape, st, now),
@@ -90,6 +99,8 @@ fun SandPage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
                 else context.startActivity(Intent(android.provider.Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${context.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
         }
+        Text("Off: when the phone is asleep, Android may ring up to about a minute late. On: Android asks you once to allow alarms.",
+            style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
         SettingRow("How it works", if (howOpen) "−" else "+") { howOpen = !howOpen }
         if (howOpen) {
             Text(

@@ -114,7 +114,7 @@ class TimerStateTest {
         assertEquals(10, s.numberValue)
         assertEquals(1000 + TimerState.NUMBER_MS, s.numberUntil)
         assertEquals(1000 + TimerState.NUMBER_MS + TimerState.REFILL_MS, s.refillUntil)
-        assertEquals(0, TimerState(presetIndex = 4).longPress(0, presets).presetIndex)   // wraps
+        assertEquals(0, TimerState(presetIndex = 4, durationMs = 25 * m).longPress(0, presets).presetIndex)   // wraps
     }
 
     @Test
@@ -122,7 +122,7 @@ class TimerStateTest {
         val s = TimerState(presetIndex = 9).longPress(0, listOf(2, 4))
         assertEquals(0, s.presetIndex)
         assertEquals(2 * m, s.durationMs)
-        assertEquals(1, TimerState(presetIndex = 0).longPress(0, emptyList()).presetIndex)   // empty → defaults
+        assertEquals(3, TimerState(presetIndex = 0).longPress(0, emptyList()).presetIndex)   // empty → defaults; 5 MIN → next is 10
     }
 
     @Test
@@ -204,5 +204,23 @@ class TimerStateTest {
         val (first, settled) = TimerState(phase = Phase.DONE, upSide = -1).firstReading(Orientation.FLAT, 0)
         assertEquals(1, first.upSide)
         assertEquals(false, settled)
+    }
+    @Test
+    fun cyclingFollowsTheCurrentTimeEvenAfterTheListChanged() {
+        // 5 MIN was showing, then 5 was removed from the list: the next long press goes to 10, not to 25
+        val s = TimerState(presetIndex = 2, durationMs = 5 * m).longPress(0, listOf(1, 3, 10, 25))
+        assertEquals(10 * m, s.durationMs)
+        assertEquals(2, s.presetIndex)
+        // a custom time added in the middle is reached in order
+        assertEquals(7 * m, TimerState(durationMs = 5 * m).longPress(0, listOf(1, 5, 7, 25)).durationMs)
+    }
+
+    @Test
+    fun theAlarmClaimsDoneOnlyFromTheStoredRunningState() {
+        val running = running(left = 1000).encode()
+        val claimed = TimerState.claimDone(running, now = 900)
+        assertEquals(Phase.DONE, TimerState.decode(claimed!!).phase)
+        assertNull(TimerState.claimDone(claimed, now = 900))                   // already done: nobody rings twice
+        assertNull(TimerState.claimDone(running(left = 60_000).encode(), now = 0))
     }
 }

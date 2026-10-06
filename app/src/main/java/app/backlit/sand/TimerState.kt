@@ -128,7 +128,9 @@ data class TimerState(
     }
 
     private fun cycle(now: Long, list: List<Int>): TimerState {
-        val i = (presetIndex.coerceIn(0, list.size - 1) + 1) % list.size
+        // The next time after the one showing, so editing the list (removing or adding times) never skips one.
+        val minutes = durationMs / MIN
+        val i = list.indexOfFirst { it > minutes }.takeIf { it >= 0 } ?: 0
         return TimerState(
             phase = Phase.READY, durationMs = list[i] * MIN, presetIndex = i, upSide = upSide,
             numberUntil = now + NUMBER_MS, numberValue = list[i], refillUntil = now + NUMBER_MS + REFILL_MS,
@@ -160,6 +162,9 @@ data class TimerState(
         const val FLIP_ME_MS = 2_300L
         val DEFAULT_PRESETS = listOf(1, 3, 5, 10, 25)
         private val json = Json { ignoreUnknownKeys = true }
+
+        /** The alarm's DONE transition from the stored state: the new JSON, or null when it isn't due or is already done (no second ring). */
+        fun claimDone(storedJson: String, now: Long): String? = decode(storedJson).alarmFired(now)?.encode()
 
         fun decode(s: String): TimerState =
             if (s.isBlank()) TimerState() else runCatching { json.decodeFromString<TimerState>(s) }.getOrDefault(TimerState())

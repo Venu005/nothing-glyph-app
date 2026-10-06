@@ -46,6 +46,9 @@ class ChargeToyService : Service() {
     private var alerts: AlertsRuntime? = null
     private val session = ChargeSession { settings.chargeTarget }
     private var lastBattery: Battery? = null
+    // Nothing is drawn until settings and the import list have loaded, so the default style never flashes first.
+    private var settingsLoaded = false
+    private var imports: List<app.backlit.alerts.AnimIndexEntry>? = null
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -88,7 +91,8 @@ class ChargeToyService : Service() {
 
         output = GlyphOutput(this, profile) { kick() }.also { it.connect() }
         s.launch { repo.update { if (it.chargeToyEverBound) it else it.copy(chargeToyEverBound = true) } }
-        s.launch { repo.settings.collect { settings = it; kick() } }
+        s.launch { repo.settings.collect { settings = it; settingsLoaded = true; kick() } }
+        s.launch { rt.config.collect { imports = it.imports; kick() } }
         s.launch { rt.bus.collect { kick() } }
         return messenger.binder
     }
@@ -115,7 +119,7 @@ class ChargeToyService : Service() {
     /** Draws now; keeps a 50 ms loop running while anything moves, and stops when the frame is still. */
     private fun kick() {
         val s = scope ?: return
-        if (renderJob?.isActive == true) return
+        if (!settingsLoaded || imports == null || renderJob?.isActive == true) return
         handler.removeCallbacks(rekick)
         renderJob = s.launch {
             val pacer = FramePacer(FRAME_MS)
@@ -151,9 +155,9 @@ class ChargeToyService : Service() {
         val t = now - show.startedAt
         return when (show.moment) {
             Moment.STILL -> style.still(size, level)
-            Moment.PLUG_IN -> alerts?.importedAnimation(settings.chargePlugInAnim)?.frame(size, t) ?: style.plugIn(size, level, t)
+            Moment.PLUG_IN -> alerts?.library?.importedOnly(settings.chargePlugInAnim, imports.orEmpty())?.frame(size, t) ?: style.plugIn(size, level, t)
             Moment.CHARGING -> style.charging(size, level, t)
-            Moment.DONE -> alerts?.importedAnimation(settings.chargeDoneAnim)?.frame(size, t) ?: style.done(size, t)
+            Moment.DONE -> alerts?.library?.importedOnly(settings.chargeDoneAnim, imports.orEmpty())?.frame(size, t) ?: style.done(size, t)
         }
     }
 

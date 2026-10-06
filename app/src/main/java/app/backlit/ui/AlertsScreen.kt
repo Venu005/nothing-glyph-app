@@ -123,7 +123,13 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
         ruleKey = "c:$name"
         if (!listenerOn) disclosing = "notif"
     }
-    val btPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> btGranted = ok; if (ok) addingDevice = true }
+    // After "Don't ask again", Android won't show the prompt any more: send the user to app settings instead.
+    var btBlocked by rememberSaveable { mutableStateOf(false) }
+    val btPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        btGranted = ok
+        if (ok) addingDevice = true
+        else btBlocked = (context as? android.app.Activity)?.shouldShowRequestPermissionRationale(Manifest.permission.BLUETOOTH_CONNECT) == false
+    }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) message = importFromUri(context, runtime, uri, size) }
 
     val attention = AlertsAttention.pick(listenerOn, btGranted, config.contacts.size, config.devices.size, segment)
@@ -237,7 +243,13 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
                     "Only their name and address are saved, on your phone. Nothing is sent anywhere.",
                 style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 8.dp),
             )
-            SheetAction("CONTINUE") { disclosing = null; btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT) }
+            if (btBlocked) Text("Nearby devices is turned off for Backlit. Turn it on in app settings → Permissions.",
+                style = MaterialTheme.typography.bodyMedium, color = BacklitColors.Dim, modifier = Modifier.padding(bottom = 8.dp))
+            SheetAction(if (btBlocked) "OPEN APP SETTINGS" else "CONTINUE") {
+                disclosing = null
+                if (btBlocked) context.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                else btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
+            }
             SheetAction("NOT NOW") { disclosing = null }
         }
     }

@@ -13,13 +13,13 @@ object BadgeArt {
     private fun iconX(size: Int): Int = (size - BadgeIcons.box(size)) / 2
 
     /** [tMs]: time since the ticker started; [sinceChangeMs]: time since this message became current (the flash). */
-    fun frame(size: Int, msg: BadgeMessage, text: String, tMs: Long, sinceChangeMs: Long): PixelGrid {
+    fun frame(size: Int, msg: BadgeMessage, text: String, tMs: Long, sinceChangeMs: Long, spanText: String = text): PixelGrid {
         val g = PixelGrid(size)
         val big = size >= 25
         val flash = sinceChangeMs in 0 until 150 || sinceChangeMs in 300 until 450
         BadgeIcons.draw(g, msg.icon, iconX(size), if (big) 3 else 1, b(if (flash) 1.0 else ICON))
         if (text.isNotEmpty()) {
-            val span = BadgeFont.width(size, text) + size + 4
+            val span = maxOf(BadgeFont.width(size, text), BadgeFont.width(size, spanText)) + size + 4
             val step = if (big) 55L else 80L
             val off = ((tMs.coerceAtLeast(0) / step) % span).toInt()
             BadgeFont.draw(g, text, size - off, if (big) 14 else 7, 255)

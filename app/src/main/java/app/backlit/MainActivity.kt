@@ -77,7 +77,7 @@ class MainActivity : ComponentActivity() {
                         Route.Welcome -> WelcomeScreen(onStart = up)
                         Route.Home -> HomeScreen(s, profile, go)
                         is Route.Toy -> ToyPagerScreen(route.id, s, profile, update, go, onPage = { id -> if (id != route.id) go(Route.Toy(id)) }, onBack = up)
-                        Route.Studio -> StudioScreen(s, profile, update, onEdit = { go(Route.Editor(it, Route.Studio)) }, onBack = up)
+                        is Route.Studio -> StudioScreen(s, profile, update, onEdit = { go(Route.Editor(it, Route.Studio())) }, onBack = up)
                         is Route.Editor -> EditorScreen(route.drawingId, profile, onClose = up, onSaved = { id -> go(Route.Editor(id, route.from)) })
                         Route.Alerts -> AlertsScreen(profile, onEdit = { go(Route.Editor(it, Route.Alerts)) }, onBack = up)
                         Route.Settings -> SettingsScreen(s, update, go, onBack = up)

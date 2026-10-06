@@ -44,7 +44,7 @@ object ToyThumbs {
             val list = BadgeMessage.decodeList(s.badgeMessages)
             val m = list[BadgeMessage.activeIndex(s.badgeActive, list.size)]
             val since = s.badgeActiveSince.takeIf { it > 0 } ?: nowMs
-            BadgeArt.frame(size, m, BadgeText.scroll(m, since, nowMs, s.use24h, zone), nowMs, BadgeArt.FLASH_MS)
+            BadgeArt.frame(size, m, BadgeText.scroll(m, since, nowMs, s.use24h, zone), nowMs, BadgeArt.FLASH_MS, BadgeText.spanText(m, s.use24h))
         }
     }
 

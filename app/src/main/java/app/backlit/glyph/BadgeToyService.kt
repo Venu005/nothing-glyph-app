@@ -154,7 +154,7 @@ class BadgeToyService : Service() {
                     when {
                         alert != null -> alerts!!.animationFor(alert).frame(profile.size, now - alert.startedAt)
                         aod -> BadgeArt.still(profile.size, msg, BadgeText.short(msg, since, wall, settings.use24h, zone))
-                        else -> BadgeArt.frame(profile.size, msg, BadgeText.scroll(msg, since, wall, settings.use24h, zone), now - tickerFrom, now - flashFrom)
+                        else -> BadgeArt.frame(profile.size, msg, BadgeText.scroll(msg, since, wall, settings.use24h, zone), now - tickerFrom, now - flashFrom, BadgeText.spanText(msg, settings.use24h))
                     }
                 }.getOrElse { Log.e(TAG, "render failed", it); PixelGrid(profile.size) }
                 output?.push(FrameEncoder.encode(grid, settings.brightness, aod = alert == null && aod))

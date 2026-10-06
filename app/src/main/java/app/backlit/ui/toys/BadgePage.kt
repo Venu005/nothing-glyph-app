@@ -75,16 +75,17 @@ fun BadgePage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) 
     val idle = editing == null
 
     ToyPageScaffold(
-        chrome, "BADGE", BadgeArt.frame(size, current, text, now - opened, BadgeArt.FLASH_MS),
+        chrome, "BADGE", BadgeArt.frame(size, current, text, now - opened, BadgeArt.FLASH_MS, BadgeText.spanText(current, settings.use24h)),
         text.ifBlank { "(ICON ONLY)" },
         ToyAction.of(ToyId.BADGE, chrome.setUp, chrome.supported, hasDrawing = false),
         onShow = { runtime.preview(BadgePreviewAnimation.idFor(current.icon, text), 6000L) },
     ) {
         Section("MESSAGES")
+        // Tapping the message that's already showing doesn't restart its countdown.
         messages.forEachIndexed { i, m ->
             Row(
                 Modifier.fillMaxWidth().border(1.dp, if (i == active) BacklitColors.White else BacklitColors.Line, RoundedCornerShape(14.dp))
-                    .clickable(enabled = idle) { save(messages, i, restart = true) }.padding(8.dp),
+                    .clickable(enabled = idle) { save(messages, i, restart = i != active) }.padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
