@@ -66,7 +66,7 @@ class MusicToyService : Service() {
         ToyPresence.enter()
         alerts = AlertsRuntime.get(this).also { it.toyChanged() }
         output = GlyphOutput(this, profile) { startLoop() }.also { it.connect() }
-        s.launch { repo.update { if (it.toyEverBound) it else it.copy(toyEverBound = true) } }
+        s.launch { repo.update { if (it.toyEverBound && it.musicToyEverBound) it else it.copy(toyEverBound = true, musicToyEverBound = true) } }
         s.launch {
             repo.settings.collect {
                 settings = it

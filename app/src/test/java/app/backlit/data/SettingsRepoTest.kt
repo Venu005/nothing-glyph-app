@@ -46,6 +46,7 @@ class SettingsRepoTest {
             sandPresets = listOf(2, 7, 45), sandAlert = "chime", sandExact = true,
             sandTimer = "{\"phase\":\"RUNNING\",\"endAt\":5}", sandToyEverBound = true,
             badgeMessages = "[{\"text\":\"HI\"}]", badgeActive = 3, badgeActiveSince = 777L, badgeToyEverBound = true,
+            welcomeSeen = true, clockToyEverBound = true, musicToyEverBound = true,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -181,5 +182,11 @@ class SettingsRepoTest {
         val s = repo().settings.first()
         assertEquals("", s.badgeMessages); assertEquals(0, s.badgeActive)
         assertEquals(0L, s.badgeActiveSince); assertEquals(false, s.badgeToyEverBound)
+    }
+
+    @Test
+    fun redesignFlagDefaults() = runBlocking {
+        val s = repo().settings.first()
+        assertEquals(false, s.welcomeSeen); assertEquals(false, s.clockToyEverBound); assertEquals(false, s.musicToyEverBound)
     }
 }

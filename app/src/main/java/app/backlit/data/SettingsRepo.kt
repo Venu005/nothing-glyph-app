@@ -69,6 +69,9 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val BADGE_ACTIVE = intPreferencesKey("badge_active")
         private val BADGE_ACTIVE_SINCE = longPreferencesKey("badge_active_since")
         private val BADGE_BOUND = booleanPreferencesKey("badge_toy_ever_bound")
+        private val WELCOME_SEEN = booleanPreferencesKey("welcome_seen")
+        private val CLOCK_BOUND = booleanPreferencesKey("clock_toy_ever_bound")
+        private val MUSIC_BOUND = booleanPreferencesKey("music_toy_ever_bound")
         private val namesJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
 
         /** The name to show for [kind]: the ghost keeps the original petName; the others live in petNames. */
@@ -142,6 +145,9 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 badgeActive = (this[BADGE_ACTIVE] ?: d.badgeActive).coerceAtLeast(0),
                 badgeActiveSince = this[BADGE_ACTIVE_SINCE] ?: d.badgeActiveSince,
                 badgeToyEverBound = this[BADGE_BOUND] ?: d.badgeToyEverBound,
+                welcomeSeen = this[WELCOME_SEEN] ?: d.welcomeSeen,
+                clockToyEverBound = this[CLOCK_BOUND] ?: d.clockToyEverBound,
+                musicToyEverBound = this[MUSIC_BOUND] ?: d.musicToyEverBound,
             )
         }
 
@@ -182,6 +188,9 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[BADGE_ACTIVE] = s.badgeActive
             this[BADGE_ACTIVE_SINCE] = s.badgeActiveSince
             this[BADGE_BOUND] = s.badgeToyEverBound
+            this[WELCOME_SEEN] = s.welcomeSeen
+            this[CLOCK_BOUND] = s.clockToyEverBound
+            this[MUSIC_BOUND] = s.musicToyEverBound
         }
     }
 }

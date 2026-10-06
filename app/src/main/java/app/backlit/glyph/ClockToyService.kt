@@ -84,7 +84,7 @@ class ClockToyService : Service() {
             s.launch { rt.bus.collect { a -> if (a != null) startAlert() else stopAlert() } }
             output = GlyphOutput(this, profile) { draw(); restartTicker() }.also { it.connect() }
             s.launch {
-                repo.update { if (it.toyEverBound) it else it.copy(toyEverBound = true) }
+                repo.update { if (it.toyEverBound && it.clockToyEverBound) it else it.copy(toyEverBound = true, clockToyEverBound = true) }
             }
             s.launch {
                 repo.settings.collect {
