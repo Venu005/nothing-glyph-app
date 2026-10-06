@@ -43,9 +43,11 @@ class BadgeToyService : Service() {
 
     private var listJson: String? = null
     private var messages: List<BadgeMessage> = BadgeMessage.STARTERS
-    private var shownKey: Pair<Int, Long>? = null
+    private var shownSince: Long? = null
     private var tickerFrom = 0L
     private var flashFrom = Long.MIN_VALUE / 2
+    private var loaded = false
+    private var boundAt = 0L
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -71,6 +73,7 @@ class BadgeToyService : Service() {
         ToyPresence.enter()
         val rt = AlertsRuntime.get(this).also { alerts = it }
         rt.toyChanged()
+        boundAt = System.currentTimeMillis()
         output = GlyphOutput(this, profile) { kick() }.also { it.connect() }
         s.launch {
             repo.update {
@@ -80,7 +83,7 @@ class BadgeToyService : Service() {
                 u
             }
         }
-        s.launch { repo.settings.collect { settings = it; kick() } }
+        s.launch { repo.settings.collect { settings = it; loaded = true; kick() } }
         s.launch { rt.bus.collect { kick() } }
         return messenger.binder
     }
@@ -126,7 +129,7 @@ class BadgeToyService : Service() {
 
     private fun kick() {
         val s = scope ?: return
-        if (renderJob?.isActive == true) return
+        if (!loaded || renderJob?.isActive == true) return   // nothing until the real settings are in
         handler.removeCallbacks(rekick)
         renderJob = s.launch {
             val pacer = FramePacer(FRAME_MS)
@@ -137,12 +140,13 @@ class BadgeToyService : Service() {
                 val wall = System.currentTimeMillis()
                 val alert = alerts?.bus?.value
                 val aod = isAod()
-                val (i, msg) = current()
-                val since = settings.badgeActiveSince.takeIf { it > 0 } ?: wall
-                val key = i to since
-                if (key != shownKey) {
-                    if (shownKey != null) flashFrom = now   // a change while showing flashes; the first frame doesn't
-                    shownKey = key
+                val (_, msg) = current()
+                val since = settings.badgeActiveSince.takeIf { it > 0 } ?: boundAt
+                // A message becomes current only when `since` moves (long press, pick, edit, delete); reordering
+                // or deleting another message changes the index but must not flash.
+                if (since != shownSince) {
+                    if (shownSince != null) flashFrom = now   // a change while showing flashes; the first frame doesn't
+                    shownSince = since
                     tickerFrom = now
                 }
                 val zone = ZoneId.systemDefault()

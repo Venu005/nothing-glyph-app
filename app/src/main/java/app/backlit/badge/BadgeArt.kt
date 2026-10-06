@@ -32,9 +32,25 @@ object BadgeArt {
         val g = PixelGrid(size)
         val big = size >= 25
         BadgeIcons.draw(g, msg.icon, iconX(size), if (big) 4 else 1, b(ICON))
-        val s = if (big) short else short.take(3)
-        BadgeFont.draw(g, s, (size - BadgeFont.width(size, s)) / 2, if (big) 15 else 7, 255)
+        val t = stillText(size, short)
+        BadgeFont.draw(g, t.text, t.x, t.y, 255, t.small)
         return g
+    }
+
+    data class StillText(val text: String, val small: Boolean, val x: Int, val y: Int)
+
+    /**
+     * Where the always-on word goes so no pixel falls off the round panel. 25×25: up to 17 px in 5×7, otherwise up to
+     * 5 characters in 3×5. 13×13: 3 characters in 3×5 on rows 6–10, which are wide enough for all 11 px.
+     */
+    fun stillText(size: Int, short: String): StillText {
+        if (size < 25) {
+            val s = short.take(3)
+            return StillText(s, true, (size - BadgeFont.width(13, s)) / 2, 6)
+        }
+        if (BadgeFont.width(25, short) <= 17) return StillText(short, false, (size - BadgeFont.width(25, short)) / 2, 15)
+        val s = short.take(5)
+        return StillText(s, true, (size - BadgeFont.width(13, s)) / 2, 15)
     }
 
     /** A UI tile: the 9×9 icon on a 13×13 dot grid (corners stay inside the round mask). */

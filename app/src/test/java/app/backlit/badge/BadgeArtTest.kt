@@ -82,4 +82,19 @@ class BadgeArtTest {
         assertNull(BadgePreviewAnimation.parse("badge:nope:X"))
         assertNull(BadgePreviewAnimation.parse("pet:happy"))
     }
+
+    @Test
+    fun alwaysOnWordsAreNeverClipped() {
+        val words = BadgeMessage.STARTERS.map { it.text.substringBefore(' ') } +
+            listOf("SOON", "11AM", "12PM", "LUNCH", "BREAK", "99M", "3H", "MEETING", "W")
+        for (size in listOf(25, 13)) for (w in words) {
+            val t = BadgeArt.stillText(size, w)
+            val drawn = PixelGrid(size).also { BadgeFont.draw(it, t.text, t.x, t.y, 255, t.small) }.litCount()
+            val whole = PixelGrid(61).also { BadgeFont.draw(it, t.text, 20, 20, 255, t.small) }.litCount()
+            assertEquals("$size '$w' -> '${t.text}'", whole, drawn)
+            assertTrue("$size '$w' keeps a gap under the icon", t.y > (if (size >= 25) 12 else 5))
+        }
+        assertEquals("THANK", BadgeArt.stillText(25, "THANK").text)    // 5 letters still fit, in the small font
+        assertEquals("SOO", BadgeArt.stillText(13, "SOON").text)
+    }
 }

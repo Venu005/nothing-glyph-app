@@ -70,6 +70,10 @@ fun BadgeTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
     Text(text.ifBlank { "(icon only)" }, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp))
 
     var editing by remember { mutableStateOf<Int?>(null) }   // index being edited, or -1 for a new message
+    // The open editor holds an index: if the list changes underneath it (here or on the toy), close it rather than
+    // let SAVE overwrite a different message.
+    LaunchedEffect(settings.badgeMessages) { editing = null }
+    val idle = editing == null
     Text("MESSAGES", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
     messages.forEachIndexed { i, m ->
         if (editing == i) {
@@ -80,7 +84,7 @@ fun BadgeTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
         } else {
             Row(
                 Modifier.fillMaxWidth().border(1.dp, if (i == active) BacklitColors.White else BacklitColors.Line)
-                    .clickable { save(messages, i, restart = true) }.padding(8.dp),
+                    .clickable(enabled = idle) { save(messages, i, restart = true) }.padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -90,12 +94,12 @@ fun BadgeTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
                     Text(kindLabel(m, settings.use24h), style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
                 }
                 SquareChip("↑", false, {
-                    if (i > 0) save(messages.toMutableList().also { it[i] = messages[i - 1]; it[i - 1] = m }, BadgeMessage.moveActive(active, i, i - 1), restart = false)
+                    if (idle && i > 0) save(messages.toMutableList().also { it[i] = messages[i - 1]; it[i - 1] = m }, BadgeMessage.moveActive(active, i, i - 1), restart = false)
                 })
                 SquareChip("↓", false, {
-                    if (i < messages.size - 1) save(messages.toMutableList().also { it[i] = messages[i + 1]; it[i + 1] = m }, BadgeMessage.moveActive(active, i, i + 1), restart = false)
+                    if (idle && i < messages.size - 1) save(messages.toMutableList().also { it[i] = messages[i + 1]; it[i + 1] = m }, BadgeMessage.moveActive(active, i, i + 1), restart = false)
                 })
-                SquareChip("EDIT", false, { editing = i })
+                SquareChip("EDIT", false, { if (idle) editing = i })
             }
         }
         Spacer(Modifier.height(6.dp))

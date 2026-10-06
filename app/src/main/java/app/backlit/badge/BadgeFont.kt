@@ -61,12 +61,13 @@ object BadgeFont {
         return if (gs.isEmpty()) 0 else gs.sumOf { it[0].length } + gs.size - 1
     }
 
-    /** Draws [text] with its top-left at (x, y); the grid's size picks the font. Off-panel pixels are dropped. */
-    fun draw(g: PixelGrid, text: String, x: Int, y: Int, b: Int) {
+    /** Draws [text] with its top-left at (x, y); 5×7 on 25×25 unless [small] asks for 3×5. Off-panel pixels are dropped. */
+    fun draw(g: PixelGrid, text: String, x: Int, y: Int, b: Int, small: Boolean = g.size < 25) {
+        val fontSize = if (small) 13 else 25
         var cx = x
         for (c in text) {
-            val rows = glyph(g.size, c) ?: continue
-            if (g.size >= 25 && c.isDigit()) PixelFont5x7.digit(g, c - '0', cx, y, b)
+            val rows = glyph(fontSize, c) ?: continue
+            if (!small && c.isDigit()) PixelFont5x7.digit(g, c - '0', cx, y, b)
             else for (r in rows.indices) for (col in rows[r].indices) if (rows[r][col] == '1') g.plot(cx + col, y + r, b)
             cx += rows[0].length + 1
         }
