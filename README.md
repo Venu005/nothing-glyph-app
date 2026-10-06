@@ -81,6 +81,15 @@ Free, no ads, no analytics, no network access.
 - **PET tab:** a live preview, "BOO IS HAPPY" with a 10-dot meter, "MOOD 63 / 100 · Gets bored in ~2 h",
   a collapsible "how his mood works" card, his name and sleep hours, and Show on Glyph.
 
+### Backlit Sand (Glyph Toy)
+A real hourglass. On the Phone (3), live sand pours as you tilt the phone.
+- **Flip** the phone over to start. Flip it mid-way and the sand runs back, so the time left becomes the time run.
+- **On its side** pauses it, and **face-down** on a desk keeps it running.
+- **Long press** the Glyph button to pick 1, 3, 5, 10 or 25 minutes (editable in the TIMER tab). While it runs, the first press shows the minutes left.
+- **Time's up:** the hourglass spins itself over ("Flip me"), with a vibration (or Glyph only, or with a chime). This works even when another toy is showing or the screen is off.
+- **Always-on:** a still that updates every minute. On the 4a Pro, flips are picked up within a minute.
+- **TIMER tab:** what the timer is doing right now, your times, what happens when time's up, and an optional "Ring exactly on time" switch.
+
 ### Alerts
 - **Important contacts:** pick contacts and give each its own animation. It plays as their call
   starts, and again after a **missed call** (10 s, then a 5 s reminder every minute, up to 10, until
@@ -234,6 +243,8 @@ app/src/main/java/app/backlit/
 │                    Canvas toy helpers (pure)
 ├── pet/             Glyph Pet: PetMood (timestamp decay), PetBrain (state machine), GhostArt,
 │                    PetInsight (hints), PetPreviewAnimation (pure)
+├── sand/            Sand timer: HourglassShape, SandSim (grain physics), TimerState (flip/side/long press),
+│                    SandArt, SandPreviewAnimation (pure); SandAlarm + receiver (Android)
 ├── data/            Settings (DataStore), sunrise/sunset maths, location, offline cities
 ├── glyph/           The only package that talks to the Nothing SDK
 │   ├── GlyphOutput.kt       connect/register/push with retry; toy or app-matrix mode
@@ -288,8 +299,11 @@ docs/                specs, plans, privacy policy, Play listing, device checklis
 | `RECORD_AUDIO`, `MODIFY_AUDIO_SETTINGS` | read the sound the phone is already playing, for the Music toy | when you tap *Allow* in the Music tab |
 | Notification access | see incoming/missed call notifications to match important contacts | when you add an important contact |
 | `BLUETOOTH_CONNECT` (Nearby devices) | notice chosen Bluetooth devices connecting | when you add a device |
+| `VIBRATE` | the sand timer's done buzz | install (no prompt) |
+| `SCHEDULE_EXACT_ALARM` (Alarms & reminders) | ring the sand timer exactly on time while the phone sleeps | only if you turn on *Ring exactly on time* |
+| `RECEIVE_BOOT_COMPLETED` | keep a running sand timer's alarm after a restart | install (no prompt) |
 
-The pet's motion sensing (shake, tilt, face-down) uses the accelerometer, which needs no permission.
+The pet's motion sensing (shake, tilt, face-down) and the sand timer's tilt use the accelerometer, which needs no permission.
 Sharing a drawing uses Android's share sheet through a private FileProvider.
 
 - No network calls, analytics, ads or accounts.
@@ -375,7 +389,6 @@ Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](doc
 
 ## Roadmap
 
-- **Tilt sand timer:** falling sand that follows gravity; flip the phone to start a 1–25 min timer.
 - **Message badge:** scrolling text like "ON A CALL" or "BACK IN 5" for a face-down phone.
 - **Blow out the candles:** pixel birthday candles you blow out into the mic.
 - **Next-event countdown:** your next calendar event on the matrix.

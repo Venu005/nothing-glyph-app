@@ -1,6 +1,6 @@
 # Backlit — Privacy Policy
 
-_Last updated: 2026-10-03_
+_Last updated: 2026-10-06_
 
 Backlit does not collect, store on any server, or share any personal data.
 
@@ -18,6 +18,9 @@ Backlit does not collect, store on any server, or share any personal data.
   are saved, on your phone.
 - **Bluetooth (Nearby devices):** used to notice when a Bluetooth device you chose connects. Only
   the name and address of the devices you pick are saved, on your phone.
+- **Sand timer:** the accelerometer is read on the phone, and only while the Backlit Sand toy is showing (or once a minute in
+  always-on), to tell which way the hourglass is held. Nothing is stored except the timer itself. The optional
+  "Alarms & reminders" access is used only to ring the timer on time.
 - **No network access:** Backlit makes no network requests, has no analytics and no ads.
 - **Uninstalling** Backlit deletes all of its data from your phone.
 
