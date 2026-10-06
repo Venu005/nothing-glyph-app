@@ -11,11 +11,3 @@ import androidx.compose.ui.unit.dp
 import app.backlit.data.Settings
 import app.backlit.glyph.DeviceProfile
 import app.backlit.ui.components.PageHeader
-
-@Composable
-fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -> Unit) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-        PageHeader("ALERTS", onBack)
-        AlertsTab(profile, onEdit)
-    }
-}

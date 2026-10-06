@@ -1,6 +1,30 @@
 package app.backlit.ui
 
 import app.backlit.ui.components.Notice
+import app.backlit.ui.components.ActionSpec
+import app.backlit.ui.components.ActionStyle
+import app.backlit.ui.components.AttentionCard
+import app.backlit.ui.components.BottomActionBar
+import app.backlit.ui.components.CenterNote
+import app.backlit.ui.components.GalleryCard
+import app.backlit.ui.components.OptionSheet
+import app.backlit.ui.components.PageHeader
+import app.backlit.ui.components.SegmentedControl
+import app.backlit.ui.components.SheetAction
+import app.backlit.ui.components.rememberTicker
+import app.backlit.ui.alerts.AlertsAttention
+import app.backlit.ui.alerts.AlertsSegment
+import app.backlit.ui.alerts.Attention
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.mutableIntStateOf
+import app.backlit.render.PixelGrid
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager
@@ -58,192 +82,170 @@ private const val DISCLOSURE =
         "caller's name against your important contacts. Nothing else is read, stored or sent."
 
 @Composable
-fun AlertsTab(profile: DeviceProfile, onEditDrawing: (String?) -> Unit = {}) {
+fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     val runtime = remember { AlertsRuntime.get(context) }
     val config by runtime.config.collectAsStateWithLifecycle(initialValue = AlertConfig())
     val scope = rememberCoroutineScope()
     val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
-
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
     val resumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
-    var listenerOn by remember { mutableStateOf(false) }
-    var btGranted by remember { mutableStateOf(false) }
-    var nothingCallLights by remember { mutableStateOf(false) }
+    var listenerOn by remember { mutableStateOf(true) }
+    var btGranted by remember { mutableStateOf(true) }
+    var callLights by remember { mutableStateOf(false) }
     LaunchedEffect(resumed) {
         if (resumed) {
             listenerOn = NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
             btGranted = hasBtPermission(context)
-            nothingCallLights = nothingCallLightsOn(context)
+            callLights = nothingCallLightsOn(context)
         }
     }
-
-    var expanded by rememberSaveable { mutableStateOf<String?>(null) }
-    var showDisclosure by rememberSaveable { mutableStateOf(false) }
-    var pickingDevice by rememberSaveable { mutableStateOf(false) }
+    var segment by rememberSaveable { mutableStateOf(AlertsSegment.CONTACTS) }
+    var ruleKey by rememberSaveable { mutableStateOf<String?>(null) }      // "c:<name>" or "d:<address>"
+    var addingDevice by rememberSaveable { mutableStateOf(false) }
+    var animId by rememberSaveable { mutableStateOf<String?>(null) }
+    var aboutOpen by rememberSaveable { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
-
-    val animations: List<GlyphAnimation> = remember(config.imports) {
-        BuiltInAnimations.all + config.imports.mapNotNull { runtime.library.load(it) }
-    }
+    var barPx by remember { mutableIntStateOf(0) }
+    val now = rememberTicker(50)
+    val animations: List<GlyphAnimation> = remember(config.imports) { BuiltInAnimations.all + config.imports.mapNotNull { runtime.library.load(it) } }
 
     val pickContact = rememberLauncherForActivityResult(ActivityResultContracts.PickContact()) { uri ->
         val name = uri?.let { readContactName(context, it) } ?: return@rememberLauncherForActivityResult
         scope.launch {
-            runtime.update { c ->
-                if (c.contacts.any { NameMatch.matches(it.name, name) }) c
-                else c.copy(contacts = c.contacts + ContactRule(name, BuiltInAnimations.DEFAULT_CONTACT))
+            runtime.update { c -> if (c.contacts.any { NameMatch.matches(it.name, name) }) c else c.copy(contacts = c.contacts + ContactRule(name, BuiltInAnimations.DEFAULT_CONTACT)) }
+        }
+        ruleKey = "c:$name"
+    }
+    val btPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> btGranted = ok; if (ok) addingDevice = true }
+    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) message = importFromUri(context, runtime, uri, size) }
+
+    val attention = AlertsAttention.pick(listenerOn, btGranted, config.contacts.size, config.devices.size, segment)
+    val bar = when (segment) {
+        AlertsSegment.CONTACTS -> ActionSpec("+ ADD CONTACT", ActionStyle.PRIMARY) { pickContact.launch(null) }
+        AlertsSegment.DEVICES -> ActionSpec("+ ADD DEVICE", ActionStyle.PRIMARY) { if (btGranted) addingDevice = true else btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT) }
+        AlertsSegment.ANIMATIONS -> ActionSpec("IMPORT FROM GLYPH MUSEUM", ActionStyle.PRIMARY) { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = with(LocalDensity.current) { barPx.toDp() } + 16.dp)) {
+            PageHeader("ALERTS", onBack)
+            when (attention) {
+                Attention.NOTIFICATION_ACCESS -> AttentionCard("Allow notification access so calls light the Glyph") {
+                    context.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+                Attention.NEARBY -> AttentionCard("Allow Nearby devices so Backlit can notice your devices connecting") { btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT) }
+                null -> Unit
+            }
+            SegmentedControl(AlertsSegment.entries.map { it.name to it.label }, segment.name) { segment = AlertsSegment.valueOf(it) }
+            message?.let { Notice(it) }
+            when (segment) {
+                AlertsSegment.CONTACTS -> {
+                    if (config.contacts.isEmpty()) CenterNote("Add the people who matter. Their calls play an animation on the Glyph as they ring, and again if you miss them.")
+                    config.contacts.forEach { r -> RuleListRow(initials(r.name), r.name, animations.nameOf(r.animationId), animations.firstOrNull { it.id == r.animationId }, size, now) { ruleKey = "c:${r.name}" } }
+                }
+                AlertsSegment.DEVICES -> {
+                    Text("Plays when the device connects.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+                    if (config.devices.isEmpty()) CenterNote("Add a Bluetooth device — earbuds, car, watch — and its animation plays on the Glyph when it connects.")
+                    config.devices.forEach { r -> RuleListRow("◖◗", r.name, animations.nameOf(r.animationId), animations.firstOrNull { it.id == r.animationId }, size, now) { ruleKey = "d:${r.address}" } }
+                }
+                AlertsSegment.ANIMATIONS -> {
+                    Text("Tap to preview on the Glyph.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+                    animations.chunked(3).forEach { row ->
+                        Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            row.forEach { a ->
+                                val own = a.id.startsWith("import:")
+                                GalleryCard(a.frame(size, now), a.name, if (own) "TAP · ⋯" else "BUILT-IN", false, {
+                                    runtime.preview(a.id)
+                                    if (own) animId = a.id
+                                }, Modifier.weight(1f))
+                            }
+                            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                        }
+                    }
+                }
+            }
+            SettingRow("About alerts", if (aboutOpen) "−" else "+") { aboutOpen = !aboutOpen }
+            if (aboutOpen) {
+                Text(
+                    listOfNotNull(DISCLOSURE,
+                        if (callLights) "Nothing's ringtone lights take over the matrix a moment into each call. Backlit plays your contact's animation as the call starts, and again if you miss it." else null,
+                        "Tip: set Backlit Clock as your always-on toy so alerts always show.").joinToString("\n\n"),
+                    style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim, modifier = Modifier.padding(vertical = 6.dp),
+                )
             }
         }
-        expanded = "c:$name"
-        if (!listenerOn) showDisclosure = true
-    }
-    val btPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
-        btGranted = ok
-        pickingDevice = ok
-    }
-    val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) message = importFromUri(context, runtime, uri, size)
+        BottomActionBar(bar, onHeight = { barPx = it }, modifier = Modifier.align(Alignment.BottomCenter))
     }
 
-    // ── Status hints ──
-    if (showDisclosure || (!listenerOn && config.contacts.isNotEmpty())) {
-        Notice(DISCLOSURE)
-        SquareChip("TURN ON NOTIFICATION ACCESS", selected = true, onClick = {
-            showDisclosure = false
-            context.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-        }, modifier = Modifier.fillMaxWidth())
-        Spacer(Modifier.height(8.dp))
-    }
-    if (nothingCallLights && config.contacts.isNotEmpty()) {
-        Notice("Nothing's ringtone lights take over the matrix a moment into each call. Backlit plays your contact's animation as the call starts, and again if you miss it.")
-    }
-    if (!btGranted && config.devices.isNotEmpty()) Notice("Allow Nearby devices so Backlit can notice your Bluetooth devices connecting.")
-    Notice("Tip: set Backlit Clock as your always-on toy so alerts always show.")
-    message?.let { Notice(it) }
-
-    // ── Important contacts ──
-    SectionTitle("IMPORTANT CONTACTS")
-    config.contacts.forEach { rule ->
-        val key = "c:${rule.name}"
-        RuleRow(rule.name, animations.nameOf(rule.animationId)) { expanded = if (expanded == key) null else key }
-        if (expanded == key) {
-            AnimationPicker(animations, rule.animationId, size,
-                onSelect = { id -> scope.launch { runtime.update { c -> c.copy(contacts = c.contacts.map { if (it == rule) it.copy(animationId = id) else it }) } } },
-                onPreview = { runtime.preview(rule.animationId) },
-                onRemove = { scope.launch { runtime.update { c -> c.copy(contacts = c.contacts - rule) } }; expanded = null },
-            )
+    // Rule sheet: looks the rule up in the live config, so a removed rule just closes the sheet.
+    val contact = ruleKey?.takeIf { it.startsWith("c:") }?.let { k -> config.contacts.firstOrNull { "c:${it.name}" == k } }
+    val device = ruleKey?.takeIf { it.startsWith("d:") }?.let { k -> config.devices.firstOrNull { "d:${it.address}" == k } }
+    if (ruleKey != null && contact == null && device == null) ruleKey = null
+    if (contact != null || device != null) {
+        val title = contact?.name ?: device!!.name
+        val selected = contact?.animationId ?: device!!.animationId
+        OptionSheet(title.uppercase(), { ruleKey = null }) {
+            animations.chunked(3).forEach { row ->
+                Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { a ->
+                        GalleryCard(a.frame(size, now), a.name, if (a.id == selected) "● CHOSEN" else "", a.id == selected, {
+                            scope.launch {
+                                runtime.update { c ->
+                                    if (contact != null) c.copy(contacts = c.contacts.map { if (it == contact) it.copy(animationId = a.id) else it })
+                                    else c.copy(devices = c.devices.map { if (it == device) it.copy(animationId = a.id) else it })
+                                }
+                            }
+                        }, Modifier.weight(1f))
+                    }
+                    repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+                }
+            }
+            SheetAction("PREVIEW ON GLYPH") { runtime.preview(selected) }
+            SheetAction("REMOVE", danger = true) {
+                scope.launch { runtime.update { c -> if (contact != null) c.copy(contacts = c.contacts - contact) else c.copy(devices = c.devices - device!!) } }
+                ruleKey = null
+            }
         }
     }
-    SquareChip("+ ADD CONTACT", selected = false, onClick = { pickContact.launch(null) }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
 
-    // ── Bluetooth devices ──
-    SectionTitle("BLUETOOTH DEVICES")
-    config.devices.forEach { rule ->
-        val key = "d:${rule.address}"
-        RuleRow(rule.name, animations.nameOf(rule.animationId)) { expanded = if (expanded == key) null else key }
-        if (expanded == key) {
-            AnimationPicker(animations, rule.animationId, size,
-                onSelect = { id -> scope.launch { runtime.update { c -> c.copy(devices = c.devices.map { if (it == rule) it.copy(animationId = id) else it }) } } },
-                onPreview = { runtime.preview(rule.animationId) },
-                onRemove = { scope.launch { runtime.update { c -> c.copy(devices = c.devices - rule) } }; expanded = null },
-            )
-        }
-    }
-    if (pickingDevice) {
-        val bonded = remember { bondedDevices(context) }
-        if (bonded.isEmpty()) Notice("No paired Bluetooth devices found.")
-        bonded.filter { (addr, _) -> config.devices.none { it.address.equals(addr, ignoreCase = true) } }.forEach { (addr, name) ->
-            RuleRow(name, "ADD") {
+    if (addingDevice) OptionSheet("ADD A BLUETOOTH DEVICE", { addingDevice = false }) {
+        val bonded = remember { bondedDevices(context) }.filter { (addr, _) -> config.devices.none { it.address.equals(addr, ignoreCase = true) } }
+        if (bonded.isEmpty()) CenterNote("No paired Bluetooth devices found.")
+        bonded.forEach { (addr, name) ->
+            SheetAction(name) {
                 scope.launch { runtime.update { c -> c.copy(devices = c.devices + DeviceRule(addr, name, BuiltInAnimations.DEFAULT_DEVICE)) } }
-                pickingDevice = false
-                expanded = "d:$addr"
+                addingDevice = false
+                ruleKey = "d:$addr"
             }
         }
     }
-    SquareChip("+ ADD DEVICE", selected = false, onClick = {
-        if (btGranted) pickingDevice = !pickingDevice else btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
-    }, modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
 
-    // ── Animation library ──
-    SectionTitle("ANIMATIONS")
-    animations.chunked(3).forEach { row ->
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            row.forEach { anim ->
-                Column(Modifier.weight(1f).clickable { runtime.preview(anim.id) }) {
-                    MiniPreview(anim, size)
-                    Text(anim.name, style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
-                    if (anim.id.startsWith("import:")) {
-                        val entry = config.imports.firstOrNull { it.id == anim.id }
-                        val isDrawing = entry?.kind == KIND_DRAWING
-                        Text(if (isDrawing) "DRAWING" else "IMPORT", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
-                        Text(if (isDrawing) "EDIT" else "EDIT IN STUDIO", style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.clickable {
-                                if (isDrawing) onEditDrawing(anim.id)
-                                else scope.launch { runtime.copyImportToDrawing(anim.id, size)?.let { onEditDrawing(it) } }
-                            }.padding(vertical = 4.dp))
-                        Text("DELETE", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Red,
-                            modifier = Modifier.clickable { runtime.deleteImport(anim.id) }.padding(vertical = 4.dp))
-                    }
-                }
-            }
-            repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
+    val ownAnim = animId?.let { id -> config.imports.firstOrNull { it.id == id } }
+    if (animId != null && ownAnim == null) animId = null
+    if (ownAnim != null) OptionSheet(ownAnim.name.uppercase(), { animId = null }) {
+        val isDrawing = ownAnim.kind == KIND_DRAWING
+        SheetAction(if (isDrawing) "EDIT IN STUDIO" else "COPY TO STUDIO AND EDIT") {
+            if (isDrawing) onEdit(ownAnim.id) else scope.launch { runtime.copyImportToDrawing(ownAnim.id, size)?.let { onEdit(it) } }
+            animId = null
         }
-        Spacer(Modifier.height(8.dp))
-    }
-    SquareChip("IMPORT FROM GLYPH MUSEUM", selected = true, onClick = { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) },
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
-    Text("Tap any animation to preview it on the matrix.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
-}
-
-@Composable
-private fun SectionTitle(text: String) {
-    Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 18.dp, bottom = 6.dp))
-}
-
-@Composable
-private fun RuleRow(label: String, value: String, onClick: () -> Unit) = SettingRow(label, value, onClick)
-
-@Composable
-private fun AnimationPicker(
-    animations: List<GlyphAnimation>,
-    selectedId: String,
-    size: Int,
-    onSelect: (String) -> Unit,
-    onPreview: () -> Unit,
-    onRemove: () -> Unit,
-) {
-    Column(Modifier.fillMaxWidth().border(1.dp, BacklitColors.Line).padding(10.dp)) {
-        animations.chunked(3).forEach { row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { anim ->
-                    val selected = anim.id == selectedId
-                    Column(Modifier.weight(1f).border(1.dp, if (selected) BacklitColors.White else BacklitColors.Black).clickable { onSelect(anim.id) }.padding(4.dp)) {
-                        MiniPreview(anim, size)
-                        Text(anim.name, style = MaterialTheme.typography.labelSmall, color = if (selected) BacklitColors.White else BacklitColors.Dim)
-                    }
-                }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-            }
-            Spacer(Modifier.height(6.dp))
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SquareChip("PREVIEW ON MATRIX", selected = true, onClick = onPreview, modifier = Modifier.weight(2f))
-            Spacer(Modifier.width(0.dp))
-            SquareChip("REMOVE", selected = false, onClick = onRemove, modifier = Modifier.weight(1f))
-        }
+        SheetAction("DELETE", danger = true) { runtime.deleteImport(ownAnim.id); animId = null }
     }
 }
 
 @Composable
-private fun MiniPreview(anim: GlyphAnimation, size: Int) {
-    var t by remember { mutableLongStateOf(0L) }
-    LaunchedEffect(anim.id) {
-        val start = System.currentTimeMillis()
-        while (true) { delay(50); t = System.currentTimeMillis() - start }
+private fun RuleListRow(badge: String, name: String, animName: String, anim: GlyphAnimation?, size: Int, now: Long, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        Box(Modifier.size(34.dp).border(1.dp, BacklitColors.Line, CircleShape), contentAlignment = Alignment.Center) { Text(badge, style = MaterialTheme.typography.labelSmall) }
+        Column(Modifier.weight(1f)) {
+            Text(name.uppercase(), style = MaterialTheme.typography.titleMedium, maxLines = 1)
+            Text(animName, style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+        }
+        MatrixPreview(anim?.frame(size, now) ?: PixelGrid(size), Modifier.size(34.dp))
     }
-    MatrixPreview(anim.frame(size, t), Modifier.fillMaxWidth().padding(4.dp))
 }
+
+private fun initials(name: String): String = name.trim().split(Regex("\\s+")).filter { it.isNotEmpty() }.take(2).joinToString("") { it.take(1).uppercase() }.ifEmpty { "?" }
 
 private fun List<GlyphAnimation>.nameOf(id: String): String = (firstOrNull { it.id == id } ?: BuiltInAnimations.byId(id))?.name?.uppercase() ?: "DEFAULT"
 
