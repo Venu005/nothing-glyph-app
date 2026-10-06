@@ -134,8 +134,10 @@ The page has three layers:
   - `ui/alerts/AlertsAttention.kt`: `AlertsAttention.pick(notificationAccess, btGranted, contacts, devices, segment)`
     returns `NotificationAccess`, `Nearby` or `null`.
 - **Screens:**
-  - `ui/toys/<Toy>Toy.kt`, one per toy: the hero grid function, the content composable, and any sheets. Logic moves out of
-    `*Screen.kt`, which are deleted.
+  - `ui/toys/<Toy>Page.kt`, one per toy: a `XxxPage(settings, profile, onUpdate, chrome: PageChrome, …)` composable that
+    keeps the toy's own state (engine, brain, timers) and fills `ToyPageScaffold` with its hero grid, status line, content and
+    `ToyAction`. Splitting the hero from the content would tear apart state they share. Logic moves out of `*Screen.kt`,
+    which are deleted. `PageChrome(onBack, setUp, supported, onTurnOn, index, count, active)` carries the pager's part.
   - `ToyPagerScreen` uses `ToyPageScaffold`.
   - `StudioScreen` and `AlertsScreen` are rewritten (the old `StudioTab` / `AlertsTab` are removed). Their runtime calls,
     pickers and importers are reused as they are.
