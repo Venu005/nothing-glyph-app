@@ -1,0 +1,82 @@
+<h2>Do Not Disturb icon + the icon set</h2>
+<p class="subtitle"><b>Top:</b> three new Do Not Disturb icons, live in style A (icon + ticker). Click the one you like. On 13×13 the icons are now 5×5, so the icon and the scrolling text fit together without overlapping. <b>Below:</b> the whole starter icon set at 25×25 and 13×13. Tell me any icon that looks off.</p>
+<div class="options" id="opts" style="display:flex;flex-direction:column;gap:14px"></div>
+<h3 style="margin-top:22px">Starter icon set</h3>
+<div class="vizrow" id="set"></div>
+<style>
+  .vizrow{display:flex;gap:16px;align-items:flex-end;background:#0b0b0b;border-radius:8px;padding:14px;flex-wrap:wrap;justify-content:center}
+  .gl{color:#888;font-size:11px;text-align:center;margin-top:4px;font-family:monospace}
+</style>
+<script>
+(function(){
+function mask(n,x,y){const c=(n-1)/2;return Math.hypot(x-c,y-c)<=n/2}
+function G(n){const g=new Float32Array(n*n);g.n=n;g.p=(x,y,b)=>{if(x<0||y<0||x>=n||y>=n||!mask(n,x,y))return;const i=y*n+x;if(b>g[i])g[i]=b};return g}
+// 5x7 caps font (25x25) and 3x5 (13x13, = the Studio TEXT font)
+const F7={A:["01110","10001","10001","11111","10001","10001","10001"],B:["11110","10001","10001","11110","10001","10001","11110"],C:["01110","10001","10000","10000","10000","10001","01110"],D:["11110","10001","10001","10001","10001","10001","11110"],E:["11111","10000","10000","11110","10000","10000","11111"],F:["11111","10000","10000","11110","10000","10000","10000"],G:["01110","10001","10000","10111","10001","10001","01111"],H:["10001","10001","10001","11111","10001","10001","10001"],I:["01110","00100","00100","00100","00100","00100","01110"],J:["00111","00010","00010","00010","00010","10010","01100"],K:["10001","10010","10100","11000","10100","10010","10001"],L:["10000","10000","10000","10000","10000","10000","11111"],M:["10001","11011","10101","10101","10001","10001","10001"],N:["10001","10001","11001","10101","10011","10001","10001"],O:["01110","10001","10001","10001","10001","10001","01110"],P:["11110","10001","10001","11110","10000","10000","10000"],Q:["01110","10001","10001","10001","10101","10010","01101"],R:["11110","10001","10001","11110","10100","10010","10001"],S:["01111","10000","10000","01110","00001","00001","11110"],T:["11111","00100","00100","00100","00100","00100","00100"],U:["10001","10001","10001","10001","10001","10001","01110"],V:["10001","10001","10001","10001","10001","01010","00100"],W:["10001","10001","10001","10101","10101","10101","01010"],X:["10001","10001","01010","00100","01010","10001","10001"],Y:["10001","10001","01010","00100","00100","00100","00100"],Z:["11111","00001","00010","00100","01000","10000","11111"],
+"0":["01110","10001","10011","10101","11001","10001","01110"],"1":["00100","01100","00100","00100","00100","00100","01110"],"2":["01110","10001","00001","00010","00100","01000","11111"],"3":["11111","00010","00100","00010","00001","10001","01110"],"4":["00010","00110","01010","10010","11111","00010","00010"],"5":["11111","10000","11110","00001","00001","10001","01110"],"6":["00110","01000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00010","01100"],
+":":["0","1","1","0","1","1","0"],"!":["1","1","1","1","1","0","1"],"?":["01110","10001","00001","00010","00100","00000","00100"],".":["0","0","0","0","0","0","1"],"-":["000","000","000","111","000","000","000"]," ":["000","000","000","000","000","000","000"],"'":["1","1","0","0","0","0","0"]};
+const F5={A:["010","101","111","101","101"],B:["110","101","110","101","110"],C:["011","100","100","100","011"],D:["110","101","101","101","110"],E:["111","100","110","100","111"],F:["111","100","110","100","100"],G:["011","100","101","101","011"],H:["101","101","111","101","101"],I:["111","010","010","010","111"],J:["001","001","001","101","010"],K:["101","101","110","101","101"],L:["100","100","100","100","111"],M:["101","111","111","101","101"],N:["110","101","101","101","101"],O:["010","101","101","101","010"],P:["110","101","110","100","100"],Q:["010","101","101","110","011"],R:["110","101","110","101","101"],S:["011","100","010","001","110"],T:["111","010","010","010","010"],U:["101","101","101","101","111"],V:["101","101","101","101","010"],W:["101","101","111","111","101"],X:["101","101","010","101","101"],Y:["101","101","010","010","010"],Z:["111","001","010","100","111"],
+"0":["111","101","101","101","111"],"1":["010","110","010","010","111"],"2":["111","001","111","100","111"],"3":["111","001","111","001","111"],"4":["101","101","111","001","001"],"5":["111","100","111","001","111"],"6":["111","100","111","101","111"],"7":["111","001","001","001","001"],"8":["111","101","111","101","111"],"9":["111","101","111","001","111"],":":["0","1","0","1","0"],"!":["1","1","1","0","1"],"?":["111","001","010","000","010"],".":["0","0","0","0","1"],"-":["000","000","111","000","000"]," ":["00","00","00","00","00"],"'":["1","1","0","0","0"]};
+const I9={laptop:[".XXXXXXX.",".X.....X.",".X.....X.",".X.....X.",".XXXXXXX.","XXXXXXXXX","........."],coffee:["..X.X.X..",".X.X.X...",".........","XXXXXXX..","X.....XXX","X.....X.X","X.....XXX",".X...X...","..XXX...."],phone:["XXX......","XXX......","XX.......","XX.......","XX.......","XXX......",".XXX..XXX","..XXXXXXX","....XXXXX"],moon:["...XXX...",".XX......",".X.......","X........","X........","X........",".X.....X.",".XX..XX..","...XXX..."],heart:[".XX...XX.","XXXX.XXXX","XXXXXXXXX","XXXXXXXXX",".XXXXXXX.","..XXXXX..","...XXX...","....X...."]};
+const I7={laptop:["XXXXXXX","X.....X","X.....X","XXXXXXX","XXXXXXX"],coffee:[".X.X...","X.X....","XXXXX..","X...XXX","X...X.X","X...XXX",".XXX..."],phone:["XX.....","XX.....","X......","X......","XX.....",".XX.XXX","..XXXXX"],moon:["..XXX..",".X.....","X......","X......","X......",".X...X.","..XXX.."],heart:[".X...X.","XXX.XXX","XXXXXXX","XXXXXXX",".XXXXX.","..XXX..","...X..."]};
+function icon(n){return n>=25?I9:I7}
+function drawIcon(g,name,x0,y0,b){const ic=icon(g.n)[name];if(!ic)return;ic.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==="X")g.p(x0+x,y0+y,b)}))}
+function iconW(n,name){const ic=icon(n)[name];return ic?ic[0].length:0}
+function iconH(n,name){const ic=icon(n)[name];return ic?ic.length:0}
+function font(n){return n>=25?F7:F5}
+function glyph(n,ch){const f=font(n);return f[ch]||f["?"]}
+function textW(n,s){let w=0;for(const ch of s){w+=glyph(n,ch)[0].length+1}return Math.max(0,w-1)}
+function drawText(g,s,x0,y0,b){let x=x0;for(const ch of s){const gl=glyph(g.n,ch);gl.forEach((r,y)=>[...r].forEach((c,dx)=>{if(c==="1")g.p(x+dx,y0+y,b)}));x+=gl[0].length+1}}
+
+
+// New DND candidates (9x9 for 25x25, 7x7 for 13x13)
+Object.assign(I9,{
+ dnd_noentry:["..XXXXX..",".XXXXXXX.","XXXXXXXXX","XXXXXXXXX","X.......X","XXXXXXXXX","XXXXXXXXX",".XXXXXXX.","..XXXXX.."],
+ dnd_moon:["..XXXX...",".XXX.....","XXX......","XXX......","XXX......","XXX......","XXXX...XX",".XXXXXXX.","..XXXXX.."],
+ dnd_zz:["XXXXX....","...X.....","..X......",".X.......","XXXXX....","......XXX",".......X.","......X..","......XXX"],
+ dnd_bell:["....X....","..XXXXX..",".XXXXXXX.",".XXXXXXX.",".XXXXXXX.","XXXXXXXXX",".........","...XXX...","........."],
+ coffee:["..X..X...","...X..X..",".........","XXXXXXX..","XXXXXXXXX","XXXXXXX.X","XXXXXXXXX",".XXXXX...","........."],
+ phone:["XXX......","XXXX.....","XXX......",".XX......",".XX......",".XXX.....","..XXX.XXX","...XXXXXX",".....XXX."],
+});
+Object.assign(I7,{
+ dnd_noentry:[".XXXXX.","XXXXXXX","XXXXXXX","X.....X","XXXXXXX","XXXXXXX",".XXXXX."],
+ dnd_moon:[".XXX...","XXX....","XX.....","XX.....","XXX..XX",".XXXXX.","..XXX.."],
+ dnd_zz:["XXXX...","..X....",".X.....","XXXX...","....XXX",".....X.","....XXX"],
+ dnd_bell:["...X...",".XXXXX.",".XXXXX.",".XXXXX.","XXXXXXX",".......","..XXX.."],
+ coffee:[".X..X..","..X..X.","XXXXX..","XXXXXXX","XXXXX.X","XXXXXXX",".XXX..."],
+ phone:["XX.....","XXX....",".X.....",".X.....",".XX.XXX","..XXXXX","....XX."],
+});
+// The bell candidate gets a slash through it (do-not-disturb bell).
+const slash={25:[[1,8],[2,7],[3,6],[4,5],[5,4],[6,3],[7,2],[8,1]].map(([x,y])=>[x,y]),13:[[0,6],[1,5],[2,4],[3,3],[4,2],[5,1],[6,0]]};
+const C=[
+ {id:"noentry",icon:"dnd_noentry",name:"A · No entry",desc:"A solid round sign with a bar cut through it. It reads as \"stop\" at once."},
+ {id:"moon",icon:"dnd_moon",name:"B · Solid moon",desc:"A chunky filled crescent, like the phone's own Do Not Disturb icon. Much bolder than before."},
+ {id:"zz",icon:"dnd_zz",name:"C · Zz",desc:"Two Z's, a big one and a small one: quiet, sleeping, don't wake me."},
+];
+
+const I5={laptop:[".XXX.",".X.X.",".XXX.","XXXXX","....."],coffee:[".X.X.","X.X..","XXXX.","XXXXX",".XX.."],phone:["XX...","X....","X....","XX.XX",".XXX."],heart:["XX.XX","XXXXX","XXXXX",".XXX.","..X.."],
+ dnd_noentry:[".XXX.","XXXXX","X...X","XXXXX",".XXX."],dnd_moon:[".XX..","XX...","X....","XX..X",".XXX."],dnd_zz:["XXX..",".X...","XXX..","...XX","...XX"]};
+function icon(n){return n>=25?I9:I5}
+let started=performance.now();
+function ticker(n,t,name,s){const g=G(n),big=n>=25,iw=iconW(n,name);const x0=Math.round((n-iw)/2),y0=big?3:1;drawIcon(g,name,x0,y0,0.85);
+  if(name==="dnd_bell")for(const [x,y] of slash[big?25:13]){const X=x0+x,Y=y0+y;const i=Y*n+X;if(X>=0&&Y>=0&&X<n&&Y<n){g[i]=0;if(X+1<n)g[Y*n+X+1]=Math.max(g[Y*n+X+1],1)}}
+  const y=big?14:7,w=textW(n,s),span=w+n+4,off=Math.floor(t/(big?55:80))%span;drawText(g,s,n-off,y,1);return g}
+function small(n,t,name,s){const g=G(n),iw=iconW(n,name),ih=iconH(n,name),w=textW(n,s),hold=1500,span=w+n+2,step=75,cycle=hold+span*step,tt=t%cycle;
+  if(tt<hold){drawIcon(g,name,Math.round((n-iw)/2),Math.round((n-ih)/2),0.85)}else{const off=Math.floor((tt-hold)/step);drawText(g,s,n-off,4,1)}return g}
+const opts=document.getElementById("opts");
+C.forEach(c=>{const el=document.createElement("div");el.className="option";el.dataset.choice=c.id;el.style.flexDirection="column";el.style.alignItems="stretch";
+  el.innerHTML=`<div class="vizrow"><div><canvas id="c25-${c.id}"></canvas><div class="gl">25×25</div></div><div><canvas id="c13-${c.id}"></canvas><div class="gl">13×13</div></div><div><canvas id="s25-${c.id}"></canvas><div class="gl">icon 25</div></div><div><canvas id="s13-${c.id}"></canvas><div class="gl">icon 13</div></div></div><div class="content"><h3>${c.name}</h3><p>${c.desc}</p></div>`;
+  el.onclick=e=>{if(e.target.tagName!=="CANVAS")toggleSelect(el)};opts.appendChild(el)});
+const SET=[["laptop","IN A MEETING"],["coffee","BACK IN 5"],["phone","ON A CALL"],["heart","THANK YOU"]];
+const setBox=document.getElementById("set");
+SET.forEach(([k,l])=>{for(const n of [25,13]){const d=document.createElement("div");d.innerHTML=`<canvas id="set${n}-${k}"></canvas><div class="gl">${l} · ${n}</div>`;setBox.appendChild(d)}});
+function draw(id,g,px){const n=g.n,cv=document.getElementById(id),ctx=cv.getContext("2d");if(cv.width!==n*px){cv.width=cv.height=n*px}
+  ctx.fillStyle="#0b0b0b";ctx.fillRect(0,0,cv.width,cv.height);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(!mask(n,x,y))continue;const b=g[y*n+x];ctx.beginPath();ctx.arc(x*px+px/2,y*px+px/2,px*.38,0,7);ctx.fillStyle=b>0?`rgba(255,255,255,${0.1+0.9*b})`:"#1a1a1a";ctx.fill()}}
+function iconOnly(n,name){const g=G(n),iw=iconW(n,name),ih=iconH(n,name);const x0=Math.round((n-iw)/2),y0=Math.round((n-ih)/2);drawIcon(g,name,x0,y0,1);
+  if(name==="dnd_bell")for(const [x,y] of slash[n>=25?25:13]){const X=x0+x,Y=y0+y;if(X>=0&&Y>=0&&X<n&&Y<n){g[Y*n+X]=0;if(X+1<n)g[Y*n+X+1]=1}}return g}
+SET.forEach(([k])=>{draw("set25-"+k,iconOnly(25,k),6);draw("set13-"+k,iconOnly(13,k),9)});
+function frame(now){const t=now-started;for(const c of C){draw("c25-"+c.id,ticker(25,t,c.icon,"DO NOT DISTURB"),9);draw("c13-"+c.id,ticker(13,t,c.icon,"DO NOT DISTURB"),13);draw("s25-"+c.id,iconOnly(25,c.icon),6);draw("s13-"+c.id,iconOnly(13,c.icon),9)}requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+})();
+</script>
