@@ -77,4 +77,24 @@ class SandArtTest {
             for (t in 0L..a.loopMs step 250) assertInMask(a.frame(n, t), "$id n=$n t=$t")
         }
     }
+    @Test
+    fun runningShowsAFallingStreamUnderTheNeck() {
+        for (n in listOf(25, 13)) {
+            val s = HourglassShape.forSize(n)
+            val c = s.center
+            val grains = SandLayout.layout(s, 0.5, false)
+            val st = TimerState(phase = Phase.RUNNING, durationMs = 10 * m, endAt = 5 * m)
+            val pileTop = (c + 1 until n).first { grains[it * n + c] }
+            fun column(g: PixelGrid) = (c + 1 until pileTop).map { g[c, it] }
+            val a = SandArt.frame(s, grains, null, st, 0)
+            val b = SandArt.frame(s, grains, null, st, 90)
+            assertEquals(255, a[c, c])
+            assertTrue("n=$n stream lit", column(a).any { it == 255 })
+            assertTrue("n=$n stream moves", column(a) != column(b))
+            val paused = SandArt.frame(s, grains, null, st.copy(phase = Phase.PAUSED, leftMs = 5 * m), 0)
+            assertTrue("n=$n no stream when paused", column(paused).all { it == 0 })
+            val empty = SandArt.frame(s, SandLayout.layout(s, 0.0, false), null, st, 0)
+            assertEquals("n=$n no stream with an empty top", 0, empty[c, c])
+        }
+    }
 }

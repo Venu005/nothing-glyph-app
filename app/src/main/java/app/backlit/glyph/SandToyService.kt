@@ -18,6 +18,7 @@ import app.backlit.data.Settings
 import app.backlit.data.SettingsRepo
 import app.backlit.render.Mode
 import app.backlit.render.PixelGrid
+import app.backlit.sand.EchoFilter
 import app.backlit.sand.HourglassShape
 import app.backlit.sand.Orientation
 import app.backlit.sand.Phase
@@ -54,7 +55,7 @@ class SandToyService : Service() {
     private var alerts: AlertsRuntime? = null
     private var loaded = false
     private var state = TimerState()
-    private val myWrites = ArrayDeque<String>()
+    private val echoes = EchoFilter()
 
     private var sensors: SensorManager? = null
     private var sensorsOn = false
@@ -77,7 +78,7 @@ class SandToyService : Service() {
                 GlyphToy.EVENT_CHANGE -> if (loaded) { commit(state.longPress(now(), settings.sandPresets)); kick() }
                 GlyphToy.EVENT_AOD -> {
                     modes.onAodEvent(now())
-                    if (profile.aodOnly) sampleOnce()
+                    if (profile.aodOnly && loaded && scope != null) sampleOnce()
                     kick()
                 }
             }
@@ -125,10 +126,11 @@ class SandToyService : Service() {
         sensors = getSystemService(SensorManager::class.java)
         s.launch {
             settings = repo.settings.first()
-            state = TimerState.decode(settings.sandTimer).tick(now())
+            state = TimerState.decode(settings.sandTimer)
             dirY = state.upSide.toDouble()
             handledRefill = state.refillUntil
             loaded = true
+            commit(state.tick(now()))
             output = GlyphOutput(this@SandToyService, profile) { kick() }.also { it.connect() }
             repo.update { if (it.sandToyEverBound) it else it.copy(sandToyEverBound = true) }
             launch { repo.settings.collect { onSettings(it) } }
@@ -159,7 +161,7 @@ class SandToyService : Service() {
     /** Settings changed (ours echoing back, or the app / alarm changed the timer). */
     private fun onSettings(s: Settings) {
         settings = s
-        if (s.sandTimer !in myWrites) {
+        if (!echoes.isEcho(s.sandTimer)) {
             val incoming = TimerState.decode(s.sandTimer)
             if (incoming.persisted() != state.persisted()) {
                 state = incoming.copy(upSide = state.upSide.takeIf { incoming.phase == Phase.READY } ?: incoming.upSide)
@@ -177,7 +179,11 @@ class SandToyService : Service() {
         if (on == sensorsOn) return
         sensorsOn = on
         if (on) {
-            if (!oneShot) needBaseline = true   // 4a Pro samples keep counting flips; only a fresh live session re-baselines
+            if (!oneShot) {
+                // A fresh live session: forget the pre-AOD reading and wait for a definite orientation again.
+                needBaseline = true
+                haveReading = false
+            }
             sm.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)?.let { sm.registerListener(sensorListener, it, SensorManager.SENSOR_DELAY_GAME) }
         } else sm.unregisterListener(sensorListener)
     }
@@ -190,9 +196,13 @@ class SandToyService : Service() {
     }
 
     private fun applyOrientation(t: Long) {
-        if (!haveReading) return
+        if (!loaded || !haveReading) return
         val o = Orientation.of(grav[0], grav[1])
-        val next = if (needBaseline) { needBaseline = false; state.baseline(o, t) } else state.onOrientation(o, t)
+        val next = if (needBaseline) {
+            val (s, settled) = state.firstReading(o, t)
+            if (settled) needBaseline = false
+            s
+        } else state.onOrientation(o, t)
         commit(next)
     }
 
@@ -202,6 +212,7 @@ class SandToyService : Service() {
         state = next
         if (next.phase != prev.phase) lastRateAt = 0L
         if (next.phase == Phase.DONE && prev.phase != Phase.DONE) {
+            needRebuild = true
             SandAlarm.cancel(this)
             SandAlarm.ring(this, settings.sandAlert)
         }
@@ -210,12 +221,10 @@ class SandToyService : Service() {
 
     private fun persist() {
         val json = state.encode()
-        myWrites.addLast(json)
-        while (myWrites.size > 8) myWrites.removeFirst()
+        echoes.record(json)
         SandAlarm.sync(this, state, settings.sandExact)
-        val sc = scope
-        if (sc != null) sc.launch { repo.update { it.copy(sandTimer = json) } }
-        else CoroutineScope(Dispatchers.IO).launch { repo.update { it.copy(sandTimer = json) } }
+        // Detached, so a save made just before unbind isn't cancelled with the toy's scope.
+        CoroutineScope(Dispatchers.IO).launch { repo.update { it.copy(sandTimer = json) } }
     }
 
     /** Steer and step the sand; rebuild it from the clock after any gap (bind, AOD, alert, refill). */

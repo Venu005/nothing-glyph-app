@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.media.AudioManager
 import android.media.RingtoneManager
+import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.VibratorManager
 import android.util.Log
@@ -48,7 +49,8 @@ object SandAlarm {
         if (alert == "glyph") return
         runCatching {
             context.getSystemService(VibratorManager::class.java)?.defaultVibrator
-                ?.vibrate(VibrationEffect.createWaveform(PATTERN, -1))
+                // Alarm usage: an unattributed vibration from a background receiver is dropped by Android.
+                ?.vibrate(VibrationEffect.createWaveform(PATTERN, -1), VibrationAttributes.createForUsage(VibrationAttributes.USAGE_ALARM))
         }.onFailure { Log.w(TAG, "vibrate failed", it) }
         if (alert != "chime") return
         val audio = context.getSystemService(AudioManager::class.java)

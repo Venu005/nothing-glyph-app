@@ -77,6 +77,16 @@ data class TimerState(
         return if (phase == Phase.READY || phase == Phase.DONE) copy(upSide = up, sideSince = 0L) else onOrientation(o, now)
     }
 
+    /**
+     * The reading that settles the baseline when the toy (re)appears. READY/DONE wait for a definite UP/DOWN
+     * (FLAT or SIDE teach nothing, so the baseline stays pending: second = false); RUNNING/PAUSED take any reading.
+     */
+    fun firstReading(o: Orientation, now: Long): Pair<TimerState, Boolean> = when {
+        phase == Phase.RUNNING || phase == Phase.PAUSED -> onOrientation(o, now) to true
+        o == Orientation.UP || o == Orientation.DOWN -> baseline(o, now) to true
+        else -> tick(now) to false
+    }
+
     private fun onSide(now: Long): TimerState {
         if (sideSince == 0L) return copy(sideSince = now)
         if (phase != Phase.RUNNING || now - sideSince < SIDE_MS) return this

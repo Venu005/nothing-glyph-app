@@ -171,4 +171,21 @@ class TimerStateTest {
         assertEquals("0:01", TimerState.clock(1))
         assertEquals("25:00", TimerState.clock(25 * m))
     }
+    @Test
+    fun firstReadingWaitsForADefiniteOrientationBeforeBaselining() {
+        val done = TimerState(phase = Phase.DONE, upSide = -1)
+        val (s1, settled1) = done.firstReading(Orientation.FLAT, 0)
+        assertEquals(false, settled1)
+        val (s2, settled2) = s1.firstReading(Orientation.UP, 10)
+        assertEquals(true, settled2)
+        assertEquals(Phase.DONE, s2.phase)      // learned the orientation, did not start
+        assertEquals(1, s2.upSide)
+        val (r, settledR) = TimerState(upSide = -1).firstReading(Orientation.SIDE, 0)
+        assertEquals(false, settledR)
+        assertEquals(Phase.READY, r.phase)
+        // a running timer takes any reading as normal
+        val (run, settledRun) = running(left = 2 * m).firstReading(Orientation.FLAT, 0)
+        assertEquals(true, settledRun)
+        assertEquals(Phase.RUNNING, run.phase)
+    }
 }

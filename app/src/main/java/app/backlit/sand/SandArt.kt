@@ -13,6 +13,7 @@ import kotlin.math.sin
 object SandArt {
     private const val WALL = 0.16
     private const val GRAIN = 0.7
+    private const val STREAM_STEP_MS = 90L
 
     private fun b(v: Double): Int = (v * 255).px()
 
@@ -29,7 +30,31 @@ object SandArt {
             Phase.DONE -> 0.16 + 0.08 * max(0.0, sin(now / 1500.0))
             else -> WALL
         }
-        return picture(shape, grains, moved, wall)
+        val g = picture(shape, grains, moved, wall)
+        if (st.phase == Phase.RUNNING) stream(shape, grains, st.upSide, now, g)
+        return g
+    }
+
+    /**
+     * A real hourglass always shows a thin falling stream, even when the neck only lets a grain through every few
+     * seconds: the neck is lit and dots fall from it to the top of the pile while sand is left in the up bulb.
+     */
+    private fun stream(shape: HourglassShape, grains: BooleanArray, upSide: Int, now: Long, g: PixelGrid) {
+        val n = shape.size
+        val c = shape.center
+        if (shape.cellsOn(upSide).none { grains[it] }) return
+        g.put(c, c, b(1.0))
+        val dir = if (upSide >= 0) 1 else -1
+        val phase = (now / STREAM_STEP_MS).toInt()
+        var k = 1
+        while (true) {
+            val y = c + dir * k
+            if (y !in 0 until n) break
+            val i = y * n + c
+            if (!shape.isOpen(i) || grains[i]) break
+            if (Math.floorMod(k - phase, 3) == 0) g.put(c, y, b(1.0))
+            k++
+        }
     }
 
     /** Always-on still (one frame a minute). */
