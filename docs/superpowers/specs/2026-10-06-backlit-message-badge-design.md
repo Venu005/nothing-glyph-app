@@ -111,12 +111,12 @@ Messages can be smart: a countdown, or "until" a time of day.
 ### Pure core (`badge/`, JVM tests)
 | Unit | Responsibility |
 |---|---|
-| `BadgeMessage` | `@Serializable` data class, `Kind`, `clean()`, `STARTERS`, and `BadgeList.clean(list)` (1..8, cleaned messages, bad JSON → starters) |
+| `BadgeMessage` | `@Serializable` data class, `Kind`, `clean()`, `STARTERS`, and companion list helpers `cleanList` / `decodeList` / `encodeList` (1..8, cleaned messages, bad JSON → starters) plus the index helpers `activeIndex` / `moveActive` / `afterDelete` |
 | `BadgeText` | `scroll(msg, activeSince, now, use24h, zone)` and `short(msg, activeSince, now, use24h, zone)` |
 | `BadgeFont` | 5×7 glyphs (A–Z and punctuation, with digits from `PixelFont5x7`), `width(text)` and `draw(grid, text, x, y, b)`. 13×13 uses `PixelFontText` |
 | `BadgeIcons` | `ICONS: Map<String, Pair<List<String>, List<String>>>`, `draw(grid, id, x, y, b)` and `ids` |
 | `BadgeArt` | `frame(size, msg, text, tMs, sinceChangeMs)` and `still(size, msg, short)` |
-| `BadgePreviewAnimation` | `badge:<icon>` (looping "IN A MEETING"-style text for each icon), used by Show on Glyph and the picker image |
+| `BadgePreviewAnimation` | `badge:<icon>:<text>` scrolls that text with that icon in a loop (one full scroll). Show on Glyph sends the current message's icon and its current scroll text. The picker image is the `laptop` icon with "IN A MEETING" at t = 1200 ms |
 
 ### Android
 - **`glyph/BadgeToyService`:** follows `CanvasToyService` / `PetToyService`.
