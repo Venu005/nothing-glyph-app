@@ -4,20 +4,26 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
 import android.media.AudioManager
 import android.media.RingtoneManager
+import android.os.Handler
+import android.os.Looper
 import android.os.VibrationAttributes
 import android.os.VibrationEffect
 import android.os.VibratorManager
 import android.util.Log
 import app.backlit.alerts.AlertsRuntime
 import app.backlit.data.SettingsRepo
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 /** Schedules the hourglass's done moment so it fires even when the toy isn't on screen. */
 object SandAlarm {
     const val ACTION_DONE = "app.backlit.sand.DONE"
     private const val TAG = "BacklitSand"
+    /** How long the chime may play before it is stopped and released. */
+    const val CHIME_MS = 4_000L
     private val PATTERN = longArrayOf(0, 400, 200, 400, 200, 600)
 
     /** True while the toy's ACTIVE render loop runs: it then handles "done" itself. */
@@ -55,8 +61,18 @@ object SandAlarm {
         if (alert != "chime") return
         val audio = context.getSystemService(AudioManager::class.java)
         if (audio?.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
-        runCatching { RingtoneManager.getRingtone(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))?.play() }
-            .onFailure { Log.w(TAG, "chime failed", it) }
+        // Played as an alarm sound and released after CHIME_MS. With the Ringtone defaults it counts as a ringtone,
+        // and Nothing OS keeps flashing its ringtone Glyph effect until the player is released.
+        runCatching {
+            val r = RingtoneManager.getRingtone(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)) ?: return
+            r.audioAttributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+            r.isLooping = false
+            r.play()
+            Handler(Looper.getMainLooper()).postDelayed({ runCatching { r.stop() } }, CHIME_MS)
+        }.onFailure { Log.w(TAG, "chime failed", it) }
     }
 
     /** Alarm (or boot) path: finish a due RUNNING timer, ring, and play "Flip me" on the matrix if no toy is showing. */
@@ -74,5 +90,7 @@ object SandAlarm {
         repo.update { it.copy(sandTimer = done.encode()) }
         ring(app, s.sandAlert)
         AlertsRuntime.get(app).preview(SandPreviewAnimation.DONE_ID, TimerState.FLIP_ME_MS + 700)
+        // Keep the receiver (and so the process) alive until the chime is stopped and released.
+        if (s.sandAlert == "chime") delay(CHIME_MS + 200)
     }
 }
