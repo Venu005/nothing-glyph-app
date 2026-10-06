@@ -23,11 +23,11 @@ fun SetupScreen(onDone: () -> Unit) {
     val canOpen = remember { ToysManager.canOpen(context) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
         ScreenHeader("SET UP", onBack = onDone)
-        Text("Turn on the Backlit Clock toy:", style = MaterialTheme.typography.bodyLarge)
+        Text("Turn on the Backlit toys you want:", style = MaterialTheme.typography.bodyLarge)
         Spacer(Modifier.height(12.dp))
         listOf(
             "01" to "Open Settings → Glyph Interface → Glyph Toys.",
-            "02" to "Find \"Backlit Clock\" and switch it on.",
+            "02" to "Switch on the Backlit toys (Clock, Music, Charge, Canvas, Pet, Sand, Badge).",
             "03" to "Phone (3): press the Glyph Button on the back until the clock shows. Long press to change face.",
             "04" to "Phone (3): also switch on \"Backlit Music\" to see your music on the back.",
             "05" to "Phone (4a) Pro: choose Backlit Clock as the always-on toy.",
