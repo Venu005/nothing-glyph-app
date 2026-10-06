@@ -1,6 +1,13 @@
 package app.backlit.ui
 
-import app.backlit.ui.components.Notice
+import app.backlit.ui.components.AttentionCard
+import app.backlit.ui.components.ChipRow
+import app.backlit.ui.components.Section
+import app.backlit.ui.home.ToyId
+import app.backlit.ui.toys.StatusInputs
+import app.backlit.ui.toys.ToyAction
+import app.backlit.ui.toys.ToyStatus
+import java.time.ZoneId
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
@@ -45,7 +52,7 @@ import app.backlit.render.viz.VizStyles
 import kotlinx.coroutines.delay
 
 @Composable
-fun MusicTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit) {
+fun MusicPage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit, chrome: PageChrome) {
     val context = LocalContext.current
     var granted by remember { mutableStateOf(hasAudioPermission(context)) }
     var denied by rememberSaveable { mutableStateOf(false) }
@@ -59,7 +66,7 @@ fun MusicTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
     val music = remember { MusicActivity(context) }
     // Only read audio and animate while this screen is in the foreground; leaving the app releases the Visualizer.
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
-    val resumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED)
+    val resumed = lifecycleState.isAtLeast(Lifecycle.State.RESUMED) && chrome.active
     // Re-check on every resume: the user may have granted the permission in system Settings.
     LaunchedEffect(resumed) {
         if (resumed) {
@@ -91,54 +98,22 @@ fun MusicTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
         }
     }
 
-    MatrixPreview(grid, Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp))
-    Text(
-        if (live) "LIVE · REACTING TO YOUR MUSIC" else "DEMO AUDIO",
-        style = MaterialTheme.typography.labelSmall,
-        color = BacklitColors.Dim,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-    )
-
-    Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        VizStyles.ids.forEach { id ->
-            SquareChip(
-                VizStyles.label(id),
-                selected = VizStyles.normalize(settings.musicStyle) == id,
-                onClick = { onUpdate { it.copy(musicStyle = id) } },
-                modifier = Modifier.weight(1f),
-            )
+    ToyPageScaffold(
+        chrome, "MUSIC", grid,
+        ToyStatus.line(ToyId.MUSIC, settings, 0, ZoneId.systemDefault(), StatusInputs(micGranted = granted, musicSupported = profile == DeviceProfile.PHONE_3)),
+        ToyAction.of(ToyId.MUSIC, chrome.setUp, chrome.supported, hasDrawing = false),
+    ) {
+        Text(if (live) "LIVE · REACTING TO YOUR MUSIC" else "DEMO AUDIO", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
+        if (profile == DeviceProfile.PHONE_3 && !granted) {
+            if (!denied) AttentionCard("Let Backlit react to your music. Android calls this the microphone permission, but Backlit only reads what your phone is already playing. Nothing is recorded.") {
+                launcher.launch(Manifest.permission.RECORD_AUDIO)
+            } else AttentionCard("Music reactions are off: the toy shows a calm line. Tap to open settings.") {
+                context.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
         }
+        Section("STYLE")
+        ChipRow(VizStyles.ids.map { it to VizStyles.label(it) }, VizStyles.normalize(settings.musicStyle)) { id -> onUpdate { it.copy(musicStyle = id) } }
+        Section("SENSITIVITY")
+        ChipRow(Sensitivity.entries.map { it.name to it.name }, settings.musicSensitivity.name) { n -> onUpdate { it.copy(musicSensitivity = Sensitivity.valueOf(n)) } }
     }
-
-    when {
-        profile != DeviceProfile.PHONE_3 -> Notice("The Music toy needs the Phone (3). The (4a) Pro only supports always-on toys.")
-        !granted && !denied -> {
-            Notice(
-                "Let Backlit react to your music. Android files this under the microphone permission, but Backlit " +
-                    "only reads the sound your phone is already playing. Nothing is recorded, stored, or sent anywhere.",
-            )
-            SquareChip("ALLOW", selected = true, onClick = { launcher.launch(Manifest.permission.RECORD_AUDIO) }, modifier = Modifier.fillMaxWidth())
-            Spacer(Modifier.height(8.dp))
-        }
-        !granted -> {
-            Notice("Music reactions are off. The toy will show a calm line instead.")
-            SquareChip(
-                "OPEN SETTINGS",
-                selected = false,
-                onClick = {
-                    context.startActivity(
-                        Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            Spacer(Modifier.height(8.dp))
-        }
-    }
-
-    SettingRow("Sensitivity", settings.musicSensitivity.name) {
-        onUpdate { it.copy(musicSensitivity = Sensitivity.entries[(it.musicSensitivity.ordinal + 1) % Sensitivity.entries.size]) }
-    }
-    BrightnessRow(settings.brightness) { pct -> onUpdate { it.copy(brightness = pct) } }
 }

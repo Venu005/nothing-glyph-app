@@ -22,8 +22,6 @@ import androidx.compose.ui.unit.dp
 import app.backlit.data.Settings
 import app.backlit.glyph.DeviceProfile
 import app.backlit.glyph.ToysManager
-import app.backlit.ui.components.PagerDots
-import app.backlit.ui.components.ToyHeader
 import app.backlit.ui.home.ToyCatalog
 import app.backlit.ui.home.ToyId
 import app.backlit.ui.nav.Route
@@ -46,20 +44,22 @@ fun ToyPagerScreen(
 
     HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { toys[it].key }) { page ->
         val id = toys[page]
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-            ToyHeader(onBack, ToyCatalog.isSetUp(settings, id), profile != DeviceProfile.UNSUPPORTED, onTurnOn = { if (!ToysManager.open(context)) onOpen(Route.Setup(Route.Toy(id))) })
-            Text(id.label, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
-            PagerDots(toys.size, page)
-            when (id) {
-                ToyId.CLOCK -> ClockTab(settings, profile, onUpdate) { onOpen(Route.Location(Route.Toy(ToyId.CLOCK))) }
-                ToyId.MUSIC -> MusicTab(settings, profile, onUpdate)
-                ToyId.CHARGE -> ChargeTab(settings, profile, onUpdate)
-                ToyId.CANVAS -> StudioTab(settings, profile, onUpdate) { onOpen(Route.Editor(it, Route.Toy(ToyId.CANVAS))) }
-                ToyId.PET -> PetTab(settings, profile, onUpdate)
-                ToyId.SAND -> SandTab(settings, profile, onUpdate)
-                ToyId.BADGE -> BadgeTab(settings, profile, onUpdate)
-            }
-            Spacer(Modifier.height(32.dp))
+        val chrome = PageChrome(
+            onBack = onBack,
+            setUp = ToyCatalog.isSetUp(settings, id),
+            supported = profile != DeviceProfile.UNSUPPORTED,
+            onTurnOn = { if (!ToysManager.open(context)) onOpen(Route.Setup(Route.Toy(id))) },
+            index = page, count = toys.size,
+            active = pager.settledPage == page,
+        )
+        when (id) {
+            ToyId.CLOCK -> ClockPage(settings, profile, onUpdate, chrome) { onOpen(Route.Location(Route.Toy(ToyId.CLOCK))) }
+            ToyId.MUSIC -> MusicPage(settings, profile, onUpdate, chrome)
+            ToyId.CHARGE -> ChargeTab(settings, profile, onUpdate)
+            ToyId.CANVAS -> StudioTab(settings, profile, onUpdate) { onOpen(Route.Editor(it, Route.Toy(ToyId.CANVAS))) }
+            ToyId.PET -> PetTab(settings, profile, onUpdate)
+            ToyId.SAND -> SandTab(settings, profile, onUpdate)
+            ToyId.BADGE -> BadgeTab(settings, profile, onUpdate)
         }
     }
 }
