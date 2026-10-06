@@ -39,6 +39,10 @@ data class Settings(
     val sandExact: Boolean = false,
     val sandTimer: String = "",
     val sandToyEverBound: Boolean = false,
+    val badgeMessages: String = "",
+    val badgeActive: Int = 0,
+    val badgeActiveSince: Long = 0L,
+    val badgeToyEverBound: Boolean = false,
 ) {
     val faceOptions: FaceOptions get() = FaceOptions(secondHand = secondHand, use24h = use24h)
 }

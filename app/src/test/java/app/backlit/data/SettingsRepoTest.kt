@@ -45,6 +45,7 @@ class SettingsRepoTest {
             petKind = "owl", petNames = mapOf("owl" to "Professor", "frog" to "Kermie"),
             sandPresets = listOf(2, 7, 45), sandAlert = "chime", sandExact = true,
             sandTimer = "{\"phase\":\"RUNNING\",\"endAt\":5}", sandToyEverBound = true,
+            badgeMessages = "[{\"text\":\"HI\"}]", badgeActive = 3, badgeActiveSince = 777L, badgeToyEverBound = true,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -173,5 +174,12 @@ class SettingsRepoTest {
         assertEquals("vibrate", SettingsRepo.parseSandAlert(null))
         assertEquals("glyph", SettingsRepo.parseSandAlert("glyph"))
         assertEquals("chime", SettingsRepo.parseSandAlert("chime"))
+    }
+
+    @Test
+    fun badgeDefaults() = runBlocking {
+        val s = repo().settings.first()
+        assertEquals("", s.badgeMessages); assertEquals(0, s.badgeActive)
+        assertEquals(0L, s.badgeActiveSince); assertEquals(false, s.badgeToyEverBound)
     }
 }

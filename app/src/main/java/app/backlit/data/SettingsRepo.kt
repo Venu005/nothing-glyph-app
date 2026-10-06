@@ -65,6 +65,10 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val SAND_EXACT = booleanPreferencesKey("sand_exact")
         private val SAND_TIMER = stringPreferencesKey("sand_timer")
         private val SAND_BOUND = booleanPreferencesKey("sand_toy_ever_bound")
+        private val BADGE_MESSAGES = stringPreferencesKey("badge_messages")
+        private val BADGE_ACTIVE = intPreferencesKey("badge_active")
+        private val BADGE_ACTIVE_SINCE = longPreferencesKey("badge_active_since")
+        private val BADGE_BOUND = booleanPreferencesKey("badge_toy_ever_bound")
         private val namesJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
 
         /** The name to show for [kind]: the ghost keeps the original petName; the others live in petNames. */
@@ -134,6 +138,10 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 sandExact = this[SAND_EXACT] ?: d.sandExact,
                 sandTimer = this[SAND_TIMER] ?: d.sandTimer,
                 sandToyEverBound = this[SAND_BOUND] ?: d.sandToyEverBound,
+                badgeMessages = this[BADGE_MESSAGES] ?: d.badgeMessages,
+                badgeActive = (this[BADGE_ACTIVE] ?: d.badgeActive).coerceAtLeast(0),
+                badgeActiveSince = this[BADGE_ACTIVE_SINCE] ?: d.badgeActiveSince,
+                badgeToyEverBound = this[BADGE_BOUND] ?: d.badgeToyEverBound,
             )
         }
 
@@ -170,6 +178,10 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[SAND_EXACT] = s.sandExact
             this[SAND_TIMER] = s.sandTimer
             this[SAND_BOUND] = s.sandToyEverBound
+            this[BADGE_MESSAGES] = s.badgeMessages
+            this[BADGE_ACTIVE] = s.badgeActive
+            this[BADGE_ACTIVE_SINCE] = s.badgeActiveSince
+            this[BADGE_BOUND] = s.badgeToyEverBound
         }
     }
 }

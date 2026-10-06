@@ -1,0 +1,78 @@
+<h2>Message badge: which look?</h2>
+<p class="subtitle">Pick a message, or type your own, and watch it on each style. <b>BACK IN 5</b> is a smart one: it counts down live, then turns into BACK SOON (sped up ×20 here). The left matrix is the Phone (3) at 25×25 and the middle one is 13×13. The right pair are the <b>always-on stills</b> (one frame a minute, which is all the 4a Pro gets). Click every style you like.</p>
+
+<div class="section" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap" id="msgs"></div>
+<div class="section" style="display:flex;gap:8px;align-items:center">
+  <span class="label">Your own</span><input id="custom" class="mock-input" maxlength="40" placeholder="TYPE A MESSAGE" style="width:240px;text-transform:uppercase">
+</div>
+
+<div class="options" data-multiselect id="opts" style="display:flex;flex-direction:column;gap:14px"></div>
+
+<style>
+  .vizrow{display:flex;gap:20px;align-items:flex-end;background:#0b0b0b;border-radius:8px;padding:14px;flex-wrap:wrap;justify-content:center}
+  .gl{color:#888;font-size:11px;text-align:center;margin-top:4px;font-family:monospace}
+  .sep{width:1px;align-self:stretch;background:#333}
+  .mock-button.on{outline:2px solid #fff}
+</style>
+
+<script>
+(function(){
+function mask(n,x,y){const c=(n-1)/2;return Math.hypot(x-c,y-c)<=n/2}
+function G(n){const g=new Float32Array(n*n);g.n=n;g.p=(x,y,b)=>{if(x<0||y<0||x>=n||y>=n||!mask(n,x,y))return;const i=y*n+x;if(b>g[i])g[i]=b};return g}
+// 5x7 caps font (25x25) and 3x5 (13x13, = the Studio TEXT font)
+const F7={A:["01110","10001","10001","11111","10001","10001","10001"],B:["11110","10001","10001","11110","10001","10001","11110"],C:["01110","10001","10000","10000","10000","10001","01110"],D:["11110","10001","10001","10001","10001","10001","11110"],E:["11111","10000","10000","11110","10000","10000","11111"],F:["11111","10000","10000","11110","10000","10000","10000"],G:["01110","10001","10000","10111","10001","10001","01111"],H:["10001","10001","10001","11111","10001","10001","10001"],I:["01110","00100","00100","00100","00100","00100","01110"],J:["00111","00010","00010","00010","00010","10010","01100"],K:["10001","10010","10100","11000","10100","10010","10001"],L:["10000","10000","10000","10000","10000","10000","11111"],M:["10001","11011","10101","10101","10001","10001","10001"],N:["10001","10001","11001","10101","10011","10001","10001"],O:["01110","10001","10001","10001","10001","10001","01110"],P:["11110","10001","10001","11110","10000","10000","10000"],Q:["01110","10001","10001","10001","10101","10010","01101"],R:["11110","10001","10001","11110","10100","10010","10001"],S:["01111","10000","10000","01110","00001","00001","11110"],T:["11111","00100","00100","00100","00100","00100","00100"],U:["10001","10001","10001","10001","10001","10001","01110"],V:["10001","10001","10001","10001","10001","01010","00100"],W:["10001","10001","10001","10101","10101","10101","01010"],X:["10001","10001","01010","00100","01010","10001","10001"],Y:["10001","10001","01010","00100","00100","00100","00100"],Z:["11111","00001","00010","00100","01000","10000","11111"],
+"0":["01110","10001","10011","10101","11001","10001","01110"],"1":["00100","01100","00100","00100","00100","00100","01110"],"2":["01110","10001","00001","00010","00100","01000","11111"],"3":["11111","00010","00100","00010","00001","10001","01110"],"4":["00010","00110","01010","10010","11111","00010","00010"],"5":["11111","10000","11110","00001","00001","10001","01110"],"6":["00110","01000","10000","11110","10001","10001","01110"],"7":["11111","00001","00010","00100","01000","01000","01000"],"8":["01110","10001","10001","01110","10001","10001","01110"],"9":["01110","10001","10001","01111","00001","00010","01100"],
+":":["0","1","1","0","1","1","0"],"!":["1","1","1","1","1","0","1"],"?":["01110","10001","00001","00010","00100","00000","00100"],".":["0","0","0","0","0","0","1"],"-":["000","000","000","111","000","000","000"]," ":["000","000","000","000","000","000","000"],"'":["1","1","0","0","0","0","0"]};
+const F5={A:["010","101","111","101","101"],B:["110","101","110","101","110"],C:["011","100","100","100","011"],D:["110","101","101","101","110"],E:["111","100","110","100","111"],F:["111","100","110","100","100"],G:["011","100","101","101","011"],H:["101","101","111","101","101"],I:["111","010","010","010","111"],J:["001","001","001","101","010"],K:["101","101","110","101","101"],L:["100","100","100","100","111"],M:["101","111","111","101","101"],N:["110","101","101","101","101"],O:["010","101","101","101","010"],P:["110","101","110","100","100"],Q:["010","101","101","110","011"],R:["110","101","110","101","101"],S:["011","100","010","001","110"],T:["111","010","010","010","010"],U:["101","101","101","101","111"],V:["101","101","101","101","010"],W:["101","101","111","111","101"],X:["101","101","010","101","101"],Y:["101","101","010","010","010"],Z:["111","001","010","100","111"],
+"0":["111","101","101","101","111"],"1":["010","110","010","010","111"],"2":["111","001","111","100","111"],"3":["111","001","111","001","111"],"4":["101","101","111","001","001"],"5":["111","100","111","001","111"],"6":["111","100","111","101","111"],"7":["111","001","001","001","001"],"8":["111","101","111","101","111"],"9":["111","101","111","001","111"],":":["0","1","0","1","0"],"!":["1","1","1","0","1"],"?":["111","001","010","000","010"],".":["0","0","0","0","1"],"-":["000","000","111","000","000"]," ":["00","00","00","00","00"],"'":["1","1","0","0","0"]};
+const I9={laptop:[".XXXXXXX.",".X.....X.",".X.....X.",".X.....X.",".XXXXXXX.","XXXXXXXXX","........."],coffee:["..X.X.X..",".X.X.X...",".........","XXXXXXX..","X.....XXX","X.....X.X","X.....XXX",".X...X...","..XXX...."],phone:["XXX......","XXX......","XX.......","XX.......","XX.......","XXX......",".XXX..XXX","..XXXXXXX","....XXXXX"],moon:["...XXX...",".XX......",".X.......","X........","X........","X........",".X.....X.",".XX..XX..","...XXX..."],heart:[".XX...XX.","XXXX.XXXX","XXXXXXXXX","XXXXXXXXX",".XXXXXXX.","..XXXXX..","...XXX...","....X...."]};
+const I7={laptop:["XXXXXXX","X.....X","X.....X","XXXXXXX","XXXXXXX"],coffee:[".X.X...","X.X....","XXXXX..","X...XXX","X...X.X","X...XXX",".XXX..."],phone:["XX.....","XX.....","X......","X......","XX.....",".XX.XXX","..XXXXX"],moon:["..XXX..",".X.....","X......","X......","X......",".X...X.","..XXX.."],heart:[".X...X.","XXX.XXX","XXXXXXX","XXXXXXX",".XXXXX.","..XXX..","...X..."]};
+function icon(n){return n>=25?I9:I7}
+function drawIcon(g,name,x0,y0,b){const ic=icon(g.n)[name];if(!ic)return;ic.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==="X")g.p(x0+x,y0+y,b)}))}
+function iconW(n,name){const ic=icon(n)[name];return ic?ic[0].length:0}
+function iconH(n,name){const ic=icon(n)[name];return ic?ic.length:0}
+function font(n){return n>=25?F7:F5}
+function glyph(n,ch){const f=font(n);return f[ch]||f["?"]}
+function textW(n,s){let w=0;for(const ch of s){w+=glyph(n,ch)[0].length+1}return Math.max(0,w-1)}
+function drawText(g,s,x0,y0,b){let x=x0;for(const ch of s){const gl=glyph(g.n,ch);gl.forEach((r,y)=>[...r].forEach((c,dx)=>{if(c==="1")g.p(x+dx,y0+y,b)}));x+=gl[0].length+1}}
+
+const MSGS=[{t:"IN A MEETING",i:"laptop"},{t:"BACK IN 5",i:"coffee",cd:5},{t:"ON A CALL",i:"phone"},{t:"DO NOT DISTURB",i:"moon"},{t:"THANK YOU",i:"heart"}];
+let cur=MSGS[1],started=performance.now();
+const box=document.getElementById("msgs");
+MSGS.forEach(m=>{const b=document.createElement("button");b.className="mock-button";b.textContent=m.t;b.onclick=()=>{cur=m;started=performance.now();document.getElementById("custom").value="";mark()};box.appendChild(b);m.btn=b});
+function mark(){MSGS.forEach(m=>m.btn.classList.toggle("on",m===cur))}mark();
+document.getElementById("custom").oninput=e=>{const v=e.target.value.toUpperCase().replace(/[^A-Z0-9 :!?.'-]/g,"");cur={t:v||" ",i:"heart"};started=performance.now();mark()};
+// Smart text: BACK IN 5 counts down (×20 speed), then BACK SOON.
+function textOf(now){if(!cur.cd)return cur.t;const left=cur.cd*60-((now-started)/1000)*20;if(left<=0)return"BACK SOON";const s=Math.ceil(left);return"BACK IN "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+function shortOf(now){if(!cur.cd)return cur.t.split(" ")[0].slice(0,4);const left=cur.cd*60-((now-started)/1000)*20;if(left<=0)return"SOON";return Math.ceil(left/60)+"M"}
+
+const PX=16; // ms per px of scroll is n-dependent
+const styles=[
+ {id:"a",name:"A · Icon + ticker",desc:"The icon sits still at the top and the message scrolls along a band underneath, like a shop's LED sign. The icon tells people the gist at a glance, and the text gives the detail.",
+  f:(n,t,now)=>{const g=G(n),big=n>=25,s=textOf(now),iw=iconW(n,cur.i),ih=iconH(n,cur.i);drawIcon(g,cur.i,Math.round((n-iw)/2),big?3:1,0.85);
+    const h=big?7:5,y=big?14:8,w=textW(n,s),span=w+n+4,off=Math.floor(t/(big?55:80))%span;drawText(g,s,n-off,y,1);return g}},
+ {id:"b",name:"B · Marquee",desc:"The icon and the text travel together across the middle as one big stream, like a stadium ticker. It uses the most space, so it's the easiest to read from across a room.",
+  f:(n,t,now)=>{const g=G(n),big=n>=25,s=textOf(now),iw=iconW(n,cur.i),ih=iconH(n,cur.i),h=big?7:5,gap=big?4:3,w=iw+gap+textW(n,s),span=w+n+6,off=Math.floor(t/(big?50:75))%span,x=n-off,cy=(n-1)/2;
+    drawIcon(g,cur.i,x,Math.round(cy-(ih-1)/2),0.85);drawText(g,s,x+iw+gap,Math.round(cy-(h-1)/2),1);return g}},
+ {id:"c",name:"C · Flash cards",desc:"No scrolling. The icon pops up first, then each word shows big and centred, one after another, and the countdown shows as its own card. It's calm and good for a quick glance, and long words slide through.",
+  f:(n,t,now)=>{const g=G(n),big=n>=25,s=textOf(now),cards=[null,...s.split(" ").filter(Boolean)],per=900,k=Math.floor(t/per)%cards.length,tt=t%per,cy=(n-1)/2;
+    const fade=tt<120?tt/120:(tt>per-120?(per-tt)/120:1);const h=big?7:5;
+    if(cards[k]===null){const iw=iconW(n,cur.i),ih=iconH(n,cur.i);drawIcon(g,cur.i,Math.round((n-iw)/2),Math.round(cy-(ih-1)/2),fade)}
+    else{const w=textW(n,cards[k]);let x=Math.round((n-w)/2);if(w>n-2){x=Math.round(n-1-(w+2)*(tt/per))}drawText(g,cards[k],x,Math.round(cy-(h-1)/2),fade)}return g}},
+];
+// AOD still (one frame a minute): icon + a short word or the minutes left.
+function still(n,now){const g=G(n),big=n>=25,iw=iconW(n,cur.i),ih=iconH(n,cur.i),s=shortOf(now),w=textW(n<25?13:n,s);
+  if(big){drawIcon(g,cur.i,Math.round((n-iw)/2),4,0.85);drawText(g,s,Math.round((n-w)/2),15,1)}
+  else{drawIcon(g,cur.i,Math.round((n-iw)/2),1,0.85);const ss=s.slice(0,3),ww=textW(13,ss);drawText(g,ss,Math.round((n-ww)/2),8,1)}return g}
+
+const opts=document.getElementById("opts");
+styles.forEach(s=>{const el=document.createElement("div");el.className="option";el.dataset.choice=s.id;el.style.flexDirection="column";el.style.alignItems="stretch";
+  el.innerHTML=`<div class="vizrow"><div><canvas id="b25-${s.id}"></canvas><div class="gl">25×25</div></div><div><canvas id="b13-${s.id}"></canvas><div class="gl">13×13</div></div><div class="sep"></div><div><canvas id="a25-${s.id}"></canvas><div class="gl">always-on 25</div></div><div><canvas id="a13-${s.id}"></canvas><div class="gl">always-on 13</div></div></div><div class="content"><h3>${s.name}</h3><p>${s.desc}</p></div>`;
+  el.onclick=e=>{if(e.target.tagName!=="CANVAS")toggleSelect(el)};opts.appendChild(el)});
+function draw(id,g,px){const n=g.n,cv=document.getElementById(id),ctx=cv.getContext("2d");if(cv.width!==n*px){cv.width=cv.height=n*px}
+  ctx.fillStyle="#0b0b0b";ctx.fillRect(0,0,cv.width,cv.height);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(!mask(n,x,y))continue;const b=g[y*n+x];ctx.beginPath();ctx.arc(x*px+px/2,y*px+px/2,px*.38,0,7);ctx.fillStyle=b>0?`rgba(255,255,255,${0.1+0.9*b})`:"#1a1a1a";ctx.fill()}}
+function frame(now){const t=now-started;for(const s of styles){draw("b25-"+s.id,s.f(25,t,now),9);draw("b13-"+s.id,s.f(13,t,now),13);draw("a25-"+s.id,still(25,now),6);draw("a13-"+s.id,still(13,now),9)}requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+})();
+</script>
