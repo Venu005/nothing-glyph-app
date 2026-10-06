@@ -188,4 +188,21 @@ class TimerStateTest {
         assertEquals(true, settledRun)
         assertEquals(Phase.RUNNING, run.phase)
     }
+
+    @Test
+    fun lyingFlatShowsTheTimeLeftInTheTopBulbWithoutChangingTime() {
+        // face-down on a desk there is no "down" on the matrix: the top bulb holds the time left, sand falls to the bottom
+        val upsideDown = running(left = 2 * m, up = -1)
+        val flat = upsideDown.onOrientation(Orientation.FLAT, 0)
+        assertEquals(Phase.RUNNING, flat.phase)
+        assertEquals(1, flat.upSide)
+        assertEquals(2 * m, flat.timeLeft(0))
+        assertEquals(1, TimerState(upSide = -1).onOrientation(Orientation.FLAT, 0).upSide)
+        assertEquals(Phase.READY, TimerState(upSide = -1).onOrientation(Orientation.FLAT, 0).phase)
+        // then turning it upside down in the hand is a real flip
+        assertEquals(3 * m, flat.onOrientation(Orientation.DOWN, 0).timeLeft(0))
+        val (first, settled) = TimerState(phase = Phase.DONE, upSide = -1).firstReading(Orientation.FLAT, 0)
+        assertEquals(1, first.upSide)
+        assertEquals(false, settled)
+    }
 }

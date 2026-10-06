@@ -98,7 +98,8 @@ class SandToyService : Service() {
             }
             haveReading = true
             val m = hypot(grav[0], grav[1])
-            if (m >= 3f) { dirX = grav[0] / m.toDouble(); dirY = grav[1] / m.toDouble() }
+            // Flat (face-down on a desk): read the matrix upright, so sand falls to its bottom edge.
+            if (m >= 3f) { dirX = grav[0] / m.toDouble(); dirY = grav[1] / m.toDouble() } else { dirX = 0.0; dirY = 1.0 }
             if (oneShot) {
                 oneShot = false
                 setSensors(false)
@@ -203,6 +204,7 @@ class SandToyService : Service() {
             if (settled) needBaseline = false
             s
         } else state.onOrientation(o, t)
+        if (o == Orientation.FLAT && next.upSide != state.upSide) needRebuild = true   // view turned upright: redraw the sand
         commit(next)
     }
 

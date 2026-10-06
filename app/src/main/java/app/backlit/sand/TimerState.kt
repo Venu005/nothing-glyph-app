@@ -64,7 +64,7 @@ data class TimerState(
     fun onOrientation(o: Orientation, now: Long): TimerState {
         val t = tick(now)
         return when (o) {
-            Orientation.FLAT -> t
+            Orientation.FLAT -> t.flat()
             Orientation.SIDE -> t.onSide(now)
             Orientation.UP -> t.onUp(1, now)
             Orientation.DOWN -> t.onUp(-1, now)
@@ -84,8 +84,14 @@ data class TimerState(
     fun firstReading(o: Orientation, now: Long): Pair<TimerState, Boolean> = when {
         phase == Phase.RUNNING || phase == Phase.PAUSED -> onOrientation(o, now) to true
         o == Orientation.UP || o == Orientation.DOWN -> baseline(o, now) to true
-        else -> tick(now) to false
+        else -> onOrientation(o, now) to false
     }
+
+    /**
+     * Face-down on a desk (the usual way to look at the matrix) gravity points through it, so the matrix is read
+     * upright: the top bulb holds the time left and sand falls to the bottom. A change of view, not a flip.
+     */
+    private fun flat(): TimerState = if (upSide == 1 && sideSince == 0L) this else copy(upSide = 1, sideSince = 0L)
 
     private fun onSide(now: Long): TimerState {
         if (sideSince == 0L) return copy(sideSince = now)
