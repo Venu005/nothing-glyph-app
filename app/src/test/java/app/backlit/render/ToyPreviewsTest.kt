@@ -7,6 +7,10 @@ import app.backlit.pet.Pose
 import app.backlit.render.charge.MoonStyle
 import app.backlit.render.faces.Faces
 import app.backlit.render.viz.MirrorBars
+import app.backlit.sand.HourglassShape
+import app.backlit.sand.Phase
+import app.backlit.sand.SandArt
+import app.backlit.sand.TimerState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -27,6 +31,7 @@ class ToyPreviewsTest {
         "ic_charge_preview" to MoonStyle.still(25, 62),
         "ic_canvas_preview" to heartDrawing(),
         "ic_pet_preview" to GhostArt.still(25, Pose(Base.CONTENT, null, 0, 0, 0, 0, 62), 0),
+        "ic_sand_preview" to SandArt.still(HourglassShape.forSize(25), TimerState(phase = Phase.RUNNING, durationMs = 100_000, endAt = 60_000), 0),
     )
 
     @Test
