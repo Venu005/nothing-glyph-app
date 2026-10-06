@@ -84,7 +84,7 @@ fun HomeScreen(
         }
 
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("CLOCK", "MUSIC", "ALERTS", "CHARGE", "STUDIO", "PET").forEachIndexed { i, label ->
+            listOf("CLOCK", "MUSIC", "ALERTS", "CHARGE", "STUDIO", "PET", "TIMER").forEachIndexed { i, label ->
                 SquareChip(label, selected = tab == i, onClick = { onTab(i) })
             }
         }
@@ -95,7 +95,8 @@ fun HomeScreen(
             2 -> AlertsTab(profile, onEdit)
             3 -> ChargeTab(settings, profile, onUpdate)
             4 -> StudioTab(settings, profile, onUpdate, onEdit)
-            else -> PetTab(settings, profile, onUpdate)
+            5 -> PetTab(settings, profile, onUpdate)
+            else -> SandTab(settings, profile, onUpdate)
         }
 
         SettingRow("Glyph Toy setup", "→") { onNavigate(Screen.SETUP) }
