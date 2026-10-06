@@ -108,6 +108,8 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
     var addingDevice by rememberSaveable { mutableStateOf(false) }
     var animId by rememberSaveable { mutableStateOf<String?>(null) }
     var aboutOpen by rememberSaveable { mutableStateOf(false) }
+    // Prominent disclosure before any permission or settings jump: "notif" (notification access) or "bt" (Nearby devices).
+    var disclosing by rememberSaveable { mutableStateOf<String?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
     var barPx by remember { mutableIntStateOf(0) }
     val now = rememberTicker(50)
@@ -119,6 +121,7 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
             runtime.update { c -> if (c.contacts.any { NameMatch.matches(it.name, name) }) c else c.copy(contacts = c.contacts + ContactRule(name, BuiltInAnimations.DEFAULT_CONTACT)) }
         }
         ruleKey = "c:$name"
+        if (!listenerOn) disclosing = "notif"
     }
     val btPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> btGranted = ok; if (ok) addingDevice = true }
     val importer = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> if (uri != null) message = importFromUri(context, runtime, uri, size) }
@@ -126,7 +129,7 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
     val attention = AlertsAttention.pick(listenerOn, btGranted, config.contacts.size, config.devices.size, segment)
     val bar = when (segment) {
         AlertsSegment.CONTACTS -> ActionSpec("+ ADD CONTACT", ActionStyle.PRIMARY) { pickContact.launch(null) }
-        AlertsSegment.DEVICES -> ActionSpec("+ ADD DEVICE", ActionStyle.PRIMARY) { if (btGranted) addingDevice = true else btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT) }
+        AlertsSegment.DEVICES -> ActionSpec("+ ADD DEVICE", ActionStyle.PRIMARY) { if (btGranted) addingDevice = true else disclosing = "bt" }
         AlertsSegment.ANIMATIONS -> ActionSpec("IMPORT FROM GLYPH MUSEUM", ActionStyle.PRIMARY) { importer.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }
     }
 
@@ -134,10 +137,8 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = with(LocalDensity.current) { barPx.toDp() } + 16.dp)) {
             PageHeader("ALERTS", onBack)
             when (attention) {
-                Attention.NOTIFICATION_ACCESS -> AttentionCard("Allow notification access so calls light the Glyph") {
-                    context.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                }
-                Attention.NEARBY -> AttentionCard("Allow Nearby devices so Backlit can notice your devices connecting") { btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT) }
+                Attention.NOTIFICATION_ACCESS -> AttentionCard("Allow notification access so calls light the Glyph") { disclosing = "notif" }
+                Attention.NEARBY -> AttentionCard("Allow Nearby devices so Backlit can notice your devices connecting") { disclosing = "bt" }
                 null -> Unit
             }
             SegmentedControl(AlertsSegment.entries.map { it.name to it.label }, segment.name) { segment = AlertsSegment.valueOf(it) }
@@ -210,6 +211,34 @@ fun AlertsScreen(profile: DeviceProfile, onEdit: (String?) -> Unit, onBack: () -
                 scope.launch { runtime.update { c -> if (contact != null) c.copy(contacts = c.contacts - contact) else c.copy(devices = c.devices - device!!) } }
                 ruleKey = null
             }
+        }
+    }
+
+    when (disclosing) {
+        "notif" -> OptionSheet("NOTIFICATION ACCESS", { disclosing = null }) {
+            Text(DISCLOSURE, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 8.dp))
+            Text(
+                listOf(
+                    "• Read: incoming-call and missed-call notifications from your calling apps, to match the caller's name.",
+                    "• Saved: only the names of the contacts you pick, on your phone.",
+                    "• Never: other notifications, message content, or anything sent off your phone.",
+                ).joinToString("\n"),
+                style = MaterialTheme.typography.bodyMedium, color = BacklitColors.Dim, modifier = Modifier.padding(bottom = 8.dp),
+            )
+            SheetAction("CONTINUE TO SETTINGS") {
+                disclosing = null
+                context.startActivity(Intent(android.provider.Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+            SheetAction("NOT NOW") { disclosing = null }
+        }
+        "bt" -> OptionSheet("NEARBY DEVICES", { disclosing = null }) {
+            Text(
+                "Backlit asks for Nearby devices so it can list your paired Bluetooth devices and notice when the ones you choose connect. " +
+                    "Only their name and address are saved, on your phone. Nothing is sent anywhere.",
+                style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 8.dp),
+            )
+            SheetAction("CONTINUE") { disclosing = null; btPermission.launch(Manifest.permission.BLUETOOTH_CONNECT) }
+            SheetAction("NOT NOW") { disclosing = null }
         }
     }
 
