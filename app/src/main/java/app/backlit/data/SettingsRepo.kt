@@ -60,6 +60,11 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
         private val PET_BOUND = booleanPreferencesKey("pet_toy_ever_bound")
         private val PET_KIND = stringPreferencesKey("pet_kind")
         private val PET_NAMES = stringPreferencesKey("pet_names")
+        private val SAND_PRESETS = stringPreferencesKey("sand_presets")
+        private val SAND_ALERT = stringPreferencesKey("sand_alert")
+        private val SAND_EXACT = booleanPreferencesKey("sand_exact")
+        private val SAND_TIMER = stringPreferencesKey("sand_timer")
+        private val SAND_BOUND = booleanPreferencesKey("sand_toy_ever_bound")
         private val namesJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true }
 
         /** The name to show for [kind]: the ghost keeps the original petName; the others live in petNames. */
@@ -79,6 +84,12 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
 
         /** 50..100 in steps of 5 (nearest step, halves round up). */
         fun clampTarget(v: Int): Int = (((v.coerceIn(50, 100) + 2) / 5) * 5).coerceIn(50, 100)
+
+        /** 1..99, no duplicates, sorted, at most 8; empty → the defaults. */
+        fun cleanPresets(list: List<Int>): List<Int> =
+            list.filter { it in 1..99 }.distinct().sorted().take(8).ifEmpty { listOf(1, 3, 5, 10, 25) }
+
+        fun parseSandAlert(s: String?): String = if (s in setOf("glyph", "vibrate", "chime")) s!! else "vibrate"
 
         fun get(context: Context): SettingsRepo = SettingsRepo(context.applicationContext.settingsDataStore)
 
@@ -118,6 +129,11 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
                 petToyEverBound = this[PET_BOUND] ?: d.petToyEverBound,
                 petKind = app.backlit.pet.PetKind.byId(this[PET_KIND] ?: d.petKind).id,
                 petNames = runCatching { namesJson.decodeFromString<Map<String, String>>(this[PET_NAMES] ?: "{}") }.getOrDefault(emptyMap()),
+                sandPresets = cleanPresets(runCatching { namesJson.decodeFromString<List<Int>>(this[SAND_PRESETS] ?: "") }.getOrDefault(d.sandPresets)),
+                sandAlert = parseSandAlert(this[SAND_ALERT]),
+                sandExact = this[SAND_EXACT] ?: d.sandExact,
+                sandTimer = this[SAND_TIMER] ?: d.sandTimer,
+                sandToyEverBound = this[SAND_BOUND] ?: d.sandToyEverBound,
             )
         }
 
@@ -149,6 +165,11 @@ class SettingsRepo(private val store: DataStore<Preferences>) {
             this[PET_BOUND] = s.petToyEverBound
             this[PET_KIND] = s.petKind
             this[PET_NAMES] = namesJson.encodeToString(s.petNames)
+            this[SAND_PRESETS] = namesJson.encodeToString(s.sandPresets)
+            this[SAND_ALERT] = s.sandAlert
+            this[SAND_EXACT] = s.sandExact
+            this[SAND_TIMER] = s.sandTimer
+            this[SAND_BOUND] = s.sandToyEverBound
         }
     }
 }
