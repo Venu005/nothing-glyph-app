@@ -40,6 +40,7 @@ import app.backlit.studio.CanvasHint
 import app.backlit.ui.components.BacklitLogo
 import app.backlit.ui.components.Section
 import app.backlit.ui.components.ToolCard
+import app.backlit.ui.components.plural
 import app.backlit.ui.components.ToyCard
 import app.backlit.ui.home.ToyCatalog
 import app.backlit.ui.home.ToyThumbs
@@ -100,8 +101,8 @@ fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Un
 
         Section("TOOLS")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ToolCard(ToyThumbs.studio(size, now), "STUDIO", "${drawings.size} DRAWINGS", { onOpen(Route.Studio()) }, Modifier.weight(1f))
-            ToolCard(ToyThumbs.alerts(size, now), "ALERTS", "${config.contacts.size} CONTACTS · ${config.devices.size} DEVICES", { onOpen(Route.Alerts) }, Modifier.weight(1f))
+            ToolCard(ToyThumbs.studio(size, now), "STUDIO", plural(drawings.size, "DRAWING"), { onOpen(Route.Studio()) }, Modifier.weight(1f))
+            ToolCard(ToyThumbs.alerts(size, now), "ALERTS", "${plural(config.contacts.size, "CONTACT")} · ${plural(config.devices.size, "DEVICE")}", { onOpen(Route.Alerts) }, Modifier.weight(1f))
         }
         Spacer(Modifier.height(32.dp))
     }
