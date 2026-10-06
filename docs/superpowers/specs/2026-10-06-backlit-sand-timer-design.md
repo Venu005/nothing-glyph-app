@@ -13,7 +13,7 @@ it over to time things: a focus session, tea or a short break. It aims to be equ
 - **Classic hourglass look** at 25×25 and 13×13, matching the approved mockups.
 - **Flipping works like a real hourglass.** The bulb on top holds the time left, so flipping mid-run swaps the time left
   and the time already run.
-- **Laying it on its side pauses it.** Laying it face-down on a desk keeps it running.
+- **Laying it on its side pauses it.** Laying it face-down on a desk keeps it running, with the sand falling to the bottom of the matrix.
 - **Long press** cycles the presets. While the timer runs, it first shows the minutes left, so it never wipes a running timer by accident.
 - **When time is up,** the "Flip me" moment plays, and the done alert fires even if another toy is showing or
   the screen is asleep. It is on time with "Ring exactly on time" switched on, and otherwise within about a minute.
@@ -58,8 +58,10 @@ it over to time things: a focus session, tea or a short break. It aims to be equ
 ### Gravity and orientation
 - **Gravity** is the accelerometer's in-plane vector `(gx, gy)` in matrix coordinates. **Up** (+1) means the top bulb is up,
   which is when gy > 0.2 after normalising. **Down** (−1) means gy < −0.2. Anything in between is **side**.
-- **Flat:** when the in-plane magnitude is under 3 m/s² (phone face-down or face-up), the last in-plane direction is
-  kept and the orientation doesn't change.
+- **Flat:** when the in-plane magnitude is under 3 m/s² (phone face-down or face-up), the matrix is read upright:
+  the top bulb holds the time left and sand falls to the bottom edge. This is a change of view (`upSide` becomes +1
+  with the time unchanged), not a flip. To start or flip, the phone is turned upside down in the hand.
+  *Changed after the device test (2026-10-06): keeping the last direction made sand pour upwards on a desk.*
 - **Side debounce:** "side" must hold for 500 ms before the timer pauses.
 
 ### The flip rule
