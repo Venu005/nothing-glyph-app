@@ -8,6 +8,7 @@ import android.util.Log
 import app.backlit.anim.BuiltInAnimations
 import app.backlit.charge.ChargePreviewAnimation
 import app.backlit.pet.PetPreviewAnimation
+import app.backlit.sand.SandPreviewAnimation
 import app.backlit.anim.GlyphAnimation
 import app.backlit.anim.MuseumFormat
 import app.backlit.data.SettingsRepo
@@ -120,6 +121,7 @@ class AlertsRuntime private constructor(private val app: Context) {
         (if (alert.animationId == PREVIEW_ID) previewSlot else null)
             ?: ChargePreviewAnimation.parse(alert.animationId)
             ?: PetPreviewAnimation.parse(alert.animationId)
+            ?: SandPreviewAnimation.parse(alert.animationId)
             ?: library.resolve(
                 alert.animationId, current.imports,
                 fallback = if (alert.kind == AlertKind.CALL) BuiltInAnimations.DEFAULT_CONTACT else BuiltInAnimations.DEFAULT_DEVICE,
