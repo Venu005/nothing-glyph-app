@@ -1,0 +1,53 @@
+<h2>Backlit logo: pick a direction</h2>
+<p class="subtitle">Five app-icon concepts in Nothing's style: monochrome, dot-matrix, and at most one red dot. Each one is shown as the home-screen icon (round mask) on a dark and a light wallpaper, small, and as the <b>monochrome themed icon</b> (Nothing OS "themed icons"). Click the ones you like. I'll refine your favourite.</p>
+
+<div class="options" data-multiselect id="opts" style="display:flex;flex-direction:column;gap:14px"></div>
+
+<style>
+  .row{display:flex;gap:22px;align-items:center;flex-wrap:wrap;padding:14px;border-radius:8px}
+  .dark{background:linear-gradient(135deg,#1d1d1f,#3a3a3c)}
+  .light{background:linear-gradient(135deg,#e9e6df,#cfcac0)}
+  .gl{color:#888;font-size:11px;text-align:center;margin-top:4px;font-family:monospace}
+  .wrap{display:flex;gap:12px;flex-wrap:wrap}
+  .ico{border-radius:50%;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+  .lbl{font-size:12px;color:#ddd;text-align:center;margin-top:6px;font-family:sans-serif}
+  .light .lbl{color:#222}
+</style>
+
+<script>
+(function(){
+const RED="#D71921";
+// 5x7 "B" (Doto-like) and helpers. All icons are drawn in a 108x108 adaptive-icon canvas (safe zone ~ r33 around 54,54).
+const B=["11110","10001","10001","11110","10001","10001","11110"];
+function dot(cx,cy,r,fill){return `<circle cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${r.toFixed(2)}" fill="${fill}"/>`}
+function inDisc(x,y,c,R){return Math.hypot(x-c,y-c)<=R}
+
+const concepts=[
+ {id:"a",name:"A · Dot B",desc:"A bold \"B\" drawn in round dots, like Nothing's Ndot type, with a single red dot as the full stop. It reads as the brand letter at any size.",
+  draw:(mono)=>{let s="";const p=7.2,r=2.9,x0=54-2*p,y0=54-3*p-1;B.forEach((row,y)=>[...row].forEach((c,x)=>{if(c==="1")s+=dot(x0+x*p,y0+y*p,r,"#fff")}));s+=dot(x0+5.6*p,y0+6*p,r,mono?"#fff":RED);return s}},
+ {id:"b",name:"B · Backlit disc",desc:"A small Glyph Matrix disc of dim dots, lit up along one edge as if light is coming from behind it. It's literally \"backlit\" and mirrors the matrix on the phone.",
+  draw:(mono)=>{let s="";const n=11,p=5.6,c=(n-1)/2,r=2.15,R=n/2;for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(!inDisc(x,y,c,R))continue;const d=Math.hypot(x-c,y-c);const lx=(x-c)/R,ly=(y-c)/R;const rim=d>R-1.6;const lit=rim&&(lx*0.7+ly*0.7)>0.05;const b=lit?1:(rim?0.35:0.16);s+=dot(54+(x-c)*p,54+(y-c)*p,r,mono?`rgba(255,255,255,${b})`:`rgba(255,255,255,${b})`)}
+   if(!mono)s+=dot(54+c*p*0.62,54-c*p*0.62,r,RED);return s}},
+ {id:"c",name:"C · Eclipse",desc:"A solid black moon with a ring of white dots glowing around its edge, like a total eclipse. Calm, premium and very Nothing. The red dot sits on the ring.",
+  draw:(mono)=>{let s=`<circle cx="54" cy="54" r="21" fill="#000"/>`;const N=28;for(let i=0;i<N;i++){const a=i/N*Math.PI*2,rr=27,f=0.45+0.55*Math.max(0,Math.cos(a-Math.PI*0.25));s+=dot(54+Math.cos(a)*rr,54+Math.sin(a)*rr,2.4,`rgba(255,255,255,${f})`)}
+   const N2=36;for(let i=0;i<N2;i++){const a=i/N2*Math.PI*2,rr=33,f=0.15+0.35*Math.max(0,Math.cos(a-Math.PI*0.25));s+=dot(54+Math.cos(a)*rr,54+Math.sin(a)*rr,1.6,`rgba(255,255,255,${f})`)}
+   s+=dot(54+Math.cos(-Math.PI*0.25)*27,54+Math.sin(-Math.PI*0.25)*27,3.1,mono?"#fff":RED);return s}},
+ {id:"d",name:"D · Boo",desc:"Boo the ghost from the Pet toy, in dots, with two dark eyes. It's the friendliest option and matches the app's playful side. Instantly recognisable in a grid of icons.",
+  draw:(mono)=>{const G=["...XXXXX...","..XXXXXXX..",".XXXXXXXXX.",".XX..X..XX.",".XX..X..XX.",".XXXXXXXXX.",".XXXXXXXXX.",".XXXXXXXXX.",".XXXXXXXXX.",".XX.XXX.XX.",".X...X...X."];
+   const p=5.6,r=2.3,x0=54-5*p,y0=54-5*p;let s="";G.forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch==="X")s+=dot(x0+x*p,y0+y*p,r,"#fff")}));
+   if(!mono)s+=dot(x0+9.6*p,y0+0.2*p,r,RED);return s}},
+ {id:"e",name:"E · One LED",desc:"A single bright LED dot with soft dotted rings of light spreading out from it. The most minimal option: it's the essence of a lit-up dot.",
+  draw:(mono)=>{let s=dot(54,54,8,mono?"#fff":"#fff");[[15,16,0.7],[22,24,0.45],[29,32,0.22]].forEach(([rr,N,f])=>{for(let i=0;i<N;i++){const a=i/N*Math.PI*2;s+=dot(54+Math.cos(a)*rr,54+Math.sin(a)*rr,1.9,`rgba(255,255,255,${f})`)}});
+   if(!mono)s+=dot(54+Math.cos(-0.8)*22,54+Math.sin(-0.8)*22,2.6,RED);return s}},
+];
+function svg(c,size,mono,bg){return `<svg class="ico" width="${size}" height="${size}" viewBox="9 9 90 90" xmlns="http://www.w3.org/2000/svg"><rect x="0" y="0" width="108" height="108" fill="${bg}"/>${c.draw(mono)}</svg>`}
+const box=document.getElementById("opts");
+concepts.forEach(c=>{const el=document.createElement("div");el.className="option";el.dataset.choice=c.id;el.style.flexDirection="column";el.style.alignItems="stretch";
+  el.innerHTML=`<div class="wrap">
+   <div class="row dark"><div>${svg(c,112,false,"#000")}<div class="lbl">Backlit</div></div><div>${svg(c,56,false,"#000")}<div class="lbl">56</div></div><div>${svg(c,36,false,"#000")}</div></div>
+   <div class="row light"><div>${svg(c,112,false,"#000")}<div class="lbl">Backlit</div></div><div>${svg(c,56,false,"#000")}</div></div>
+   <div class="row dark"><div>${svg(c,80,true,"#2b2b2d")}<div class="lbl">themed</div></div></div></div>
+   <div class="content"><h3>${c.name}</h3><p>${c.desc}</p></div>`;
+  el.onclick=()=>toggleSelect(el);box.appendChild(el)});
+})();
+</script>
