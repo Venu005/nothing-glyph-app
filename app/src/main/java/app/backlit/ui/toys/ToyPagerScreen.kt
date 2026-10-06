@@ -55,8 +55,8 @@ fun ToyPagerScreen(
         when (id) {
             ToyId.CLOCK -> ClockPage(settings, profile, onUpdate, chrome) { onOpen(Route.Location(Route.Toy(ToyId.CLOCK))) }
             ToyId.MUSIC -> MusicPage(settings, profile, onUpdate, chrome)
-            ToyId.CHARGE -> ChargeTab(settings, profile, onUpdate)
-            ToyId.CANVAS -> StudioTab(settings, profile, onUpdate) { onOpen(Route.Editor(it, Route.Toy(ToyId.CANVAS))) }
+            ToyId.CHARGE -> ChargePage(settings, profile, onUpdate, chrome)
+            ToyId.CANVAS -> CanvasPage(settings, profile, onUpdate, chrome, onEdit = { onOpen(Route.Editor(it, Route.Toy(ToyId.CANVAS))) }, onOpenStudio = { onOpen(Route.Studio) })
             ToyId.PET -> PetTab(settings, profile, onUpdate)
             ToyId.SAND -> SandTab(settings, profile, onUpdate)
             ToyId.BADGE -> BadgeTab(settings, profile, onUpdate)
