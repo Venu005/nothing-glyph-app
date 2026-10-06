@@ -1,9 +1,7 @@
 package app.backlit.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,35 +17,25 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import app.backlit.alerts.AlertConfig
 import app.backlit.alerts.AlertsRuntime
-import app.backlit.data.DayLightResolver
-import app.backlit.data.LocationMode
 import app.backlit.data.Settings
 import app.backlit.glyph.DeviceProfile
-import app.backlit.glyph.TickSchedule
-import app.backlit.render.FaceContext
-import app.backlit.render.Mode
-import app.backlit.render.faces.DayRingFace
-import app.backlit.render.faces.Faces
 import app.backlit.studio.CanvasHint
 import app.backlit.ui.components.BacklitLogo
 import app.backlit.ui.components.Section
@@ -56,9 +44,11 @@ import app.backlit.ui.components.ToyCard
 import app.backlit.ui.home.ToyCatalog
 import app.backlit.ui.home.ToyThumbs
 import app.backlit.ui.nav.Route
-import java.time.LocalDateTime
 import java.time.ZoneId
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import app.backlit.anim.GlyphAnimation
+import app.backlit.ui.components.rememberTicker
 
 @Composable
 fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Unit) {
@@ -68,11 +58,12 @@ fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Un
     val toys = remember(profile) { ToyCatalog.visible(hideMusic = profile == DeviceProfile.PHONE_4A_PRO) }
     val drawings by runtime.drawings.collectAsState(initial = emptyList())
     val config by runtime.config.collectAsState(initial = AlertConfig())
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) { while (true) { delay(50); now = System.currentTimeMillis() } }
+    val now = rememberTicker(50)   // pauses while the app isn't visible
     val zone = ZoneId.systemDefault()
-    val canvasAnim = remember(settings.canvasDrawingId, drawings) {
-        CanvasHint.pick(settings.canvasDrawingId, drawings.map { it.id })?.let { runtime.importedAnimation(it) }
+    // Load the Canvas drawing off the main thread (it reads a file).
+    val canvasId = CanvasHint.pick(settings.canvasDrawingId, drawings.map { it.id })
+    val canvasAnim by produceState<GlyphAnimation?>(null, canvasId, drawings) {
+        value = withContext(Dispatchers.IO) { canvasId?.let { id -> runtime.library.importedOnly(id, drawings) } }
     }
     val on = ToyCatalog.setUpCount(settings, toys)
 
@@ -82,7 +73,7 @@ fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Un
             Spacer(Modifier.width(8.dp))
             Text("BACKLIT", style = MaterialTheme.typography.displaySmall)
             Spacer(Modifier.weight(1f))
-            Text("⚙", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable { onOpen(Route.Settings) }.padding(4.dp))
+            Text("⚙", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.minimumInteractiveComponentSize().clickable { onOpen(Route.Settings) }.padding(4.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)) {
             val supported = profile != DeviceProfile.UNSUPPORTED
@@ -100,7 +91,7 @@ fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Un
                 pair.forEach { id ->
                     ToyCard(
                         ToyThumbs.frame(id, settings, size, now, zone, canvasAnim), id.label, ToyCatalog.isSetUp(settings, id),
-                        onClick = { onOpen(Route.Toy(id)) }, modifier = Modifier.weight(1f),
+                        onClick = { onOpen(Route.Toy(id)) }, modifier = Modifier.weight(1f), supported = profile != DeviceProfile.UNSUPPORTED,
                     )
                 }
                 if (pair.size == 1) Spacer(Modifier.weight(1f))

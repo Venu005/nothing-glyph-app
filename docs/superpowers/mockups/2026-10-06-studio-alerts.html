@@ -1,0 +1,88 @@
+<h2>Studio and Alerts: pick a layout for each</h2>
+<p class="subtitle">Both use the new style: Doto titles, thin lines, and live dot previews. The main action sits in a fixed bottom bar, the same as the toy pages, and details open in a bottom sheet. Click one Studio layout (A or B) and one Alerts layout (A or B).</p>
+<div class="options" data-multiselect id="opts" style="display:flex;flex-wrap:wrap;gap:16px"></div>
+<link href="https://fonts.googleapis.com/css2?family=Doto:wght@900&family=Space+Grotesk:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  .phone{width:300px;height:620px;background:#000;border-radius:34px;border:2px solid #333;overflow:hidden;position:relative;font-family:'Space Grotesk',sans-serif;color:#fff}
+  .scr{position:absolute;inset:0;overflow:hidden;padding:18px 16px 84px}
+  .dot{font-family:'Doto',monospace;font-weight:900}
+  .lab{font-size:9px;letter-spacing:2px;color:#888;text-transform:uppercase}
+  .hdr{display:flex;align-items:center;gap:8px;margin:14px 0 4px}
+  .hdr .dot{font-size:22px;letter-spacing:1px}
+  .stat{display:flex;align-items:center;gap:6px;margin-bottom:12px}
+  .rd{width:6px;height:6px;border-radius:50%;background:#D71921;display:inline-block}
+  .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .tcard{background:#000;border:1px solid #333;border-radius:14px;padding:8px;position:relative}
+  .tcard .nm{font-family:'Doto',monospace;font-weight:900;font-size:13px;margin-top:4px}
+  .on{font-size:8px;letter-spacing:1.5px;color:#fff}
+  .off{font-size:8px;letter-spacing:1.5px;color:#666}
+  .lrow{display:flex;align-items:center;gap:10px;border-bottom:1px solid #222;padding:8px 0}
+  .lrow .nm{font-family:'Doto',monospace;font-weight:900;font-size:14px}
+  .chev{margin-left:auto;color:#666;font-size:14px}
+  .sec{margin:12px 0 4px}
+  .pill{display:inline-block;border:1px solid #333;border-radius:20px;padding:3px 9px;font-size:9px;letter-spacing:1.5px;margin-right:4px}
+  .pill.sel{background:#fff;color:#000;border-color:#fff}
+  .bnav{position:absolute;left:0;right:0;bottom:0;height:54px;border-top:1px solid #222;display:flex;justify-content:space-around;align-items:center;background:#000}
+  .bnav div{font-size:8px;letter-spacing:1.5px;color:#666;text-align:center}
+  .bnav .a{color:#fff}
+  canvas{display:block}
+</style>
+<script>
+(function(){
+// ---- tiny live previews (13x13 dot discs) ----
+function mask(n,x,y){const c=(n-1)/2;return Math.hypot(x-c,y-c)<=n/2}
+const P={
+ clock:(g,t,n)=>{const c=6,a=t/9000*2*Math.PI,b=t/60000*2*Math.PI;for(let r=0;r<=5;r++){g(c+Math.round(Math.sin(a)*r),c-Math.round(Math.cos(a)*r),1)}for(let r=0;r<=3;r++)g(c+Math.round(Math.sin(b+2)*r),c-Math.round(Math.cos(b+2)*r),.8);for(let i=0;i<12;i++){const q=i/12*2*Math.PI;g(c+Math.round(Math.sin(q)*6),c-Math.round(Math.cos(q)*6),.3)}},
+ music:(g,t)=>{for(let x=2;x<=10;x++){const h=Math.round(2+3*Math.abs(Math.sin(t/300+x*0.9)));for(let k=0;k<h;k++){g(x,6-k,1);g(x,6+k,.5)}}},
+ charge:(g,t)=>{const L=0.62;for(let y=0;y<13;y++)for(let x=0;x<13;x++){const d=Math.hypot(x-6,y-6);if(d>5.6&&d<6.6){const a=(Math.atan2(x-6,-(y-6))+2*Math.PI)%(2*Math.PI);if(a<L*2*Math.PI)g(x,y,1);else g(x,y,.15)}}
+   [["111","001","111","100","111"]].forEach(()=>{});const D={6:["111","100","111","101","111"],2:["111","001","111","100","111"]};[6,2].forEach((d,k)=>D[d].forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==="1")g(3+k*4+x,4+y,1)})))},
+ pet:(g,t)=>{const G=["..XXXXX..",".XXXXXXX.","XXXXXXXXX","XX.XXX.XX","XXXXXXXXX","XXXXXXXXX","XXXXXXXXX","XX.X.X.XX"];const by=Math.round(Math.sin(t/500));G.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==="X")g(2+x,2+y+by,.9)}))},
+ sand:(g,t)=>{const hw=[-1,0,1,2,3,3];const f=1-((t/12000)%1);for(let y=0;y<13;y++)for(let x=0;x<13;x++){const d=Math.abs(y-6);if(d<hw.length&&d>0&&Math.abs(x-6)<=hw[d]){const top=y<6;const fill=top?(d<=Math.ceil(5*f)&&d>0):(d>=6-Math.ceil(5*(1-f)));g(x,y,fill?.75:0)}else if(d<hw.length&&d>0&&Math.abs(x-6)===hw[d]+1)g(x,y,.18)}if(Math.floor(t/120)%2)g(6,6,1);g(6,8,(Math.floor(t/120)%2)?1:0)},
+ badge:(g,t)=>{const I=[".XX..","XX...","X....","XX..X",".XXX."];I.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==="X")g(4+x,1+y,.85)}));const s="DO NOT DISTURB",F={D:["110","101","101","101","110"],O:["010","101","101","101","010"],N:["110","101","101","101","101"],T:["111","010","010","010","010"],I:["111","010","010","010","111"],S:["011","100","010","001","110"],U:["101","101","101","101","111"],R:["110","101","110","101","101"],B:["110","101","110","101","110"]," ":["00","00","00","00","00"]};
+   let w=0;for(const ch of s)w+=(F[ch]||F[" "])[0].length+1;const off=Math.floor(t/80)%(w+13);let x0=13-off;for(const ch of s){const gl=F[ch]||F[" "];gl.forEach((r,y)=>[...r].forEach((c,x)=>{if(c==="1")g(x0+x,7+y,1)}));x0+=gl[0].length+1}},
+ canvas:(g,t)=>{const H=["..XX.XX..",".XXXXXXX.",".XXXXXXX.","..XXXXX..","...XXX...","....X...."];const k=0.6+0.4*Math.abs(Math.sin(t/600));H.forEach((r,y)=>[...r].forEach((ch,x)=>{if(ch==="X")g(2+x,3+y,k)}))},
+ alerts:(g,t)=>{const k=(t%1400)/1400;for(let y=0;y<13;y++)for(let x=0;x<13;x++){const d=Math.hypot(x-6,y-6);if(Math.abs(d-k*7)<0.7)g(x,y,1-k)}for(let y=4;y<9;y++)for(let x=4;x<9;x++)if(Math.hypot(x-6,y-6)<2.2)g(x,y,1)}
+};
+const cans=[];
+function mini(kind,px){const id="m"+cans.length;cans.push({id,kind,px});return `<canvas id="${id}"></canvas>`}
+function drawAll(t){for(const c of cans){const el=document.getElementById(c.id);if(!el)continue;const n=13,px=c.px,ctx=el.getContext("2d");if(el.width!==n*px){el.width=el.height=n*px}
+  const g=new Float32Array(n*n);const set=(x,y,b)=>{if(x<0||y<0||x>=n||y>=n||!mask(n,x,y))return;const i=y*n+x;if(b>g[i])g[i]=b};P[c.kind](set,t,n);
+  ctx.fillStyle="#000";ctx.fillRect(0,0,el.width,el.height);for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(!mask(n,x,y))continue;const b=g[y*n+x];ctx.beginPath();ctx.arc(x*px+px/2,y*px+px/2,px*.38,0,7);ctx.fillStyle=b>0?`rgba(255,255,255,${0.12+0.88*b})`:"#1c1c1c";ctx.fill()}}}
+// ---- logo (C3 diamond ring) ----
+function logo(size){const RED="#D71921",L=-Math.PI*0.25;let s="";for(let i=0;i<30;i++){const a=i/30*Math.PI*2,f=0.12+0.88*Math.pow(Math.max(0,Math.cos(a-L)),3);s+=`<circle cx="${54+Math.cos(a)*27}" cy="${54+Math.sin(a)*27}" r="2.3" fill="rgba(255,255,255,${f})"/>`}
+  const cx=54+Math.cos(L)*27,cy=54+Math.sin(L)*27;[[0,-6],[6,0],[-4,4],[4,-4]].forEach(([dx,dy])=>s+=`<circle cx="${cx+dx}" cy="${cy+dy}" r="1.5" fill="rgba(255,255,255,.7)"/>`);s+=`<circle cx="${cx}" cy="${cy}" r="4" fill="${RED}"/>`;
+  return `<svg width="${size}" height="${size}" viewBox="18 18 72 72">${s}</svg>`}
+const TOYS=[["clock","CLOCK",1],["music","MUSIC",1],["charge","CHARGE",0],["canvas","CANVAS",1],["pet","PET",1],["sand","SAND",0],["badge","BADGE",1]];
+const head=`<div class="hdr">${logo(26)}<span class="dot">BACKLIT</span></div><div class="stat"><span class="rd"></span><span class="lab">Live on matrix · Phone (3) · 5 of 7 toys on</span></div>`;
+const st=on=>on?`<span class="on">● ON GLYPH</span>`:`<span class="off">○ TURN ON</span>`;
+const hdr=(t)=>`<div style="display:flex;align-items:center;gap:10px;margin-top:6px"><span style="color:#888;font-size:16px">←</span><span class="dot" style="font-size:22px">${t}</span></div>`;
+const bar=(main,sec)=>`<div style="position:absolute;left:0;right:0;bottom:0;padding:12px 16px 18px;background:#000;border-top:1px solid #1c1c1c;display:flex;gap:8px">
+  ${sec?`<div style="flex:1;border:1px solid #333;color:#fff;text-align:center;border-radius:24px;padding:11px;font-size:10px;letter-spacing:2px;font-weight:700">${sec}</div>`:""}
+  <div style="flex:2;background:#fff;color:#000;text-align:center;border-radius:24px;padding:11px;font-size:10px;letter-spacing:2px;font-weight:700">${main}</div></div>`;
+const DR=[["canvas","HEART",1],["badge","HELLO",0],["pet","BOO WAVE",0],["music","BARS",0],["clock","TICK",0],["sand","DRIP",0]];
+const layouts=[
+ {id:"sa",name:"Studio A · Gallery",desc:"Your drawings as a 2-column gallery of live, looping previews. The one showing on the Canvas toy has a white outline and \"● ON CANVAS\". Tap a drawing for a sheet: EDIT, SHOW ON CANVAS, SHARE, RENAME, DELETE. The bottom bar has + NEW DRAWING, with IMPORT beside it.",
+  html:()=>`<div class="scr">${hdr("STUDIO")}<div class="lab" style="margin:10px 0 8px">6 drawings · tap one for options</div><div class="g2">${DR.map(([k,n,on])=>`<div class="tcard" style="${on?"border-color:#fff":""}">${mini(k,9)}<div class="nm">${n}</div>${on?`<span class="on">● ON CANVAS</span>`:`<span class="off">2 FRAMES</span>`}</div>`).join("")}</div></div>${bar("+ NEW DRAWING","IMPORT")}`},
+ {id:"sb",name:"Studio B · List",desc:"A compact list: a small preview, the name, frames and FPS, then a ⋯ menu. It fits more drawings on screen but is less visual.",
+  html:()=>`<div class="scr">${hdr("STUDIO")}<div class="lab" style="margin:10px 0 4px">6 drawings</div>${DR.map(([k,n,on])=>`<div class="lrow">${mini(k,3.4)}<div><div class="nm">${n}</div><span class="${on?"on":"off"}">${on?"● ON CANVAS":"2 FRAMES · 4 FPS"}</span></div><span class="chev">⋯</span></div>`).join("")}</div>${bar("+ NEW DRAWING","IMPORT")}`},
+ {id:"aa",name:"Alerts A · One page, sections",desc:"One clean page. At the top, a single \"needs attention\" card (red dot) appears only when a permission is missing. Then CONTACTS and DEVICES as rows, each showing its chosen animation as a live mini preview, then ANIMATIONS as a small gallery. Tapping a row opens a sheet to pick the animation, preview it or remove it. The bottom bar has + ADD, which opens a sheet: contact, device or import.",
+  html:()=>`<div class="scr">${hdr("ALERTS")}
+   <div style="border:1px solid #D71921;border-radius:14px;padding:8px 10px;margin:10px 0;font-size:10px"><span class="rd"></span> Allow notification access so calls light the Glyph <span style="float:right">→</span></div>
+   <div class="lab sec">Contacts</div>
+   <div class="lrow"><div style="width:30px;height:30px;border-radius:50%;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:11px">MA</div><div><div class="nm">MAA</div><span class="off">HEARTBEAT</span></div><span class="chev">${mini("alerts",2.2)}</span></div>
+   <div class="lrow"><div style="width:30px;height:30px;border-radius:50%;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:11px">AK</div><div><div class="nm">AKHIL</div><span class="off">HEART</span></div><span class="chev">${mini("canvas",2.2)}</span></div>
+   <div class="lab sec">Devices</div>
+   <div class="lrow"><div style="width:30px;height:30px;border-radius:50%;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:12px">◖◗</div><div><div class="nm">EAR (3)</div><span class="off">LINK</span></div><span class="chev">${mini("music",2.2)}</span></div>
+   <div class="lab sec">Animations</div><div style="display:flex;gap:6px">${["alerts","canvas","music","pet"].map(k=>mini(k,4.2)).join("")}</div></div>${bar("+ ADD","")}`},
+ {id:"ab",name:"Alerts B · Segmented",desc:"The same content split by a segmented control at the top: CONTACTS | DEVICES | ANIMATIONS. Each segment is a short list with its own + ADD in the bottom bar. It's tidier when there are many entries, but it takes one more tap to see everything.",
+  html:()=>`<div class="scr">${hdr("ALERTS")}<div style="margin:12px 0"><span class="pill sel">CONTACTS</span><span class="pill">DEVICES</span><span class="pill">ANIMATIONS</span></div>
+   <div class="lrow"><div style="width:30px;height:30px;border-radius:50%;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:11px">MA</div><div><div class="nm">MAA</div><span class="off">HEARTBEAT</span></div><span class="chev">${mini("alerts",2.2)}</span></div>
+   <div class="lrow"><div style="width:30px;height:30px;border-radius:50%;border:1px solid #444;display:flex;align-items:center;justify-content:center;font-size:11px">AK</div><div><div class="nm">AKHIL</div><span class="off">HEART</span></div><span class="chev">${mini("canvas",2.2)}</span></div>
+   <div class="lab" style="margin-top:12px">Calls from these people play their animation as they ring, and again if you miss them.</div></div>${bar("+ ADD CONTACT","")}`},
+];
+const box=document.getElementById("opts");
+layouts.forEach(l=>{const el=document.createElement("div");el.className="option";el.dataset.choice=l.id;el.style.flexDirection="column";el.style.alignItems="center";el.style.width="330px";
+  el.innerHTML=`<div class="phone">${l.html()}</div><div class="content" style="margin-top:8px"><h3>${l.name}</h3><p>${l.desc}</p></div>`;el.onclick=()=>toggleSelect(el);box.appendChild(el)});
+const t0=performance.now();(function f(now){drawAll(now-t0);requestAnimationFrame(f)})(t0);
+})();
+</script>

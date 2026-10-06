@@ -25,6 +25,8 @@ import kotlin.math.sin
 
 /** The live dot previews on the Home cards, drawn with each toy's real art from the current settings. */
 object ToyThumbs {
+    private val sand by lazy { SandPreviewAnimation.parse(SandPreviewAnimation.RUNNING_ID)!! }
+
     fun frame(id: ToyId, s: Settings, size: Int, nowMs: Long, zone: ZoneId, canvas: GlyphAnimation? = null): PixelGrid = when (id) {
         ToyId.CLOCK -> {
             val t = Instant.ofEpochMilli(nowMs).atZone(zone)
@@ -37,7 +39,7 @@ object ToyThumbs {
         ToyId.CHARGE -> ChargeStyles.byId(s.chargeStyle).charging(size, 62, nowMs)
         ToyId.CANVAS -> canvas?.frame(size, nowMs) ?: CanvasHint.frame(size)
         ToyId.PET -> PetArt.frame(PetKind.byId(s.petKind), size, Pose(Base.CONTENT, null, 0, 0, 0, 0, 62), nowMs)
-        ToyId.SAND -> SandPreviewAnimation.parse(SandPreviewAnimation.RUNNING_ID)!!.frame(size, nowMs)
+        ToyId.SAND -> sand.frame(size, nowMs)
         ToyId.BADGE -> {
             val list = BadgeMessage.decodeList(s.badgeMessages)
             val m = list[BadgeMessage.activeIndex(s.badgeActive, list.size)]
