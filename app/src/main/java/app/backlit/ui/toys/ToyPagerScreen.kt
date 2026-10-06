@@ -59,7 +59,7 @@ fun ToyPagerScreen(
             ToyId.CANVAS -> CanvasPage(settings, profile, onUpdate, chrome, onEdit = { onOpen(Route.Editor(it, Route.Toy(ToyId.CANVAS))) }, onOpenStudio = { onOpen(Route.Studio) })
             ToyId.PET -> PetPage(settings, profile, onUpdate, chrome)
             ToyId.SAND -> SandPage(settings, profile, onUpdate, chrome)
-            ToyId.BADGE -> BadgeTab(settings, profile, onUpdate)
+            ToyId.BADGE -> BadgePage(settings, profile, onUpdate, chrome)
         }
     }
 }

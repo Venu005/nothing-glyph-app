@@ -1,6 +1,12 @@
 package app.backlit.ui
 
-import app.backlit.ui.components.Notice
+import app.backlit.ui.components.OptionSheet
+import app.backlit.ui.components.PillButton
+import app.backlit.ui.components.Section
+import app.backlit.ui.components.rememberTicker
+import app.backlit.ui.home.ToyId
+import app.backlit.ui.toys.ToyAction
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,7 +46,7 @@ import kotlinx.coroutines.delay
 import java.time.ZoneId
 
 @Composable
-fun BadgeTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit) {
+fun BadgePage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -> Settings) -> Unit, chrome: PageChrome) {
     val context = LocalContext.current
     val runtime = remember { AlertsRuntime.get(context) }
     val size = if (profile == DeviceProfile.PHONE_4A_PRO) 13 else 25
@@ -48,8 +54,7 @@ fun BadgeTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
     val active = BadgeMessage.activeIndex(settings.badgeActive, messages.size)
     val current = messages[active]
     val opened = remember { System.currentTimeMillis() }
-    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) { while (true) { delay(50); now = System.currentTimeMillis() } }
+    val now = rememberTicker(50, chrome.active)
     val since = settings.badgeActiveSince.takeIf { it > 0 } ?: opened
     val zone = ZoneId.systemDefault()
     val text = BadgeText.scroll(current, since, now, settings.use24h, zone)
@@ -63,61 +68,56 @@ fun BadgeTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
         )
     }
 
-    if (profile != DeviceProfile.UNSUPPORTED && !settings.badgeToyEverBound) {
-        Notice("Turn on Backlit Badge in Glyph Toys (Settings → Glyph Interface → Glyph Toys), then lay your phone face-down.")
-    }
-
-    MatrixPreview(BadgeArt.frame(size, current, text, now - opened, BadgeArt.FLASH_MS), Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp))
-    Text(text.ifBlank { "(icon only)" }, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp))
-
     var editing by remember { mutableStateOf<Int?>(null) }   // index being edited, or -1 for a new message
     // The open editor holds an index: if the list changes underneath it (here or on the toy), close it rather than
     // let SAVE overwrite a different message.
     LaunchedEffect(settings.badgeMessages) { editing = null }
     val idle = editing == null
-    Text("MESSAGES", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp, bottom = 6.dp))
-    messages.forEachIndexed { i, m ->
-        if (editing == i) {
-            BadgeEditor(m, settings.use24h, canDelete = messages.size > 1,
-                onSave = { e -> save(messages.toMutableList().also { it[i] = e }, active, restart = i == active); editing = null },
-                onDelete = { save(messages.filterIndexed { k, _ -> k != i }, BadgeMessage.afterDelete(active, i, messages.size), restart = i == active); editing = null },
-                onCancel = { editing = null })
-        } else {
+
+    ToyPageScaffold(
+        chrome, "BADGE", BadgeArt.frame(size, current, text, now - opened, BadgeArt.FLASH_MS),
+        text.ifBlank { "(ICON ONLY)" },
+        ToyAction.of(ToyId.BADGE, chrome.setUp, chrome.supported, hasDrawing = false),
+        onShow = { runtime.preview(BadgePreviewAnimation.idFor(current.icon, text), 6000L) },
+    ) {
+        Section("MESSAGES")
+        messages.forEachIndexed { i, m ->
             Row(
-                Modifier.fillMaxWidth().border(1.dp, if (i == active) BacklitColors.White else BacklitColors.Line)
+                Modifier.fillMaxWidth().border(1.dp, if (i == active) BacklitColors.White else BacklitColors.Line, RoundedCornerShape(14.dp))
                     .clickable(enabled = idle) { save(messages, i, restart = true) }.padding(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 MatrixPreview(BadgeArt.tile(m.icon), Modifier.size(36.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(m.text.ifBlank { "—" }, style = MaterialTheme.typography.bodyLarge)
+                    Text(m.text.ifBlank { "—" }, style = MaterialTheme.typography.bodyLarge, maxLines = 1)
                     Text(kindLabel(m, settings.use24h), style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
                 }
-                SquareChip("↑", false, {
+                PillButton("↑", {
                     if (idle && i > 0) save(messages.toMutableList().also { it[i] = messages[i - 1]; it[i - 1] = m }, BadgeMessage.moveActive(active, i, i - 1), restart = false)
                 })
-                SquareChip("↓", false, {
+                PillButton("↓", {
                     if (idle && i < messages.size - 1) save(messages.toMutableList().also { it[i] = messages[i + 1]; it[i + 1] = m }, BadgeMessage.moveActive(active, i, i + 1), restart = false)
                 })
-                SquareChip("EDIT", false, { if (idle) editing = i })
+                PillButton("EDIT", { if (idle) editing = i })
             }
+            Spacer(Modifier.height(6.dp))
         }
-        Spacer(Modifier.height(6.dp))
-    }
-    if (editing == -1) {
-        BadgeEditor(BadgeMessage("", "heart"), settings.use24h, canDelete = false,
-            onSave = { e -> save(messages + e, messages.size, restart = true); editing = null },
-            onDelete = {}, onCancel = { editing = null })
-    } else if (messages.size < BadgeMessage.MAX_MESSAGES) {
-        SquareChip("+ ADD MESSAGE", false, { editing = -1 }, Modifier.fillMaxWidth())
+        if (messages.size < BadgeMessage.MAX_MESSAGES) SettingRow("+ Add message", "→") { if (idle) editing = -1 }
+        Text("Tap a message to show it. Long press the Glyph button to switch messages on the back.",
+            style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim, modifier = Modifier.padding(top = 10.dp))
     }
 
-    Text("Tap a message to show it. Long press the Glyph button to switch messages on the back.",
-        style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim, modifier = Modifier.padding(top = 10.dp))
-    SquareChip("SHOW ON GLYPH", true, { runtime.preview(BadgePreviewAnimation.idFor(current.icon, text), 6000L) },
-        Modifier.fillMaxWidth().padding(vertical = 12.dp))
-    Spacer(Modifier.height(8.dp))
+    editing?.let { i ->
+        val isNew = i == -1
+        val start = if (isNew) BadgeMessage("", "heart") else messages.getOrNull(i)
+        if (start == null) { editing = null } else OptionSheet(if (isNew) "NEW MESSAGE" else "EDIT MESSAGE", { editing = null }) {
+            BadgeEditor(start, settings.use24h, canDelete = !isNew && messages.size > 1,
+                onSave = { e -> if (isNew) save(messages + e, messages.size, restart = true) else save(messages.toMutableList().also { it[i] = e }, active, restart = i == active); editing = null },
+                onDelete = { save(messages.filterIndexed { k, _ -> k != i }, BadgeMessage.afterDelete(active, i, messages.size), restart = i == active); editing = null },
+                onCancel = { editing = null })
+        }
+    }
 }
 
 private fun kindLabel(m: BadgeMessage, use24h: Boolean): String = when (m.kind) {
