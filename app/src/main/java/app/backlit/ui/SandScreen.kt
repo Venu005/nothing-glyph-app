@@ -1,5 +1,6 @@
 package app.backlit.ui
 
+import app.backlit.ui.components.Notice
 import android.app.AlarmManager
 import android.content.Intent
 import android.net.Uri

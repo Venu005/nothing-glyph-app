@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
@@ -82,7 +83,7 @@ fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Un
             Spacer(Modifier.width(8.dp))
             Text("BACKLIT", style = MaterialTheme.typography.displaySmall)
             Spacer(Modifier.weight(1f))
-            Text("⚙", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable { onOpen(Route.Settings) }.padding(4.dp))
+            Text("⚙", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.minimumInteractiveComponentSize().clickable { onOpen(Route.Settings) }.padding(4.dp))
         }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 6.dp, bottom = 4.dp)) {
             val supported = profile != DeviceProfile.UNSUPPORTED
@@ -100,7 +101,7 @@ fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Un
                 pair.forEach { id ->
                     ToyCard(
                         ToyThumbs.frame(id, settings, size, now, zone, canvasAnim), id.label, ToyCatalog.isSetUp(settings, id),
-                        onClick = { onOpen(Route.Toy(id)) }, modifier = Modifier.weight(1f),
+                        onClick = { onOpen(Route.Toy(id)) }, modifier = Modifier.weight(1f), supported = profile != DeviceProfile.UNSUPPORTED,
                     )
                 }
                 if (pair.size == 1) Spacer(Modifier.weight(1f))

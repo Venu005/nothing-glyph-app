@@ -1,5 +1,6 @@
 package app.backlit.ui
 
+import app.backlit.ui.components.Notice
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
@@ -140,12 +141,4 @@ fun MusicTab(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
         onUpdate { it.copy(musicSensitivity = Sensitivity.entries[(it.musicSensitivity.ordinal + 1) % Sensitivity.entries.size]) }
     }
     BrightnessRow(settings.brightness) { pct -> onUpdate { it.copy(brightness = pct) } }
-}
-
-@Composable
-internal fun Notice(text: String) {
-    Column(Modifier.fillMaxWidth().border(1.dp, BacklitColors.Line).padding(12.dp)) {
-        Text(text, style = MaterialTheme.typography.bodyMedium)
-    }
-    Spacer(Modifier.height(8.dp))
 }

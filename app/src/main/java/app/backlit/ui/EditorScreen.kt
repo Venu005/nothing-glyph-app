@@ -1,5 +1,6 @@
 package app.backlit.ui
 
+import app.backlit.ui.components.Notice
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi

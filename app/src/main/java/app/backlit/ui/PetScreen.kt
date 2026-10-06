@@ -1,5 +1,6 @@
 package app.backlit.ui
 
+import app.backlit.ui.components.Notice
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager

@@ -1,5 +1,6 @@
 package app.backlit.ui
 
+import app.backlit.ui.components.Notice
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothManager

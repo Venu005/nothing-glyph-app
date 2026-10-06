@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -43,27 +44,23 @@ fun BacklitLogo(size: Dp) {
     }
 }
 
-/** "● ON GLYPH" (white) or "○ TURN ON" (grey; tappable when [onTurnOn] is given). */
+/** "● ON GLYPH" (white), "○ TURN ON" (grey; tappable when [onTurnOn] is given) or "PREVIEW" on phones without a matrix. */
 @Composable
-fun StatusPill(setUp: Boolean, onTurnOn: (() -> Unit)? = null) {
-    val m = if (!setUp && onTurnOn != null) Modifier.clickable(onClick = onTurnOn) else Modifier
-    Text(
-        if (setUp) "● ON GLYPH" else "○ TURN ON",
-        style = MaterialTheme.typography.labelSmall,
-        color = if (setUp) BacklitColors.White else BacklitColors.Dim,
-        modifier = m,
-    )
+fun StatusPill(setUp: Boolean, supported: Boolean = true, onTurnOn: (() -> Unit)? = null) {
+    val label = when { !supported -> "PREVIEW"; setUp -> "● ON GLYPH"; else -> "○ TURN ON" }
+    val m = if (supported && !setUp && onTurnOn != null) Modifier.clickable(onClick = onTurnOn) else Modifier
+    Text(label, style = MaterialTheme.typography.labelSmall, color = if (supported && setUp) BacklitColors.White else BacklitColors.Dim, modifier = m)
 }
 
 @Composable
-fun ToyCard(grid: PixelGrid, name: String, setUp: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
+fun ToyCard(grid: PixelGrid, name: String, setUp: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier, supported: Boolean = true) {
     Column(
         modifier.clip(CardShape).border(1.dp, BacklitColors.Line, CardShape).background(BacklitColors.Black)
             .clickable(onClick = onClick).padding(8.dp),
     ) {
         MatrixPreview(grid, Modifier.fillMaxWidth())
         Text(name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 6.dp))
-        StatusPill(setUp)
+        StatusPill(setUp, supported)
     }
 }
 
@@ -84,12 +81,12 @@ fun ToolCard(grid: PixelGrid, name: String, subtitle: String, onClick: () -> Uni
 
 /** Toy page header: ← GLYPH TOYS on the left, the toy's status on the right. */
 @Composable
-fun ToyHeader(onBack: () -> Unit, setUp: Boolean, onTurnOn: () -> Unit) {
+fun ToyHeader(onBack: () -> Unit, setUp: Boolean, supported: Boolean, onTurnOn: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("←", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable(onClick = onBack).padding(end = 10.dp))
+        Text("←", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.minimumInteractiveComponentSize().clickable(onClick = onBack).padding(end = 10.dp))
         Text("GLYPH TOYS", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
         Spacer(Modifier.weight(1f))
-        StatusPill(setUp, onTurnOn)
+        StatusPill(setUp, supported, onTurnOn)
     }
 }
 
@@ -111,7 +108,7 @@ fun Section(label: String) {
 @Composable
 fun PageHeader(title: String, onBack: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 14.dp, bottom = 10.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("←", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.clickable(onClick = onBack).padding(end = 12.dp))
+        Text("←", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.minimumInteractiveComponentSize().clickable(onClick = onBack).padding(end = 12.dp))
         Text(title, style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.width(4.dp))
     }

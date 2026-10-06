@@ -47,7 +47,7 @@ fun ToyPagerScreen(
     HorizontalPager(state = pager, modifier = Modifier.fillMaxSize(), key = { toys[it].key }) { page ->
         val id = toys[page]
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
-            ToyHeader(onBack, ToyCatalog.isSetUp(settings, id), onTurnOn = { if (!ToysManager.open(context)) onOpen(Route.Setup(Route.Toy(id))) })
+            ToyHeader(onBack, ToyCatalog.isSetUp(settings, id), profile != DeviceProfile.UNSUPPORTED, onTurnOn = { if (!ToysManager.open(context)) onOpen(Route.Setup(Route.Toy(id))) })
             Text(id.label, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
             PagerDots(toys.size, page)
             when (id) {
