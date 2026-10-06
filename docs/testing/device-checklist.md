@@ -119,3 +119,14 @@ Date: ______  Build: ______  Nothing OS: ______
 - [ ] Reboot mid-timer: alarm still fires (or fires right after boot if the time has passed)
 - [ ] Always-on still updates each minute with the right level
 - [ ] 4a Pro: AOD still; flipping is picked up within a minute
+
+## Backlit Badge
+- [ ] Glyph Toys picker shows "Backlit Badge" with the laptop + text image
+- [ ] Each starter message: icon on top, text scrolls underneath; nothing overlaps on 13×13
+- [ ] Long press switches to the next message; the icon flashes
+- [ ] BACK IN 5 counts down in real time and becomes BACK SOON
+- [ ] An UNTIL message shows the time, and drops it once the time passes
+- [ ] BADGE tab: tap to pick, add, edit (text, icon, kind), reorder, delete; the Glyph follows
+- [ ] Always-on still shows the icon + short word / minutes left
+- [ ] 4a Pro: always-on still with a 5×5 icon and 3-letter text
+- [ ] The new icons (car, headphones, food) look right

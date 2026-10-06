@@ -90,6 +90,15 @@ A real hourglass. On the Phone (3), live sand pours as you tilt the phone.
 - **Always-on:** a still that updates every minute. On the 4a Pro, flips are picked up within a minute.
 - **TIMER tab:** what the timer is doing right now, your times, what happens when time's up, and an optional "Ring exactly on time" switch.
 
+### Backlit Badge (Glyph Toy)
+A status sign for when your phone is face-down: a pixel icon with your message scrolling underneath.
+- **Messages:** up to 8, each with one of 8 icons (laptop, coffee, phone, moon, heart, car, headphones, food).
+  Starters: IN A MEETING, BACK IN 5, ON A CALL, DO NOT DISTURB, THANK YOU.
+- **Smart messages:** a countdown ("BACK IN 4:59" → "BACK SOON") or until a time ("IN A MEETING UNTIL 3PM").
+- **Long press** the Glyph button to switch messages; the icon flashes on change.
+- **Always-on:** the icon with a short word, the minutes left or the time, once a minute.
+- **BADGE tab:** pick, add, edit, reorder and delete messages.
+
 ### Alerts
 - **Important contacts:** pick contacts and give each its own animation. It plays as their call
   starts, and again after a **missed call** (10 s, then a 5 s reminder every minute, up to 10, until
@@ -245,6 +254,8 @@ app/src/main/java/app/backlit/
 │                    PetInsight (hints), PetPreviewAnimation (pure)
 ├── sand/            Sand timer: HourglassShape, SandSim (grain physics), TimerState (flip/side/long press),
 │                    SandArt, SandPreviewAnimation (pure); SandAlarm + receiver (Android)
+├── badge/           Message badge: BadgeMessage, BadgeText (countdown/until), BadgeFont, BadgeIcons,
+│                    BadgeArt, BadgePreviewAnimation (pure)
 ├── data/            Settings (DataStore), sunrise/sunset maths, location, offline cities
 ├── glyph/           The only package that talks to the Nothing SDK
 │   ├── GlyphOutput.kt       connect/register/push with retry; toy or app-matrix mode
@@ -389,7 +400,6 @@ Also: [Play listing draft](docs/release/play-listing.md) · [Privacy policy](doc
 
 ## Roadmap
 
-- **Message badge:** scrolling text like "ON A CALL" or "BACK IN 5" for a face-down phone.
 - **Blow out the candles:** pixel birthday candles you blow out into the mic.
 - **Next-event countdown:** your next calendar event on the matrix.
 - **Later ideas:** animated weather, gentle reminders (water, stretch).
