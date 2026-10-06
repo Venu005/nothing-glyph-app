@@ -9,6 +9,7 @@ import app.backlit.anim.BuiltInAnimations
 import app.backlit.charge.ChargePreviewAnimation
 import app.backlit.pet.PetPreviewAnimation
 import app.backlit.sand.SandPreviewAnimation
+import app.backlit.badge.BadgePreviewAnimation
 import app.backlit.anim.GlyphAnimation
 import app.backlit.anim.MuseumFormat
 import app.backlit.data.SettingsRepo
@@ -122,6 +123,7 @@ class AlertsRuntime private constructor(private val app: Context) {
             ?: ChargePreviewAnimation.parse(alert.animationId)
             ?: PetPreviewAnimation.parse(alert.animationId)
             ?: SandPreviewAnimation.parse(alert.animationId)
+            ?: BadgePreviewAnimation.parse(alert.animationId)
             ?: library.resolve(
                 alert.animationId, current.imports,
                 fallback = if (alert.kind == AlertKind.CALL) BuiltInAnimations.DEFAULT_CONTACT else BuiltInAnimations.DEFAULT_DEVICE,
