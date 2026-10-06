@@ -140,3 +140,16 @@ Date: ______  Build: ______  Nothing OS: ______
 - [ ] Studio and Alerts pages work as before (editor opens and Back returns to Studio)
 - [ ] Settings: brightness changes the toys; setup, sun times, privacy policy and about open and Back returns to Settings
 - [ ] Rotate on a toy page: the same toy stays open
+
+## UI redesign — part 2
+- [ ] Every toy page: big preview, name, dots, status line, settings, bottom button; nothing hides under the bar (scroll to the end, open "How … works")
+- [ ] Swiping: only the visible page animates; Music only listens on its own page
+- [ ] Charge: style sheet, done-at stepper, plug-in/done animation sheets, import
+- [ ] Canvas: drawing sheet, Open Studio, + NEW DRAWING when there are none
+- [ ] Pet: tap to pet, pet chooser sheet, name, sleep hours; keyboard doesn't hide the field
+- [ ] Sand: times, edit, when time's up, exact switch
+- [ ] Badge: tap to show, ↑ ↓, EDIT and + Add message open the editor sheet
+- [ ] Studio: gallery, ON CANVAS outline, sheet actions (edit, canvas, glyph, share, rename, delete), NEW and IMPORT
+- [ ] Alerts: attention card only when needed; CONTACTS add/edit/remove; DEVICES (Bluetooth) add from paired list, animation plays on connect; ANIMATIONS preview, delete, edit in Studio, import
+- [ ] Home previews pause when the app is in the background
+- [ ] 4a Pro: 13×13 heroes, no Music page

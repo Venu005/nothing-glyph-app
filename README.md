@@ -32,7 +32,9 @@ Free, no ads, no analytics, no network access.
 
 ## Features
 
-The app opens on a grid of live toy cards; tap one for its page and swipe between toys. The icon is the
+The app opens on a grid of live toy cards; tap one for its page and swipe between toys. Every
+toy page has a big live preview, its settings, and one button at the bottom. Studio is a gallery of your drawings;
+Alerts has three tabs — CONTACTS, DEVICES (Bluetooth connect alerts) and ANIMATIONS. The icon is the
 "Diamond ring" logo (`render/LogoGeometry.kt`), also used for the themed icon and the Play Store icon (`docs/store/icon-512.png`).
 
 ### Backlit Clock (Glyph Toy)
@@ -272,8 +274,10 @@ app/src/main/java/app/backlit/
 │   │                Settings, Privacy, Setup, Location, About
 │   ├── home/        ToyCatalog (order, set-up status), ToyThumbs (live card previews)   (pure)
 │   ├── nav/         Route (screens, Back, save/restore)   (pure)
-│   ├── components/  Nothing-style components: BacklitLogo, ToyCard, ToolCard, ToyHeader, PagerDots…
-│   └── toys/        ToyPagerScreen, ClockTab
+│   ├── components/  Nothing-style components: BacklitLogo, ToyCard, ToyHeader, PagerDots; Controls.kt (chips,
+│   │                segments, bottom bar, sheets, gallery cards, attention card)
+│   ├── toys/        ToyPagerScreen, ToyPageScaffold, one XxxPage per toy, ToyStatus + ToyAction (pure)
+│   └── alerts/      AlertsAttention (pure)
 └── MainActivity.kt
 app/src/test/        JVM unit tests mirroring the packages above
 app/src/debug/       debug-only spike probes
@@ -393,6 +397,7 @@ Backlit learned the format by reading the open-source editor; no code was copied
 
 | Part | Spec | Plan |
 |---|---|---|
+| UI redesign part 2 (toy pages, Studio, Alerts) | [`2026-10-06-backlit-ui-redesign-part2-design.md`](docs/superpowers/specs/2026-10-06-backlit-ui-redesign-part2-design.md) | [`2026-10-06-backlit-ui-redesign-part2.md`](docs/superpowers/plans/2026-10-06-backlit-ui-redesign-part2.md) |
 | UI redesign + logo (part 1) | [`2026-10-06-backlit-ui-redesign-design.md`](docs/superpowers/specs/2026-10-06-backlit-ui-redesign-design.md) | [`2026-10-06-backlit-ui-redesign-part1.md`](docs/superpowers/plans/2026-10-06-backlit-ui-redesign-part1.md) |
 | Core + Clock toy | [`2026-10-03-backlit-clocks-design.md`](docs/superpowers/specs/2026-10-03-backlit-clocks-design.md) | [`2026-10-03-backlit-clocks.md`](docs/superpowers/plans/2026-10-03-backlit-clocks.md) |
 | Music toy | [`2026-10-03-backlit-music-design.md`](docs/superpowers/specs/2026-10-03-backlit-music-design.md) | [`2026-10-03-backlit-music.md`](docs/superpowers/plans/2026-10-03-backlit-music.md) |
