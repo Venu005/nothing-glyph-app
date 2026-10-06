@@ -126,4 +126,19 @@ class PetBrainTest {
         val s = b.snapshot(t0)
         assertEquals(65.0, s.mood, 1e-9); assertEquals(t0, s.at); assertFalse(b.dirty)
     }
+    @Test
+    fun calmingOnlyRewardsOnceEveryTenMinutes() {
+        val b = brain(50.0)
+        fun anger(at: Long) { b.onShake(15f, at, true); b.onShake(15f, at + 1_000, true); b.onShake(15f, at + 2_000, true) }
+        anger(t0); b.onLongPress(t0 + 3_000, true)
+        val afterFirst = b.moodExact(t0 + 3_000)
+        anger(t0 + 20_000); b.onLongPress(t0 + 23_000, true)
+        assertEquals("second calm", Reaction.CALMED, b.reaction(t0 + 23_000))
+        assertTrue("no second +10: ${b.moodExact(t0 + 23_000)} vs $afterFirst", b.moodExact(t0 + 23_000) < afterFirst)
+        anger(t0 + 700_000)
+        val before = b.moodExact(t0 + 703_000)
+        b.onLongPress(t0 + 703_000, true)
+        assertEquals("third calm", Reaction.CALMED, b.reaction(t0 + 703_000))
+        assertEquals("10 min later the +10 counts again", before + 10.0, b.moodExact(t0 + 703_000), 0.01)
+    }
 }

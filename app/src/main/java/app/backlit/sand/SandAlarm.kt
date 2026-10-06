@@ -80,17 +80,19 @@ object SandAlarm {
         val app = context.applicationContext
         val repo = SettingsRepo.get(app)
         val s = repo.settings.first()
-        val st = TimerState.decode(s.sandTimer)
-        val done = st.alarmFired(System.currentTimeMillis())
-        if (done == null) {
-            if (rescheduleIfNotDue) sync(app, st, s.sandExact)
+        val now = System.currentTimeMillis()
+        if (TimerState.decode(s.sandTimer).alarmFired(now) == null) {
+            if (rescheduleIfNotDue) sync(app, TimerState.decode(s.sandTimer), s.sandExact)
             return
         }
         if (liveLoop) return
-        repo.update { it.copy(sandTimer = done.encode()) }
+        // Claim DONE inside the update, from the stored state at that moment: if the toy got there first, nobody rings twice.
+        var claimed = false
+        repo.update { cur -> TimerState.claimDone(cur.sandTimer, now)?.let { claimed = true; cur.copy(sandTimer = it) } ?: cur }
+        if (!claimed) return
         ring(app, s.sandAlert)
         AlertsRuntime.get(app).preview(SandPreviewAnimation.DONE_ID, TimerState.FLIP_ME_MS + 700)
-        // Keep the receiver (and so the process) alive until the chime is stopped and released.
-        if (s.sandAlert == "chime") delay(CHIME_MS + 200)
+        // Keep the receiver (and so the process) alive until "Flip me" has played and the chime is released.
+        delay(maxOf(TimerState.FLIP_ME_MS + 900, if (s.sandAlert == "chime") CHIME_MS + 200 else 0))
     }
 }

@@ -41,7 +41,12 @@ class SaveTracker(id: String?, saved: Drawing?) {
 
     fun begin(doc: Drawing, newId: () -> String): String = id ?: newId().also { id = it }
 
+    private var base: Drawing? = null
+
     fun finished(doc: Drawing) { saved = doc }
 
-    fun dirty(doc: Drawing): Boolean = doc != saved
+    /** What a brand-new drawing starts as, so leaving it untouched isn't a change to discard. */
+    fun baseline(doc: Drawing) { base = doc }
+
+    fun dirty(doc: Drawing): Boolean = doc != (saved ?: base)
 }

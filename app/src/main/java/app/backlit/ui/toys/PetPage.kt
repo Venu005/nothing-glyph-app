@@ -113,6 +113,7 @@ fun PetPage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) ->
         Section("SLEEP HOURS")
         HourRow("From", settings.petSleepStart) { h -> onUpdate { it.copy(petSleepStart = h) } }
         HourRow("To", settings.petSleepEnd) { h -> onUpdate { it.copy(petSleepEnd = h) } }
+        Text("He sleeps between these hours, and his mood doesn't drop while he's asleep.", style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
         SettingRow("How $petName's mood works", if (howOpen) "−" else "+") { howOpen = !howOpen }
         if (howOpen) {
             Text(

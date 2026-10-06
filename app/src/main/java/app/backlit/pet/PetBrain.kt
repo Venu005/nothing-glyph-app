@@ -100,10 +100,14 @@ class PetBrain(
         reactionStart = now
     }
 
+    private var lastCalmAt = Long.MIN_VALUE / 2
+    private val CALM_COOLDOWN_MS = 10 * 60_000L
+
     fun onLongPress(now: Long, active: Boolean) {
         if (reaction(now) == Reaction.ANGRY) {
             start(Reaction.CALMED, now, active)
-            change(now, 10.0)
+            // The +10 counts once every 10 minutes, so shaking him angry and calming him can't farm mood.
+            if (now - lastCalmAt >= CALM_COOLDOWN_MS) { change(now, 10.0); lastCalmAt = now }
             return
         }
         if (asleep(now)) {

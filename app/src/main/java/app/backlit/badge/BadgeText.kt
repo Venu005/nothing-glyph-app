@@ -20,6 +20,13 @@ object BadgeText {
         Kind.UNTIL -> if (now < untilEnd(m, since, zone)) join(m.text, "UNTIL " + timeLabel(m.untilMinuteOfDay, use24h)) else m.text
     }
 
+    /** The widest text this message shows (a countdown's full time, an until's label): the ticker loops on it, so it never jumps as the text shrinks. */
+    fun spanText(m: BadgeMessage, use24h: Boolean): String = when (m.kind) {
+        Kind.PLAIN -> m.text
+        Kind.COUNTDOWN -> join(m.text, clock(m.minutes * MIN))
+        Kind.UNTIL -> join(m.text, "UNTIL " + timeLabel(m.untilMinuteOfDay, use24h))
+    }
+
     fun short(m: BadgeMessage, since: Long, now: Long, use24h: Boolean, zone: ZoneId): String = when (m.kind) {
         Kind.PLAIN -> firstWord(m.text)
         Kind.COUNTDOWN -> {

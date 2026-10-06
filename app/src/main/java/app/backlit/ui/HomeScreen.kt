@@ -100,7 +100,7 @@ fun HomeScreen(settings: Settings, profile: DeviceProfile, onOpen: (Route) -> Un
 
         Section("TOOLS")
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ToolCard(ToyThumbs.studio(size, now), "STUDIO", "${drawings.size} DRAWINGS", { onOpen(Route.Studio) }, Modifier.weight(1f))
+            ToolCard(ToyThumbs.studio(size, now), "STUDIO", "${drawings.size} DRAWINGS", { onOpen(Route.Studio()) }, Modifier.weight(1f))
             ToolCard(ToyThumbs.alerts(size, now), "ALERTS", "${config.contacts.size} CONTACTS · ${config.devices.size} DEVICES", { onOpen(Route.Alerts) }, Modifier.weight(1f))
         }
         Spacer(Modifier.height(32.dp))

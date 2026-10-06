@@ -12,7 +12,8 @@ sealed interface Route {
     data object Welcome : Route
     data object Home : Route
     data class Toy(val id: ToyId) : Route
-    data object Studio : Route
+    /** Studio, remembering where it was opened from (Home, or the Canvas page). */
+    data class Studio(val from: Route = Home) : Route
     data class Editor(val drawingId: String?, val from: Route) : Route
     data object Alerts : Route
     data object Settings : Route
@@ -24,7 +25,8 @@ sealed interface Route {
     /** One level up; null on Home (Back leaves the app). */
     fun parent(): Route? = when (this) {
         Home -> null
-        Welcome, is Toy, Studio, Alerts, Settings -> Home
+        Welcome, is Toy, Alerts, Settings -> Home
+        is Studio -> from
         is Editor -> from
         is Location -> from
         is Setup -> from
@@ -35,8 +37,9 @@ sealed interface Route {
         Welcome -> "welcome"
         Home -> "home"
         is Toy -> "toy:${id.key}"
-        Studio -> "studio"
-        is Editor -> "editor|${from.save()}|${drawingId ?: ""}"
+        is Studio -> "studio|${from.save()}"
+        // The origin is always last: it may itself contain "|" (e.g. Studio(from = …)).
+        is Editor -> "editor|${drawingId ?: ""}|${from.save()}"
         Alerts -> "alerts"
         Settings -> "settings"
         is Location -> "location|${from.save()}"
@@ -47,14 +50,19 @@ sealed interface Route {
 
     companion object {
         // Built on use: a companion property here could initialise before the data objects (class-init cycle).
-        private fun simple(): List<Route> = listOf(Welcome, Home, Studio, Alerts, Settings, Privacy, About)
+        private fun simple(): List<Route> = listOf(Welcome, Home, Alerts, Settings, Privacy, About)
 
         fun restore(s: String): Route {
-            val parts = s.split('|', limit = 3)
-            return when (parts[0]) {
-                "editor" -> if (parts.size == 3) Editor(parts[2].ifEmpty { null }, restore(parts[1])) else Home
-                "location" -> if (parts.size >= 2) Location(restore(parts[1])) else Home
-                "setup" -> if (parts.size >= 2) Setup(restore(parts[1])) else Home
+            val head = s.substringBefore('|')
+            val rest = s.substringAfter('|', missingDelimiterValue = "")
+            return when (head) {
+                "editor" -> {
+                    if (!s.contains('|') || !rest.contains('|')) Home
+                    else Editor(rest.substringBefore('|').ifEmpty { null }, restore(rest.substringAfter('|')))
+                }
+                "location" -> if (rest.isEmpty()) Home else Location(restore(rest))
+                "setup" -> if (rest.isEmpty()) Home else Setup(restore(rest))
+                "studio" -> Studio(if (rest.isEmpty()) Home else restore(rest))
                 else -> when {
                     s.startsWith("toy:") -> ToyId.byKey(s.removePrefix("toy:"))?.let { Toy(it) } ?: Home
                     else -> simple().firstOrNull { it.save() == s } ?: Home

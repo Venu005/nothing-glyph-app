@@ -8,8 +8,8 @@ import org.junit.Test
 
 class RouteTest {
     private val all = listOf(
-        Route.Welcome, Route.Home, Route.Toy(ToyId.PET), Route.Studio,
-        Route.Editor("import:abc", Route.Studio), Route.Editor(null, Route.Alerts), Route.Editor("import:x", Route.Toy(ToyId.CANVAS)),
+        Route.Welcome, Route.Home, Route.Toy(ToyId.PET), Route.Studio(), Route.Studio(Route.Toy(ToyId.CANVAS)),
+        Route.Editor("import:abc", Route.Studio()), Route.Editor(null, Route.Alerts), Route.Editor("import:x", Route.Toy(ToyId.CANVAS)),
         Route.Alerts, Route.Settings, Route.Location(Route.Settings), Route.Location(Route.Toy(ToyId.CLOCK)),
         Route.Privacy, Route.Setup(Route.Settings), Route.Setup(Route.Toy(ToyId.SAND)), Route.About,
     )
@@ -19,7 +19,7 @@ class RouteTest {
         assertNull(Route.Home.parent())
         assertEquals(Route.Home, Route.Welcome.parent())
         assertEquals(Route.Home, Route.Toy(ToyId.SAND).parent())
-        assertEquals(Route.Home, Route.Studio.parent())
+        assertEquals(Route.Home, Route.Studio().parent())
         assertEquals(Route.Home, Route.Alerts.parent())
         assertEquals(Route.Home, Route.Settings.parent())
         for (r in listOf(Route.Privacy, Route.About)) assertEquals(Route.Settings, r.parent())
@@ -31,7 +31,8 @@ class RouteTest {
         assertEquals(Route.Settings, Route.Location(Route.Settings).parent())
         assertEquals(Route.Alerts, Route.Editor("import:a", Route.Alerts).parent())
         assertEquals(Route.Toy(ToyId.CANVAS), Route.Editor(null, Route.Toy(ToyId.CANVAS)).parent())
-        assertEquals(Route.Studio, Route.Editor(null, Route.Studio).parent())
+        assertEquals(Route.Studio(), Route.Editor(null, Route.Studio()).parent())
+        assertEquals(Route.Toy(ToyId.CANVAS), Route.Studio(Route.Toy(ToyId.CANVAS)).parent())
         assertEquals(Route.Toy(ToyId.SAND), Route.Setup(Route.Toy(ToyId.SAND)).parent())
     }
 
@@ -40,7 +41,7 @@ class RouteTest {
         for (r in all) assertEquals(r, Route.restore(r.save()))
         assertEquals(Route.Home, Route.restore("garbage"))
         assertEquals(Route.Home, Route.restore("toy:nope"))
-        assertEquals(Route.Editor("a:b:c", Route.Studio), Route.restore(Route.Editor("a:b:c", Route.Studio).save()))
+        assertEquals(Route.Editor("a:b:c", Route.Studio()), Route.restore(Route.Editor("a:b:c", Route.Studio()).save()))
     }
 
     @Test

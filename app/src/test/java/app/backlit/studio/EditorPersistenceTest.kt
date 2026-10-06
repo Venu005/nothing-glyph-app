@@ -42,4 +42,21 @@ class EditorPersistenceTest {
         assertFalse(t.dirty(d))
         assertTrue(t.dirty(edited))
     }
+    @Test
+    fun anUntouchedNewDrawingIsNotDirty() {
+        val t = SaveTracker(id = null, saved = null)
+        val blank = doc()
+        t.baseline(blank)
+        assertFalse(t.dirty(blank))
+        assertTrue(t.dirty(EditorState.of(blank).paint(listOf(6 to 6), 2, false).doc))
+    }
+
+    @Test
+    fun touchesOutsideTheCanvasAreNotCells() {
+        assertEquals(0 to 0, EditorGeometry.cellAt(1f, 1f, 250f, 250f, 25))
+        assertEquals(24 to 24, EditorGeometry.cellAt(249f, 249f, 250f, 250f, 25))
+        assertEquals(null, EditorGeometry.cellAt(-3f, 100f, 250f, 250f, 25))
+        assertEquals(null, EditorGeometry.cellAt(100f, 251f, 250f, 250f, 25))
+        assertEquals(24 to 0, EditorGeometry.clampedCellAt(400f, -9f, 250f, 250f, 25))
+    }
 }

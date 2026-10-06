@@ -1,5 +1,6 @@
 package app.backlit.ui
 
+import app.backlit.studio.EditorGeometry
 import app.backlit.ui.components.Notice
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
@@ -97,7 +98,7 @@ fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit
         val d = if (drawingId == null) Drawing.blank(n) else runtime.loadDrawing(drawingId, n)
         if (d == null) failed = true else {
             editor = EditorState.of(d)
-            if (drawingId != null) { tracker.finished(d); savedBytes = DrawingBytes.encode(d) }
+            if (drawingId != null) { tracker.finished(d); savedBytes = DrawingBytes.encode(d) } else tracker.baseline(d)
         }
     }
     LaunchedEffect(editor) {
@@ -190,8 +191,12 @@ fun EditorScreen(drawingId: String?, profile: DeviceProfile, onClose: () -> Unit
                             val ev = awaitPointerEvent()
                             val ch = ev.changes.firstOrNull { it.id == down.id } ?: break
                             if (!ch.pressed) break
-                            val c = cell(ch.position)
-                            if (c != stroke.last() && toolNow != Tool.FILL) {
+                            // Pen and eraser ignore the part of a drag outside the canvas (no painted edge);
+                            // a line or circle end is clamped to the edge.
+                            val w = size.width.toFloat(); val h = size.height.toFloat()
+                            val c = if (toolNow == Tool.LINE || toolNow == Tool.CIRCLE) EditorGeometry.clampedCellAt(ch.position.x, ch.position.y, w, h, n)
+                                else EditorGeometry.cellAt(ch.position.x, ch.position.y, w, h, n)
+                            if (c != null && c != stroke.last() && toolNow != Tool.FILL) {
                                 stroke += Raster.line(stroke.last().first, stroke.last().second, c.first, c.second).drop(1)
                                 editor = apply(c)
                             }
