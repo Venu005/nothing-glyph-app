@@ -34,6 +34,11 @@ data class Settings(
     val petToyEverBound: Boolean = false,
     val petKind: String = "ghost",
     val petNames: Map<String, String> = emptyMap(),
+    val sandPresets: List<Int> = listOf(1, 3, 5, 10, 25),
+    val sandAlert: String = "vibrate",
+    val sandExact: Boolean = false,
+    val sandTimer: String = "",
+    val sandToyEverBound: Boolean = false,
 ) {
     val faceOptions: FaceOptions get() = FaceOptions(secondHand = secondHand, use24h = use24h)
 }

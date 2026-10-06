@@ -9,5 +9,7 @@
     <string name="canvas_toy_name">Backlit Canvas</string>
     <string name="canvas_toy_summary">Shows your own drawings from Backlit Studio. Long press for the next one.</string>
     <string name="pet_toy_name">Backlit Pet</string>
+    <string name="sand_toy_name">Backlit Sand</string>
+    <string name="sand_toy_summary">A real hourglass on your Glyph. Flip to start, lay it on its side to pause, long press to pick a time.</string>
     <string name="pet_toy_summary">A little ghost that lives on your Glyph. Long press to pet him.</string>
 </resources>

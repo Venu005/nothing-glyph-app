@@ -43,6 +43,8 @@ class SettingsRepoTest {
             canvasDrawingId = "import:q", canvasToyEverBound = true,
             petName = "Casper", petMood = 42.5f, petMoodAt = 123_456L, petSleepStart = 22, petSleepEnd = 6, petToyEverBound = true,
             petKind = "owl", petNames = mapOf("owl" to "Professor", "frog" to "Kermie"),
+            sandPresets = listOf(2, 7, 45), sandAlert = "chime", sandExact = true,
+            sandTimer = "{\"phase\":\"RUNNING\",\"endAt\":5}", sandToyEverBound = true,
         )
         r.update { s }
         assertEquals(s, r.settings.first())
@@ -148,5 +150,28 @@ class SettingsRepoTest {
         val ghost = SettingsRepo.withPetName(named, app.backlit.pet.PetKind.GHOST, "Spooky")
         assertEquals("Spooky", ghost.petName); assertEquals("Professor", SettingsRepo.petNameFor(ghost, owl))
         assertEquals("Hoot", SettingsRepo.petNameFor(SettingsRepo.withPetName(s, owl, "   "), owl))
+    }
+    @Test
+    fun sandDefaults() = runBlocking {
+        val s = repo().settings.first()
+        assertEquals(listOf(1, 3, 5, 10, 25), s.sandPresets)
+        assertEquals("vibrate", s.sandAlert); assertEquals(false, s.sandExact)
+        assertEquals("", s.sandTimer); assertEquals(false, s.sandToyEverBound)
+    }
+
+    @Test
+    fun presetsAreCleaned() {
+        assertEquals(listOf(1, 5, 99), SettingsRepo.cleanPresets(listOf(5, 0, 1, 5, 120, 99, -3)))
+        assertEquals(listOf(1, 3, 5, 10, 25), SettingsRepo.cleanPresets(emptyList()))
+        assertEquals(listOf(1, 3, 5, 10, 25), SettingsRepo.cleanPresets(listOf(0, 100)))
+        assertEquals(8, SettingsRepo.cleanPresets((1..20).toList()).size)
+    }
+
+    @Test
+    fun unknownSandAlertFallsBackToVibrate() {
+        assertEquals("vibrate", SettingsRepo.parseSandAlert("loud"))
+        assertEquals("vibrate", SettingsRepo.parseSandAlert(null))
+        assertEquals("glyph", SettingsRepo.parseSandAlert("glyph"))
+        assertEquals("chime", SettingsRepo.parseSandAlert("chime"))
     }
 }

@@ -101,3 +101,21 @@ Date: ______  Build: ______  Nothing OS: ______
 - [x] Signature moves: frog tongue + fly, penguin slide, axolotl bubbles, owl swivel, robot glitch
 - [x] AOD idle and charging fill for two pets
 - [x] Mood kept when switching; names are per pet; existing Boo name unchanged
+
+## Backlit Sand
+- [ ] Glyph Toys picker shows "Backlit Sand" with the hourglass image; selecting it shows sand in the lower bulb, glass breathing
+- [ ] Tilt left/right: sand pours towards the lower side (if mirrored, flip X_SIGN in SandToyService)
+- [ ] Flip the phone over: timer starts, thin stream through the neck
+- [ ] Flip mid-way: sand runs back; TIMER tab shows time left = time run
+- [ ] Lay on its side ~1 s: pauses (TIMER tab says PAUSED); stand back up the same way: resumes
+- [ ] Face-down on the desk: keeps running
+- [ ] Long press when ready: number shows, lower bulb refills, next preset
+- [ ] Long press while running: minutes left shows, timer untouched; second press within 2 s: next preset, reset
+- [ ] Time's up with the toy showing: Flip me spin + blink + vibration; settles with sand at the bottom
+- [ ] Time's up after swiping to another Backlit toy: vibration + Flip me plays there
+- [ ] Time's up with the screen off: vibration (+ chime if chosen and ringer on)
+- [ ] Glyph only / Vibrate / + Chime each behave as named
+- [ ] "Ring exactly on time": opens Alarms & reminders when not allowed; shows ON after allowing
+- [ ] Reboot mid-timer: alarm still fires (or fires right after boot if the time has passed)
+- [ ] Always-on still updates each minute with the right level
+- [ ] 4a Pro: AOD still; flipping is picked up within a minute

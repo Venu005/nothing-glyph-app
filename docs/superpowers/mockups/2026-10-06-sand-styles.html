@@ -1,0 +1,150 @@
+<h2>Sand timer: which look?</h2>
+<p class="subtitle">The sand is live physics. Use <b>Flip</b> to turn the hourglass over like a real one, which sends the time left back the other way. <b>On its side</b> pauses it, and the slider tilts it to any angle. The left matrix is the Phone (3) at 25×25. The right is the 13×13 (the 4a Pro shows it as a still, redrawn each minute). Click every style you like.</p>
+
+<div class="section" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+  <span class="label">Timer</span>
+  <button class="mock-button dur" data-m="1">1 min</button>
+  <button class="mock-button dur" data-m="3">3 min</button>
+  <button class="mock-button dur" data-m="5">5 min</button>
+  <span class="label" style="margin-left:12px">Speed</span>
+  <button class="mock-button spd" data-s="1">×1</button>
+  <button class="mock-button spd" data-s="10">×10</button>
+  <button class="mock-button spd" data-s="30">×30</button>
+</div>
+<div class="section" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+  <button class="mock-button" id="flip">⟲ Flip</button>
+  <button class="mock-button" id="side">On its side</button>
+  <button class="mock-button" id="up">Upright</button>
+  <span class="label" style="margin-left:12px">Tilt</span>
+  <input id="tilt" type="range" min="-180" max="180" value="0" style="width:220px">
+  <span id="tiltv" class="label">0°</span>
+</div>
+
+<div class="options" data-multiselect id="opts" style="display:flex;flex-direction:column;gap:14px"></div>
+
+<style>
+  .vizrow{display:flex;gap:22px;align-items:flex-end;background:#0b0b0b;border-radius:8px;padding:14px;flex-wrap:wrap;justify-content:center}
+  .gl{color:#888;font-size:11px;text-align:center;margin-top:4px;font-family:monospace}
+  .left{color:#eee;font-family:monospace;font-size:20px;min-width:150px;text-align:center;align-self:center}
+  .mock-button.on{outline:2px solid #fff}
+</style>
+
+<script>
+(function(){
+const rnd=Math.random;
+const IN=1,WALL=2,GATE=3,RING=4;
+function mask(n,x,y){const c=(n-1)/2;return Math.hypot(x-c,y-c)<=n/2}
+
+function build(style,n){
+  const c=(n-1)/2,kind=new Uint8Array(n*n),side=new Int8Array(n*n),I=(x,y)=>y*n+x;
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(!mask(n,x,y))continue;const i=I(x,y),d=Math.hypot(x-c,y-c);
+    if(style==="a"){const hw=n>=25?[-1,0,1,2,3,4,5,6,6,6,5]:[-1,0,1,2,3,3];const dy=Math.abs(y-c);
+      if(dy<hw.length){if(dy===0){if(x===c)kind[i]=GATE}else if(Math.abs(x-c)<=hw[dy])kind[i]=IN}
+      side[i]=y<c?1:y>c?-1:0}
+    else if(style==="b"){if(d>n/2-1){kind[i]=WALL;continue}
+      const yw=c-Math.abs(x-c);
+      if(x===c&&y===c){kind[i]=GATE;side[i]=0}
+      else if(y===yw&&x!==c){kind[i]=WALL}
+      else{kind[i]=IN;side[i]=y<yw?1:-1}}
+    else{if(d>n/2-1)kind[i]=RING;else if(d>n/2-2){}else kind[i]=IN}}
+  if(style==="a"){for(let y=0;y<n;y++)for(let x=0;x<n;x++){const i=I(x,y);if(kind[i]||!mask(n,x,y))continue;
+    let near=false;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const X=x+dx,Y=y+dy;if(X>=0&&Y>=0&&X<n&&Y<n){const k=kind[I(X,Y)];if(k===IN||k===GATE)near=true}}
+    if(near)kind[i]=WALL}}
+  return{n,c,kind,side,style}}
+
+function newSim(style,n,durMs){
+  const sh=build(style,n),{c,kind,side}=sh,grid=new Uint8Array(n*n),moved=new Uint8Array(n*n);
+  const cells=[];for(let i=0;i<n*n;i++)if(kind[i]===IN)cells.push(i);
+  let total,start;
+  if(style==="c"){total=Math.floor(cells.length*0.38);start=cells}
+  else{const top=cells.filter(i=>side[i]===1),bot=cells.filter(i=>side[i]===-1);total=Math.floor(Math.min(top.length,bot.length)*0.72);start=top}
+  start=start.slice().sort((a,b)=>{const ya=(a/n|0),yb=(b/n|0);return yb-ya||Math.abs(a%n-c)-Math.abs(b%n-c)});
+  for(let k=0;k<total;k++)grid[start[k]]=1;
+  return{sh,grid,moved,total,rate:total/durMs,budget:0,dur:durMs,remain:durMs,lastSign:1,doneAt:null}}
+
+const DIRS=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if(dx||dy)DIRS.push([dx,dy]);
+function step(s,gx,gy,dtSim){
+  const{n,kind,side}=s.sh,grid=s.grid,moved=s.moved;moved.fill(0);
+  if(s.sh.style!=="c")s.budget=Math.min(2,s.budget+s.rate*dtSim);
+  const gs=[];for(let i=0;i<n*n;i++)if(grid[i])gs.push(i);
+  gs.sort((a,b)=>((b%n)*gx+(b/n|0)*gy)-((a%n)*gx+(a/n|0)*gy));
+  const cand=DIRS.map(([dx,dy])=>({dx,dy,dot:(dx*gx+dy*gy)/Math.hypot(dx,dy)+rnd()*0.02})).filter(d=>d.dot>0.38).sort((p,q)=>q.dot-p.dot);
+  const open=k=>k===IN||k===GATE;
+  for(const i of gs){const x=i%n,y=i/n|0;
+    for(const d of cand){const X=x+d.dx,Y=y+d.dy;if(X<0||Y<0||X>=n||Y>=n)continue;const j=Y*n+X;
+      if(!open(kind[j])||grid[j])continue;
+      if(side[i]*side[j]===-1)continue;
+      if(d.dx&&d.dy&&!open(kind[y*n+X])&&!open(kind[Y*n+x]))continue;
+      if(kind[j]===GATE){if(s.budget<1)continue;s.budget-=1}
+      grid[i]=0;grid[j]=1;moved[j]=1;break}}}
+
+function timeLeft(s,gy){
+  const up=gy>0.2?1:gy<-0.2?-1:0;
+  if(s.sh.style==="c")return{ms:s.remain,paused:up===0};
+  if(up===0)return{ms:null,paused:true};
+  let cnt=0;const{side,kind}=s.sh;for(let i=0;i<s.grid.length;i++)if(s.grid[i]&&(side[i]===up||kind[i]===GATE))cnt++;
+  return{ms:Math.min(s.dur,cnt/s.rate),paused:false,cnt}}
+
+function render(s,gy,t){
+  const{n,c,kind}=s.sh,g=new Float32Array(n*n);const done=s.doneAt!==null?t-s.doneAt:-1;
+  let wallB=0.16;if(done>=0&&done<3000)wallB=0.16+0.7*Math.max(0,Math.sin(done/3000*Math.PI*6));
+  const ringOrder=s.ring||(s.ring=(()=>{const r=[];for(let i=0;i<n*n;i++)if(kind[i]===RING)r.push(i);
+    return r.sort((a,b)=>ang(a)-ang(b));function ang(i){let a=Math.atan2(i%n-c,-((i/n|0)-c));return a<0?a+2*Math.PI:a}})());
+  if(s.sh.style==="c"){const lit=Math.round(ringOrder.length*Math.max(0,s.remain)/s.dur);ringOrder.forEach((i,k)=>{g[i]=k<lit?0.9:(done>=0&&done<3000?wallB*0.8:0)})}
+  for(let i=0;i<n*n;i++){if(kind[i]===WALL)g[i]=wallB;
+    if(s.grid[i]){let b=s.moved[i]?1:0.7;
+      if(done>=0&&done<3000){const y=i/n|0;const h=(gy>=0?n-1-y:y);const pos=((done/650)%1)*(n+6)-3;b=0.5+0.5*Math.max(0,1-Math.abs(h-pos)/2)}
+      g[i]=b}}
+  return g}
+
+function draw(id,g,n,px){const cv=document.getElementById(id),ctx=cv.getContext("2d");if(cv.width!==n*px){cv.width=cv.height=n*px}
+  ctx.fillStyle="#0b0b0b";ctx.fillRect(0,0,cv.width,cv.height);
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){if(!mask(n,x,y))continue;const b=g[y*n+x];ctx.beginPath();ctx.arc(x*px+px/2,y*px+px/2,px*.38,0,7);ctx.fillStyle=b>0?`rgba(255,255,255,${0.1+0.9*b})`:"#1a1a1a";ctx.fill()}}
+
+const styles=[
+ {id:"a",name:"A · Classic hourglass",desc:"A dim glass outline with two bulbs. Sand drains through the one-dot neck in a thin stream and piles up in a mound below. You can tell it's a timer at a glance."},
+ {id:"b",name:"B · Round hourglass",desc:"The whole circle is the glass. A V-shaped funnel splits it into two halves, and sand pours through the point. It uses every dot, so there's more sand and it reads well from across a room."},
+ {id:"c",name:"C · Free sand + ring",desc:"No glass. Loose sand you can pour around the whole circle, while the rim is a countdown ring that goes dark clockwise. It's the most toy-like, with the time shown by the ring rather than the sand."},
+];
+const box=document.getElementById("opts");
+styles.forEach(s=>{const el=document.createElement("div");el.className="option";el.dataset.choice=s.id;el.style.flexDirection="column";el.style.alignItems="stretch";
+  el.innerHTML=`<div class="vizrow">
+   <div><canvas id="m25-${s.id}"></canvas><div class="gl">25×25</div></div>
+   <div><canvas id="m13-${s.id}"></canvas><div class="gl">13×13</div></div>
+   <div class="left" id="left-${s.id}"></div></div>
+   <div class="content"><h3>${s.name}</h3><p>${s.desc}</p></div>`;
+  el.onclick=e=>{if(e.target.tagName!=="CANVAS")toggleSelect(el)};box.appendChild(el)});
+
+let durMin=1,speed=10,theta=0,target=0,sims={};
+function reset(){sims={};styles.forEach(s=>{sims[s.id]={25:newSim(s.id,25,durMin*60000),13:newSim(s.id,13,durMin*60000)}})}
+reset();
+function mark(){document.querySelectorAll(".dur").forEach(b=>b.classList.toggle("on",+b.dataset.m===durMin));document.querySelectorAll(".spd").forEach(b=>b.classList.toggle("on",+b.dataset.s===speed))}
+document.querySelectorAll(".dur").forEach(b=>b.onclick=()=>{durMin=+b.dataset.m;reset();mark()});
+document.querySelectorAll(".spd").forEach(b=>b.onclick=()=>{speed=+b.dataset.s;mark()});mark();
+const tilt=document.getElementById("tilt"),tiltv=document.getElementById("tiltv");
+const norm=a=>((a+180)%360+360)%360-180;
+tilt.oninput=()=>{target=theta=+tilt.value};
+document.getElementById("flip").onclick=()=>{target=theta+180};
+document.getElementById("side").onclick=()=>{target=theta+(90-((norm(theta)%180)+180)%180)};
+document.getElementById("up").onclick=()=>{const t=norm(theta);target=theta+(Math.abs(t)<=90?-t:(t>0?180-t:-180-t))};
+
+const fmt=ms=>{const s=Math.ceil(ms/1000);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")};
+let last=performance.now(),acc=0;
+function frame(now){const dt=Math.min(100,now-last);last=now;
+  if(Math.abs(target-theta)>0.5){theta+=Math.sign(target-theta)*Math.min(Math.abs(target-theta),dt*0.35)}else theta=target;
+  const a=norm(theta);tilt.value=Math.round(a);tiltv.textContent=Math.round(a)+"°";
+  const gx=Math.sin(theta*Math.PI/180),gy=Math.cos(theta*Math.PI/180);
+  acc+=dt;
+  while(acc>=40){acc-=40;const sub=Math.max(1,Math.ceil(speed/10)),dts=40*speed/sub;
+    for(const id in sims)for(const n of [25,13]){const s=sims[id][n];
+      if(id==="c"){const sign=gy>0.2?1:gy<-0.2?-1:0;if(sign&&sign!==s.lastSign){s.remain=s.dur-s.remain;s.lastSign=sign}if(sign)s.remain=Math.max(0,s.remain-40*speed)}
+      for(let k=0;k<sub;k++)step(s,gx,gy,dts)}}
+  for(const s of styles){
+    for(const n of [25,13]){const sim=sims[s.id][n];const tl=timeLeft(sim,gy);
+      const isDone=!tl.paused&&tl.ms!==null&&tl.ms<=0;if(isDone&&sim.doneAt===null)sim.doneAt=now;if(!isDone&&!(s.id==="c"&&tl.paused))sim.doneAt=isDone?sim.doneAt:null;
+      draw(`m${n}-${s.id}`,render(sim,gy,now),n,n===25?9:13);
+      if(n===25)document.getElementById("left-"+s.id).textContent=tl.paused?"paused":(tl.ms<=0?"done!":fmt(tl.ms*1)+" left")}}
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+})();
+</script>
