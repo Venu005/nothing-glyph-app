@@ -8,6 +8,9 @@ import android.app.AlarmManager
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -20,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -55,6 +59,9 @@ fun SandPage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
     val busy = st.phase == Phase.RUNNING || st.phase == Phase.PAUSED
     var editing by rememberSaveable { mutableStateOf(false) }
     var howOpen by rememberSaveable { mutableStateOf(false) }
+    val howView = remember { BringIntoViewRequester() }
+    // Opening "How it works" scrolls the page so the steps are on screen (they sit below the fold).
+    LaunchedEffect(howOpen) { if (howOpen) { withFrameNanos { }; howView.bringIntoView() } }
     val canExact = context.getSystemService(AlarmManager::class.java)?.canScheduleExactAlarms() == true
     val exactOn = settings.sandExact && canExact
     // Coming back from system settings: re-arm the timer's alarm with the access Android now gives us.
@@ -101,18 +108,20 @@ fun SandPage(settings: Settings, profile: DeviceProfile, onUpdate: ((Settings) -
         }
         Text("Off: when the phone is asleep, Android may ring up to about a minute late. On: Android asks you once to allow alarms.",
             style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim)
-        SettingRow("How it works", if (howOpen) "−" else "+") { howOpen = !howOpen }
-        if (howOpen) {
-            Text(
-                listOf(
-                    "⟲ Flip the phone over to start, like a real hourglass",
-                    "⟲ Flip it mid-way and the sand runs back: time left becomes time run",
-                    "↔ Lay it on its side to pause",
-                    "▭ Face-down on a desk keeps it running",
-                    "● Long press: pick a time. While it runs, the first press shows the minutes left; press again within 2 s to change it",
-                ).joinToString("\n"),
-                style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim, modifier = Modifier.padding(vertical = 6.dp),
-            )
+        Column(Modifier.bringIntoViewRequester(howView)) {
+            SettingRow("How it works", if (howOpen) "−" else "+") { howOpen = !howOpen }
+            if (howOpen) {
+                Text(
+                    listOf(
+                        "⟲ Flip the phone over to start, like a real hourglass",
+                        "⟲ Flip it mid-way and the sand runs back: time left becomes time run",
+                        "↔ Lay it on its side to pause",
+                        "▭ Face-down on a desk keeps it running",
+                        "● Long press: pick a time. While it runs, the first press shows the minutes left; press again within 2 s to change it",
+                    ).joinToString("\n"),
+                    style = MaterialTheme.typography.labelSmall, color = BacklitColors.Dim, modifier = Modifier.padding(vertical = 6.dp),
+                )
+            }
         }
     }
 }
